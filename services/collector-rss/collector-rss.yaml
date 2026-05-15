@@ -1,0 +1,7 @@
+# Optional overrides (also pass -configdir containing this file).
+# listen: ":8087"
+# poll_interval_seconds: 300
+# fetch_timeout_seconds: 90
+# items_max_per_feed: 25
+#   Caps articles per run after sorting by date (default 25 when unset). Raise for deeper backfills.
+# user_agent: "icehive-collector-rss/1.0"

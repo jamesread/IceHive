@@ -1,0 +1,20 @@
+site_name: IceHive
+site_description: Developer documentation for the IceHive microservices platform.
+docs_dir: content
+site_dir: site
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Services:
+      - Controller: services/controller.md
+      - collector-github: services/collector-github.md
+      - collector-azure: services/collector-azure.md
+      - collector-testdata: services/collector-testdata.md
+      - persister-yaml: services/persister-yaml.md
+      - persister-mysql: services/persister-mysql.md
+  - Frontend: frontend.md
+  - Protocol: protocol.md

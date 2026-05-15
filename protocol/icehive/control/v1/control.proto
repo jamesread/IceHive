@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package icehive.control.v1;
+
+// Control-plane messages exchanged over AMQP (not gRPC). Serialized as binary protobuf on the wire.
+
+// ControlEvent is the envelope for broadcast or targeted control messages between IceHive services.
+message ControlEvent {
+  // Correlation identifier for tracing; should be unique per published event.
+  string correlation_id = 1;
+  // Wall-clock time when the event was created, in milliseconds since Unix epoch.
+  int64 created_unix_ms = 2;
+
+  oneof payload {
+    Ping ping = 10;
+    RequestDrain request_drain = 11;
+    CollectorScaleHint collector_scale_hint = 12;
+  }
+}
+
+// Ping is a liveness or connectivity check on the control channel.
+message Ping {
+  string source_service = 1;
+}
+
+// RequestDrain asks consumers to finish in-flight work and stop accepting new tasks.
+message RequestDrain {
+  string reason = 1;
+}
+
+// CollectorScaleHint carries non-gRPC scheduling hints for collector workers.
+message CollectorScaleHint {
+  string collector_id = 1;
+  int32 desired_replicas = 2;
+}

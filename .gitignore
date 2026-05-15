@@ -1,0 +1,57 @@
+# Binaries
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+services/controller/controller
+services/collector-github/collector-github
+services/collector-azure/collector-azure
+services/collector-jmap/collector-jmap
+services/collector-rss/collector-rss
+services/collector-testdata/collector-testdata
+services/persister-yaml/persister-yaml
+services/persister-mysql/persister-mysql
+
+# Air hot-reload
+**/tmp/
+
+# Go
+coverage.out
+coverage.html
+*.test
+vendor/
+go.work.sum
+
+# Node
+node_modules/
+frontend/dist/
+integration-tests/node_modules/
+npm-debug.log*
+.pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Python (docs)
+.venv/
+__pycache__/
+*.pyc
+docs/site/
+
+# Selenium / integration artifacts
+**/screenshots/

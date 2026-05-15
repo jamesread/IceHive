@@ -1,0 +1,187 @@
+syntax = "proto3";
+
+package icehive.v1;
+
+// ControllerService exposes the primary API clients use to request and inspect data.
+service ControllerService {
+  // Health indicates whether the Controller process is reachable.
+  rpc Health(HealthRequest) returns (HealthResponse);
+  // WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.
+  rpc WorkerBootstrap(WorkerBootstrapRequest) returns (WorkerBootstrapResponse);
+  // ListConfig returns flattened configuration keys and values from the loaded controller config file.
+  rpc ListConfig(ListConfigRequest) returns (ListConfigResponse);
+  // GetConfig returns a single flattened configuration key; creates it with empty value when missing.
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  // SetConfig updates a single flattened key and persists the full configuration back to the same file.
+  rpc SetConfig(SetConfigRequest) returns (SetConfigResponse);
+  // ListServices returns latest heartbeat status for AMQP-connected services.
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse);
+  // Collection sources: generic strings interpreted per collector_type.
+  rpc ListCollectionSources(ListCollectionSourcesRequest) returns (ListCollectionSourcesResponse);
+  // ListCollectorSourceSchemas returns the latest SourceSchema JSON published by each collector (AMQP), for UI forms.
+  rpc ListCollectorSourceSchemas(ListCollectorSourceSchemasRequest) returns (ListCollectorSourceSchemasResponse);
+  rpc UpsertCollectionSource(UpsertCollectionSourceRequest) returns (UpsertCollectionSourceResponse);
+  rpc DeleteCollectionSource(DeleteCollectionSourceRequest) returns (DeleteCollectionSourceResponse);
+  rpc ReportCollectionSourceRun(ReportCollectionSourceRunRequest) returns (ReportCollectionSourceRunResponse);
+  // EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.
+  // Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).
+  rpc EnqueueCollectionRequest(EnqueueCollectionRequestRequest) returns (EnqueueCollectionRequestResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  // Status summary, e.g. "ok".
+  string status = 1;
+}
+
+// WorkerBootstrapRequest identifies the calling worker binary.
+message WorkerBootstrapRequest {
+  string worker_kind = 1;
+  string worker_id = 2;
+}
+
+// AMQPSettings describes how workers should connect to the message broker.
+message AMQPSettings {
+  string url = 1;
+  string exchange = 2;
+  string routing_key_control_events = 3;
+}
+
+// MySQLSettings describes how workers should connect to a MySQL database.
+message MySQLSettings {
+  string host = 1;
+  int32 port = 2;
+  string user = 3;
+  string password = 4;
+  string database = 5;
+}
+
+// WorkerBootstrapResponse is returned by the Controller for collector/persister startup.
+message WorkerBootstrapResponse {
+  AMQPSettings amqp = 1;
+  // Present for persister workers that require a target sink database.
+  MySQLSettings mysql = 2;
+}
+
+message ListConfigRequest {}
+
+message ConfigVar {
+  string key = 1;
+  // Value as string; secrets may be redacted.
+  string value = 2;
+  bool redacted = 3;
+}
+
+message ListConfigResponse {
+  repeated ConfigVar vars = 1;
+}
+
+message GetConfigRequest {
+  string key = 1;
+}
+
+message GetConfigResponse {
+  ConfigVar var = 1;
+}
+
+message SetConfigRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SetConfigResponse {}
+
+message ListServicesRequest {}
+
+message ServiceStatus {
+  string service_name = 1;
+  int64 latest_heartbeat_unix_ms = 2;
+  string status = 3;
+}
+
+message ListServicesResponse {
+  repeated ServiceStatus services = 1;
+}
+
+message CollectionSource {
+  string id = 1;
+  string collector_type = 2;
+  string source_spec = 3;
+  // Standard 5-field cron (minute hour day-of-month month day-of-week), e.g. "0 0 * * *" daily at midnight.
+  // When empty, the source has no schedule and is only collected when EnqueueCollectionRequest (Run now) is used.
+  string cron_line = 4;
+  bool enabled = 5;
+  int64 last_run_unix_ms = 6;
+  int64 last_success_unix_ms = 7;
+  string last_error = 8;
+  int64 next_due_unix_ms = 9;
+  int64 created_unix_ms = 10;
+  int64 updated_unix_ms = 11;
+}
+
+message ListCollectionSourcesRequest {
+  string collector_type = 1;
+}
+
+message ListCollectionSourcesResponse {
+  repeated CollectionSource sources = 1;
+}
+
+message CollectorSourceSchema {
+  string collector_type = 1;
+  string schema_version = 2;
+  // Full SourceSchema JSON document (kind, primary_patterns, modifiers, etc.).
+  string body_json = 3;
+  int64 updated_unix_ms = 4;
+}
+
+message ListCollectorSourceSchemasRequest {
+  // When empty, returns all stored schemas. Otherwise filters by collector_type.
+  string collector_type = 1;
+}
+
+message ListCollectorSourceSchemasResponse {
+  repeated CollectorSourceSchema schemas = 1;
+}
+
+message UpsertCollectionSourceRequest {
+  CollectionSource source = 1;
+}
+
+message UpsertCollectionSourceResponse {
+  CollectionSource source = 1;
+}
+
+message DeleteCollectionSourceRequest {
+  string id = 1;
+}
+
+message DeleteCollectionSourceResponse {}
+
+message ReportCollectionSourceRunRequest {
+  string id = 1;
+  int64 run_unix_ms = 2;
+  bool success = 3;
+  string error = 4;
+  int64 next_due_unix_ms = 5;
+}
+
+message ReportCollectionSourceRunResponse {}
+
+// CollectionRequest is the JSON (protojson) body published to AMQP for on-demand collection.
+message CollectionRequest {
+  CollectionSource source = 1;
+}
+
+message EnqueueCollectionRequestRequest {
+  // Exactly one of the following must be set.
+  oneof target {
+    // Load the source from the controller DB and publish it.
+    string collection_source_id = 1;
+    // Inline source: published as CollectionRequest.source with id cleared; not persisted.
+    CollectionSource ephemeral_collection = 2;
+  }
+}
+
+message EnqueueCollectionRequestResponse {}

@@ -1,0 +1,13 @@
+{
+  "name": "icehive-integration-tests",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "npx mocha --recursive tests/"
+  },
+  "devDependencies": {
+    "mocha": "^11.0.0",
+    "selenium-webdriver": "^4.0.0"
+  }
+}

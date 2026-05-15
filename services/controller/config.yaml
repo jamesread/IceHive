@@ -1,0 +1,13 @@
+listen: auto
+mysql:
+    database: icehive
+    host: mysql
+    password: icehive
+    port: "3306"
+    user: icehive
+persister_mysql:
+    database: icehive_sink
+    host: mysql
+    password: icehive_sink
+    port: "3306"
+    user: icehive_sink

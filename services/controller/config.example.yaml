@@ -1,0 +1,24 @@
+listen: auto
+
+# Fixed port (skips golure listenaddr): use e.g. ":9090" instead of auto/:8080.
+
+# Served to collectors and persisters via Controller.WorkerBootstrap (Connect).
+worker_bootstrap:
+  amqp:
+    url: "amqp://guest:guest@127.0.0.1:5672/"
+    # exchange and routing_key_control_events default to ex_icehive / control.events when omitted
+
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  user: "icehive"
+  password: "change-me"
+  database: "icehive"
+
+# Target sink used by persister-mysql (fetched through Controller.WorkerBootstrap).
+persister_mysql:
+  host: "127.0.0.1"
+  port: 3306
+  user: "icehive_sink"
+  password: "change-me-too"
+  database: "icehive_sink"

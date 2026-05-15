@@ -1,0 +1,13 @@
+go 1.25.7
+
+use (
+	./services/collector-azure
+	./services/collector-github
+	./services/collector-jmap
+	./services/collector-rss
+	./services/collector-testdata
+	./services/common
+	./services/controller
+	./services/persister-mysql
+	./services/persister-yaml
+)
