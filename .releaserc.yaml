@@ -1,0 +1,18 @@
+---
+# Release automation (semantic-release → GoReleaser), modeled on OliveTin.
+# Only production releases run from main; use manual tags or separate policy for other lines.
+branches:
+  - name: main
+
+plugins:
+  - "@semantic-release/commit-analyzer"
+  # OliveTin's config omits this; semantic-release needs a generateNotes implementation.
+  - "@semantic-release/release-notes-generator"
+  - - "@semantic-release/git"
+    # No root package.json / changelog file to commit; tags still push for GoReleaser.
+    - assets: false
+  - - "@semantic-release/exec"
+    - publishCmd: |
+        goreleaser release --clean --timeout 60m
+
+tagFormat: "${version}"

@@ -55,3 +55,5 @@ docs/site/
 
 # Selenium / integration artifacts
 **/screenshots/
+
+dist

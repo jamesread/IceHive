@@ -1,0 +1,130 @@
+---
+name: Build & Release
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
+      - next
+      - beta
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+          cache-dependency-path: |
+            **/go.sum
+
+      - name: Print toolchain versions
+        run: |
+          go version
+          node --version
+          buf --version
+
+      - name: Record date (artifacts)
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref_type != 'tag'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (proto, services, frontend)
+        run: make all
+
+      - name: Unit tests
+        run: make test
+
+      - name: Integration tests
+        run: make integration-tests
+
+      - name: Archive integration tests log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: icehive-integration-tests-${{ env.DATE }}-${{ github.sha }}
+          path: |
+            integration-tests
+            !integration-tests/node_modules
+
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+          version: "~> v2"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: GoReleaser snapshot (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --snapshot --clean --skip=publish
+
+      - name: Upload snapshot build artifacts (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: icehive-snapshot-${{ env.DATE }}-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: warn
+
+      - name: Semantic release
+        if: github.event_name == 'push' && github.ref_type != 'tag'
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/exec
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Archive binaries
+        if: github.event_name == 'push' && github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: icehive-snapshot-${{ env.DATE }}-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: warn

@@ -1,0 +1,17 @@
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY controller /usr/local/bin/
+COPY collector-github /usr/local/bin/
+COPY collector-azure /usr/local/bin/
+COPY collector-jmap /usr/local/bin/
+COPY collector-rss /usr/local/bin/
+COPY collector-testdata /usr/local/bin/
+COPY persister-mysql /usr/local/bin/
+COPY persister-yaml /usr/local/bin/
+COPY entrypoint.sh /usr/local/bin/
+
+ENV ICEHIVE_SERVICE=controller
+
+ENTRYPOINT ["entrypoint.sh"]

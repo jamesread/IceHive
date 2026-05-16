@@ -1,6 +1,13 @@
-# IceHive
+<div align="center">
+  <img alt="IceHive logo" src="logo.svg" width="128" />
+  <h1>IceHive</h1>
 
-IceHive is a set of microservices that collect data from various APIs, normalize it into a standard format, and store it in a database.
+  IceHive is a set of microservices that **collect** data from various APIs, **normalize** it into a standard format, and **store** it in a database.
+
+[![Maturity](https://img.shields.io/badge/maturity-Development-yellow)](#none)
+[![Go Report Card](https://goreportcard.com/badge/github.com/icehive/icehive)](https://goreportcard.com/report/github.com/icehive/icehive)
+
+</div>
 
 ## What it does
 

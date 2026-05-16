@@ -12,7 +12,6 @@ services:
 	$(MAKE) -wC services/controller
 	$(MAKE) -wC services/collector-github
 	$(MAKE) -wC services/collector-azure
-	$(MAKE) -wC services/collector-imap
 	$(MAKE) -wC services/collector-jmap
 	$(MAKE) -wC services/collector-rss
 	$(MAKE) -wC services/collector-testdata
@@ -27,7 +26,6 @@ test:
 	$(MAKE) -wC services/controller test
 	$(MAKE) -wC services/collector-github test
 	$(MAKE) -wC services/collector-azure test
-	$(MAKE) -wC services/collector-imap test
 	$(MAKE) -wC services/collector-jmap test
 	$(MAKE) -wC services/collector-rss test
 	$(MAKE) -wC services/collector-testdata test
@@ -40,7 +38,6 @@ lint:
 	$(MAKE) -wC services/controller lint
 	$(MAKE) -wC services/collector-github lint
 	$(MAKE) -wC services/collector-azure lint
-	$(MAKE) -wC services/collector-imap lint
 	$(MAKE) -wC services/collector-jmap lint
 	$(MAKE) -wC services/collector-rss lint
 	$(MAKE) -wC services/collector-testdata lint
@@ -59,7 +56,6 @@ clean:
 	$(MAKE) -wC services/controller clean
 	$(MAKE) -wC services/collector-github clean
 	$(MAKE) -wC services/collector-azure clean
-	$(MAKE) -wC services/collector-imap clean
 	$(MAKE) -wC services/collector-jmap clean
 	$(MAKE) -wC services/collector-rss clean
 	$(MAKE) -wC services/collector-testdata clean

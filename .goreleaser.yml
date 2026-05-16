@@ -1,49 +1,145 @@
-project_name: OliveTin
+project_name: icehive
 version: 2
-before:
-  hooks:
-    - make service-prep
 
 builds:
-  - env:
+  - id: controller
+    env:
       - CGO_ENABLED=0
-    binary: OliveTin
-    main: main.go
-    dir: service
+    binary: controller
+    main: .
+    dir: services/controller
     goos:
       - linux
-      - windows
-      - darwin
-      - freebsd
-
     goarch:
       - amd64
-      - arm64
-      - arm
-      - riscv64
-
-    goarm:
-      - 5 # For old RPIs
-      - 6
-      - 7
-
-    ignore:
-      - goos: darwin
-        goarch: arm # Mac does not work on [32bit] arm
-
-      - goos: windows
-        goarch: arm
-
-      - goos: windows # Does anyone use Windows on arm64?
-        goarch: arm64
-
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
 
+  - id: collector-github
+    env:
+      - CGO_ENABLED=0
+    binary: collector-github
+    main: .
+    dir: services/collector-github
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: collector-azure
+    env:
+      - CGO_ENABLED=0
+    binary: collector-azure
+    main: .
+    dir: services/collector-azure
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: collector-jmap
+    env:
+      - CGO_ENABLED=0
+    binary: collector-jmap
+    main: .
+    dir: services/collector-jmap
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: collector-rss
+    env:
+      - CGO_ENABLED=0
+    binary: collector-rss
+    main: .
+    dir: services/collector-rss
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: collector-testdata
+    env:
+      - CGO_ENABLED=0
+    binary: collector-testdata
+    main: .
+    dir: services/collector-testdata
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: persister-mysql
+    env:
+      - CGO_ENABLED=0
+    binary: persister-mysql
+    main: .
+    dir: services/persister-mysql
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+  - id: persister-yaml
+    env:
+      - CGO_ENABLED=0
+    binary: persister-yaml
+    main: .
+    dir: services/persister-yaml
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+
+archives:
+  - formats: tar.gz
+    files:
+      - LICENSE
+      - README.md
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+
+dockers:
+  - ids:
+      - controller
+      - collector-github
+      - collector-azure
+      - collector-jmap
+      - collector-rss
+      - collector-testdata
+      - persister-mysql
+      - persister-yaml
+    image_templates:
+      - "ghcr.io/icehive/icehive:{{ .Tag }}"
+      - "ghcr.io/icehive/icehive:latest"
+    dockerfile: Dockerfile.goreleaser
+    extra_files:
+      - entrypoint.sh
+    build_flag_templates:
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Tag }}"
+      - "--platform=linux/amd64"
+
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   version_template: "{{ .Branch }}-{{ .ShortCommit }}"
+
 changelog:
   sort: asc
   groups:
@@ -68,127 +164,18 @@ changelog:
       - '^refactor:'
       - '^Merge branch'
 
-archives:
-  - formats: tar.gz
-    files:
-      - config.yaml
-      - LICENSE
-      - README.md
-      - src: Dockerfile.singlearch
-        dst: Dockerfile
-      - webui
-      - ./var/
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
-    wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        formats: zip
-
-# dockers_v2: single multi-platform build with buildx; keeps default provenance + SBOM.
-# Replaces legacy dockers + docker_manifests (avoids "is a manifest list" when attestations are on).
-dockers_v2:
-  - dockerfile: Dockerfile.multiarches
-    images:
-      - docker.io/jamesread/olivetin
-      - ghcr.io/olivetin/olivetin
-    tags:
-      - "{{ .Tag }}"
-      - latest
-      - latest-3k
-    platforms:
-      - linux/amd64
-      - linux/arm64
-    extra_files:
-      - webui/
-      - var/entities/
-      - config.yaml
-      - var/helper-actions/
-    labels:
-      org.opencontainers.image.revision: "{{ .FullCommit }}"
-      org.opencontainers.image.version: "{{ .Tag }}"
-    sbom: true
-
-nfpms:
-  - id: default
-    maintainer: James Read <contact@jread.com>
-    description: OliveTin is a web interface for running Linux shell commands.
-    homepage: https://github.com/OliveTin/OliveTin
-    license: AGPL-3.0
-    formats:
-      - deb
-      - rpm
-
-    bindir: /usr/local/bin/
-
-    file_name_template: '{{ .PackageName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
-
-    contents:
-      - src: var/systemd/OliveTin.service
-        dst: /etc/systemd/system/OliveTin.service
-
-      - src: webui/
-        dst: /var/www/olivetin/
-        type: tree
-
-      - src: config.yaml
-        dst: /etc/OliveTin/config.yaml
-        type: "config|noreplace"
-
-      - src: var/entities/*
-        dst: /etc/OliveTin/entities/
-        type: "config|noreplace"
-
-      - src: var/manpage/OliveTin.1.gz
-        dst: /usr/share/man/man1/OliveTin.1.gz
-
-  - id: openrc
-    maintainer: James Read <contact@jread.com>
-    description: OliveTin is a web interface for running Linux shell commands.
-    homepage: https://github.com/OliveTin/OliveTin
-    license: AGPL-3.0
-    formats:
-      - apk
-
-    bindir: /usr/local/bin/
-
-    file_name_template: '{{ .PackageName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
-
-    contents:
-      - src: var/openrc/OliveTin
-        dst: /etc/init.d/OliveTin
-
-      - src: webui/
-        dst: /var/www/olivetin/
-        type: tree
-
-      - src: config.yaml
-        dst: /etc/OliveTin/config.yaml
-        type: "config|noreplace"
-
-      - src: var/entities/*
-        dst: /etc/OliveTin/entities/
-        type: "config|noreplace"
-
-      - src: var/manpage/OliveTin.1.gz
-        dst: /usr/share/man/man1/OliveTin.1.gz
-
 release:
   footer: |
-    ## Container images (from GitHub)
+    ## Container image
 
-    - `docker pull ghcr.io/olivetin/olivetin:{{ .Version }}`
+    - `docker pull ghcr.io/icehive/icehive:{{ .Version }}`
 
-    ## Container images ([on Docker Hub](https://hub.docker.com/r/jamesread/olivetin/tags?page=1&ordering=last_updated))
+    ## Usage
 
-    - `docker pull docker.io/jamesread/olivetin:{{ .Version }}`
+    Set `ICEHIVE_SERVICE` to choose which service to run:
 
-    ## Upgrade warnings, or breaking changes
+    ```
+    docker run -e ICEHIVE_SERVICE=controller ghcr.io/icehive/icehive:{{ .Version }}
+    ```
 
-    - No such issues between the last release and this version.
-
-    ## Useful links
-
-    - [Which download do I need?](https://docs.olivetin.app/install/choose_package.html)
-    - [Ask for help and chat with others users in the Discord community](https://discord.gg/jhYWWpNJ3v)
-
-    Thanks for your interest in OliveTin!
+    Available services: `controller`, `collector-github`, `collector-azure`, `collector-jmap`, `collector-rss`, `collector-testdata`, `persister-mysql`, `persister-yaml`
