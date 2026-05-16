@@ -1,20 +1,30 @@
 # collector-testdata
 
-Emits periodic test entities of type `Animal` to RabbitMQ using routing key `collector.entities`.
+**Testdata** emits deterministic **`Animal`** JSON entities roughly every **`emit_interval_seconds`** so QA clusters can rehearse ingestion without touching SaaS integrations.
 
-## Run
+Perfect for validating RabbitMQ quotas, **`persister-mysql`** DDL generation, alerting, dashboards, …
 
-```bash
-make -C services/collector-testdata run
+## Container invocation
+
+| Setting | Typical value |
+|---------|---------------|
+| `ICEHIVE_SERVICE` | `collector-testdata` |
+| `ICEHIVE_CONTROLLER_URL` | Controller base URL |
+| `LOG_LEVEL` | Optional |
+
+Arguments:
+
+```
+-configdir /etc/icehive
 ```
 
-## Configuration
+Default **`/healthz`** port comes from `:8085` unless replaced.
 
-Optional `collector-testdata.yaml` in the directory passed to `-configdir`.
+## Optional YAML (**`collector-testdata.yaml`**)
 
-| Key                     | Default | Description                              |
-|-------------------------|---------|------------------------------------------|
-| `listen`                | `:8085` | HTTP listen address (metrics/health)     |
-| `emit_interval_seconds` | `15`    | Emit interval for each test entity batch |
+| Key | Default | Notes |
+|-----|---------|-------|
+| `listen` | `:8085` | Overrides metrics/health bind |
+| `emit_interval_seconds` | `15` | Minimum positive integer seconds between replay batches |
 
-Shared collector lifecycle and HTTP sidecar: `services/common/pkg/collector`.
+Each tick publishes three fixtures with routing key **`collector.entities`**.

@@ -1,20 +1,25 @@
 site_name: IceHive
-site_description: Developer documentation for the IceHive microservices platform.
+site_description: Runbooks for deploying and operating IceHive in containers (especially Kubernetes).
 docs_dir: content
 site_dir: site
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
 
 nav:
   - Home: index.md
+  - Deploying IceHive: deployment.md
   - Architecture: architecture.md
   - Services:
       - Controller: services/controller.md
       - collector-github: services/collector-github.md
       - collector-azure: services/collector-azure.md
+      - collector-jmap: services/collector-jmap.md
+      - collector-rss: services/collector-rss.md
       - collector-testdata: services/collector-testdata.md
       - persister-yaml: services/persister-yaml.md
       - persister-mysql: services/persister-mysql.md
   - Frontend: frontend.md
-  - Protocol: protocol.md
+  - API & messaging: protocol.md

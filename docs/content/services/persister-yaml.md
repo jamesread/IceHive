@@ -1,19 +1,29 @@
 # persister-yaml
 
-Consumes normalized messages from RabbitMQ and writes them using a YAML filesystem (or similar) sink via `persist.Store`.
+**Status:** scaffolding. The YAML persister process loads AMQP bootstrap data, opens the shared metrics server, logs readiness, then blocks until terminated—persistent queue consumers and YAML sink writers are **not** wired yet.
 
-## Run
+Deploy only when experimenting with parity between container packaging and **`persister-mysql`**.
 
-```bash
-make -C services/persister-yaml run
+## Container invocation
+
+| Setting | Typical value |
+|---------|---------------|
+| `ICEHIVE_SERVICE` | `persister-yaml` |
+| `ICEHIVE_CONTROLLER_URL` | Controller URL |
+| `LOG_LEVEL` | Optional |
+
+Arguments:
+
+```
+-configdir /etc/icehive
 ```
 
-## Configuration
+`-listen :8083` default.
 
-Optional `persister-yaml.yaml` in the directory passed to `-configdir`.
+## YAML (**`persister-yaml.yaml`**)
 
-| Key      | Default | Description                          |
-|----------|---------|--------------------------------------|
-| `listen` | `:8083` | HTTP listen address (metrics/health) |
+| Key | Default |
+|-----|---------|
+| `listen` | `:8083` |
 
-Shared persister lifecycle and `persist.Store`: `services/common/pkg/persist`.
+Future YAML sink knobs (directories, rotations, compaction) belong here once implemented—watch changelog.
