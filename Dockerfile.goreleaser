@@ -1,5 +1,13 @@
 FROM alpine:3.21
 
+LABEL org.opencontainers.image.title="IceHive" \
+    org.opencontainers.image.description="Microservices that collect data from APIs, normalize it into a standard format, and store it via controller, collectors, and persisters." \
+    org.opencontainers.image.source="https://github.com/jamesread/icehive" \
+    org.opencontainers.image.documentation="https://github.com/jamesread/icehive#readme" \
+    org.opencontainers.image.url="https://github.com/jamesread/icehive" \
+    org.opencontainers.image.licenses="AGPL-3.0-only" \
+    org.opencontainers.image.vendor="IceHive contributors"
+
 RUN apk add --no-cache ca-certificates tzdata
 
 COPY controller /usr/local/bin/
