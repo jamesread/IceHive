@@ -124,8 +124,8 @@ dockers:
       - persister-mysql
       - persister-yaml
     image_templates:
-      - "ghcr.io/icehive/icehive:{{ .Tag }}"
-      - "ghcr.io/icehive/icehive:latest"
+      - "ghcr.io/jamesread/icehive:{{ .Tag }}"
+      - "ghcr.io/jamesread/icehive:latest"
     dockerfile: Dockerfile.goreleaser
     extra_files:
       - entrypoint.sh
@@ -168,14 +168,14 @@ release:
   footer: |
     ## Container image
 
-    - `docker pull ghcr.io/icehive/icehive:{{ .Version }}`
+    - `docker pull ghcr.io/jamesread/icehive:{{ .Version }}`
 
     ## Usage
 
     Set `ICEHIVE_SERVICE` to choose which service to run:
 
     ```
-    docker run -e ICEHIVE_SERVICE=controller ghcr.io/icehive/icehive:{{ .Version }}
+    docker run -e ICEHIVE_SERVICE=controller ghcr.io/jamesread/icehive:{{ .Version }}
     ```
 
     Available services: `controller`, `collector-github`, `collector-azure`, `collector-jmap`, `collector-rss`, `collector-testdata`, `persister-mysql`, `persister-yaml`
