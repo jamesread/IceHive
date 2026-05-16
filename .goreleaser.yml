@@ -13,7 +13,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: collector-github
     env:
@@ -26,7 +26,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: collector-azure
     env:
@@ -39,7 +39,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: collector-jmap
     env:
@@ -52,7 +52,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: collector-rss
     env:
@@ -65,7 +65,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: collector-testdata
     env:
@@ -78,7 +78,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: persister-mysql
     env:
@@ -91,7 +91,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
   - id: persister-yaml
     env:
@@ -104,7 +104,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
+      - -s -w -X github.com/icehive/icehive/services/common/pkg/buildinfo.Version={{.Version}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Commit={{.ShortCommit}} -X github.com/icehive/icehive/services/common/pkg/buildinfo.Date={{ .CommitDate }}
 
 archives:
   - formats: tar.gz

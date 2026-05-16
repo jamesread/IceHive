@@ -28,6 +28,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/icehive/icehive/services/common/pkg/amqpctl"
+	"github.com/icehive/icehive/services/common/pkg/buildinfo"
 	"github.com/icehive/icehive/services/common/pkg/common"
 	controlv1 "github.com/icehive/icehive/services/common/pkg/gen/icehive/control/v1"
 	icehivev1 "github.com/icehive/icehive/services/common/pkg/gen/icehive/v1"
@@ -622,7 +623,11 @@ func main() {
 
 	log := logrus.New()
 	logging.ApplyEnvLogLevel(log)
-	log.Infof("%s Controller %s starting", common.ProjectName, common.Version)
+	log.WithFields(logrus.Fields{
+		"version": buildinfo.Version,
+		"commit":  buildinfo.Commit,
+		"date":    buildinfo.Date,
+	}).Infof("%s Controller starting", common.ProjectName)
 
 	k, configPath, err := loadConfig(*configDir)
 	if err != nil {

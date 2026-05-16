@@ -16,6 +16,7 @@ import (
 
 	"github.com/icehive/icehive/services/common/pkg/amqpctl"
 	"github.com/icehive/icehive/services/common/pkg/bootstrap"
+	"github.com/icehive/icehive/services/common/pkg/buildinfo"
 	"github.com/icehive/icehive/services/common/pkg/common"
 	"github.com/icehive/icehive/services/common/pkg/config"
 	"github.com/icehive/icehive/services/common/pkg/logging"
@@ -108,7 +109,11 @@ func Main(cfg MainConfig) {
 
 	log := logrus.New()
 	logging.ApplyEnvLogLevel(log)
-	log.Infof("%s collector-%s %s starting", common.ProjectName, cfg.ID, common.Version)
+	log.WithFields(logrus.Fields{
+		"version": buildinfo.Version,
+		"commit":  buildinfo.Commit,
+		"date":    buildinfo.Date,
+	}).Infof("%s collector-%s starting", common.ProjectName, cfg.ID)
 
 	k, err := config.LoadOptionalYAML(log, *cfgDir, "collector-"+cfg.ID, cfg.ConfigYAML)
 	if err != nil {
