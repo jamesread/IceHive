@@ -9,8 +9,8 @@ plugins:
   # OliveTin's config omits this; semantic-release needs a generateNotes implementation.
   - "@semantic-release/release-notes-generator"
   - - "@semantic-release/git"
-    # No root package.json / changelog file to commit; tags still push for GoReleaser.
-    - assets: false
+    # No package.json/changelog to commit; use [] not false (@semantic-release/git expects an array).
+    - assets: []
   - - "@semantic-release/exec"
     - publishCmd: |
         goreleaser release --clean --timeout 60m
