@@ -1,0 +1,121 @@
+# Example IceHive controller Deployment (reference wiring).
+#
+# Before applying:
+#   1. Deploy MySQL (with an empty database) and RabbitMQ reachable from the cluster,
+#      or point the mysql / worker_bootstrap hostnames below at existing instances.
+#   2. Replace the image tag (if needed), CHANGEME_* passwords, and hostnames.
+#   3. Apply: kubectl apply -f kubernetes-icehive.yaml
+#
+# Collectors and persisters use the same container image; set ICEHIVE_SERVICE and
+# ICEHIVE_CONTROLLER_URL=http://icehive-controller.icehive.svc.cluster.local:8080
+# on additional Deployments (see docs/content/deployment.md).
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: icehive
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: icehive-controller-config
+  namespace: icehive
+data:
+  config.yaml: |
+    listen: "0.0.0.0:8080"
+
+    worker_bootstrap:
+      amqp:
+        url: "amqp://guest:guest@rabbitmq.icehive.svc.cluster.local:5672/"
+
+    mysql:
+      host: "mysql-controller.icehive.svc.cluster.local"
+      port: 3306
+      user: "icehive"
+      password: "CHANGEME_CONTROLLER_DB_PASSWORD"
+      database: "icehive"
+
+    persister_mysql:
+      host: "mysql-sink.icehive.svc.cluster.local"
+      port: 3306
+      user: "icehive_sink"
+      password: "CHANGEME_SINK_DB_PASSWORD"
+      database: "icehive_sink"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: icehive-controller
+  namespace: icehive
+  labels:
+    app.kubernetes.io/name: icehive-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: icehive-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: icehive-controller
+    spec:
+      containers:
+        - name: controller
+          image: ghcr.io/jamesread/icehive:latest
+          imagePullPolicy: Always
+          env:
+            - name: ICEHIVE_SERVICE
+              value: controller
+            - name: LOG_LEVEL
+              value: info
+          args:
+            - -configdir
+            - /etc/icehive
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /etc/icehive/config.yaml
+              subPath: config.yaml
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: icehive-controller-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: icehive-controller
+  namespace: icehive
+  labels:
+    app.kubernetes.io/name: icehive-controller
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: icehive-controller
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

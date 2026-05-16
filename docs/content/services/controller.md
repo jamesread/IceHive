@@ -21,18 +21,18 @@ Optional **`LOG_LEVEL`** env controls verbosity (**`trace` → `panic`**, defaul
 Startup behaviour:
 
 - Locates **`config.yaml`** (preferred) or **`controller.yaml`** under **`-configdir`**.
+- Applies SQL migrations from **`/opt/ih/migrations`** when that directory exists (official images); otherwise from **`<configdir>/migrations/`** for development and integration tests.
 - Retries **[golang-migrate](https://github.com/golang-migrate/migrate)** + MySQL **`Ping`** until the primary database succeeds (5 second backoff between attempts).
 - Opens an AMQP client using **`icehive_meta`** keys (`amqp.*`) with the same retry philosophy as collectors (10 seconds).
 - Prints the resolved YAML absolute path plus non-secret MySQL identifiers for easier log tracing.
 
-### Mount layout
+### Migrations layout
 
-Kubernetes should project both:
+Official container images bundle SQL revisions at **`/opt/ih/migrations`**. On startup the controller runs **[golang-migrate](https://github.com/golang-migrate/migrate)** against that directory when it exists.
 
-1. The controller YAML (**`config.yaml`** or **`controller.yaml`**).
-2. A sibling **`migrations/`** folder containing packaged SQL revisions.
+For **`go run`**, tests, or custom layouts without that path, place migrations under **`<configdir>/migrations/`** beside your YAML instead.
 
-If either is missing, migrations cannot run and pods stay in crash backoff.
+Kubernetes only needs ConfigMap (**or Secret**) projections for **`config.yaml`** (`controller.yaml`); you do **not** need a separate migrations ConfigMap.
 
 ### HTTP surface
 

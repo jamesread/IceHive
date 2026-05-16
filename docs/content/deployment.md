@@ -40,6 +40,10 @@ docker run --rm \
 
 ## Typical Kubernetes footprint
 
+### Example manifest
+
+A minimal multi-document manifest that runs the **controller** (ConfigMap-mounted `config.yaml`, SQL migrations baked into the container at `/opt/ih/migrations`, ClusterIP Service, `tcpSocket` probes) lives at [`examples/kubernetes-icehive.yaml`](examples/kubernetes-icehive.yaml). Edit image tag, hostnames, and passwords, deploy MySQL and RabbitMQ (or point at existing brokers / databases), then `kubectl apply -f` the file. Add collectors and persisters as separate Deployments using the **same** image and `ICEHIVE_CONTROLLER_URL=http://icehive-controller.icehive.svc.cluster.local:8080` as described in [Shared environment variables](#shared-environment-variables-and-flags).
+
 Provision these shared dependencies:
 
 1. **MySQL cluster A (“controller”)** holding IceHive operational tables (`collection_sources`, `icehive_meta`, heartbeat tracking, migrations applied by controller).
@@ -50,7 +54,7 @@ Recommended workload split:
 
 | Workload category | Scheduling notes |
 |------------------|------------------|
-| `controller` | Mount config + migrations; expose Service/Ingress suitable for HTTPS termination if externally facing |
+| `controller` | Mount **config only** (migrations ship in the image under `/opt/ih/migrations`); expose Service/Ingress suitable for HTTPS termination if externally facing |
 | collectors / persisters | Set `ICEHIVE_CONTROLLER_URL` to your controller Service Cluster DNS |
 
 ### Observability probes
@@ -117,7 +121,7 @@ GitHub ingest reads the **`GetConfig("github.token")`** value to authenticate AP
 | `ICEHIVE_SERVICE` | Container entrypoint | Selects the binary to launch |
 | `LOG_LEVEL` | All backend binaries | `trace` · `debug` · `info` · `warn` · `error` · `fatal` · `panic` (invalid → `info`) |
 | `ICEHIVE_CONTROLLER_URL` | Collectors + persisters | Connect base URL (`http`/`https`, no trailing slash). Falls back to `http://localhost:8080` when unset—almost never correct in-cluster |
-| CLI `-configdir` | All services | Directory containing YAML (and controller `migrations/`) |
+| CLI `-configdir` | All services | Directory containing YAML; controller uses **`/opt/ih/migrations`** in official images when that path exists, otherwise **`<configdir>/migrations`** for dev/tests |
 | CLI `-controller` | Collectors + persisters | Overrides `ICEHIVE_CONTROLLER_URL` when non-empty |
 | CLI `-listen` | All services | HTTP bind address; defaults per binary but **YAML `listen` wins** when present |
 

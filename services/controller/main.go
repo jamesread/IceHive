@@ -469,6 +469,17 @@ func loadConfig(dir string) (*koanf.Koanf, string, error) {
 	return nil, "", fmt.Errorf("no config.yaml or controller.yaml found under %q", dir)
 }
 
+// bundledMigrationsDir holds SQL revisions baked into official container images (see Dockerfile.goreleaser).
+const bundledMigrationsDir = "/opt/ih/migrations"
+
+// migrationsDirectory returns bundled image migrations when present, otherwise `<configDir>/migrations/` for local dev and tests.
+func migrationsDirectory(configDir string) string {
+	if st, err := os.Stat(bundledMigrationsDir); err == nil && st.IsDir() {
+		return bundledMigrationsDir
+	}
+	return filepath.Join(configDir, "migrations")
+}
+
 func openMySQLAndMigrate(ctx context.Context, log *logrus.Logger, k *koanf.Koanf, configDir string) (*sql.DB, error) {
 	ms, ok := db.SettingsFromKoanf(k)
 	if !ok {
@@ -481,7 +492,8 @@ func openMySQLAndMigrate(ctx context.Context, log *logrus.Logger, k *koanf.Koanf
 	if err != nil {
 		return nil, err
 	}
-	migrationsDir := filepath.Join(configDir, "migrations")
+	migrationsDir := migrationsDirectory(configDir)
+	log.WithField("migrations_path", migrationsDir).Info("running database migrations")
 	if err := db.RunMigrations(migrationsDir, migrateURL, migrationLogger{log: log}); err != nil {
 		return nil, fmt.Errorf("migrations: %w", err)
 	}
@@ -602,7 +614,7 @@ func serveControllerWelcome(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flagListen := flag.String("listen", "", `listen address; empty, auto, or :8080 uses golure listenaddr (config listen overrides when set)`)
-	configDir := flag.String("configdir", ".", "directory containing config.yaml and migrations/")
+	configDir := flag.String("configdir", ".", "directory containing config.yaml (migrations packaged at "+bundledMigrationsDir+" in container images)")
 	flag.Parse()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

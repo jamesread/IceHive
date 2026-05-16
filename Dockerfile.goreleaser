@@ -19,6 +19,7 @@ COPY collector-testdata /usr/local/bin/
 COPY persister-mysql /usr/local/bin/
 COPY persister-yaml /usr/local/bin/
 COPY entrypoint.sh /usr/local/bin/
+COPY services/controller/migrations /opt/ih/migrations
 
 ENV ICEHIVE_SERVICE=controller
 

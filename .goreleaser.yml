@@ -129,6 +129,7 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     extra_files:
       - entrypoint.sh
+      - services/controller/migrations
     build_flag_templates:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Tag }}"
