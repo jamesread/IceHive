@@ -1,0 +1,21 @@
+worker_processes auto;
+error_log /dev/stderr info;
+pid /tmp/nginx-icehive-frontend.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    access_log /dev/stdout;
+    sendfile on;
+    server {
+        listen @LISTEN_PORT@;
+        root /opt/ih/frontend;
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}

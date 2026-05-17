@@ -8,7 +8,10 @@ LABEL org.opencontainers.image.title="IceHive" \
     org.opencontainers.image.licenses="AGPL-3.0-only" \
     org.opencontainers.image.vendor="IceHive contributors"
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata nginx
+
+COPY nginx-frontend.conf.template /etc/nginx/icehive-frontend.conf.template
+COPY frontend/dist /opt/ih/frontend
 
 COPY controller /usr/local/bin/
 COPY collector-github /usr/local/bin/

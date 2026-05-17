@@ -129,6 +129,8 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     extra_files:
       - entrypoint.sh
+      - nginx-frontend.conf.template
+      - frontend/dist
       - services/controller/migrations
     build_flag_templates:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
@@ -179,4 +181,6 @@ release:
     docker run -e ICEHIVE_SERVICE=controller ghcr.io/jamesread/icehive:{{ .Version }}
     ```
 
-    Available services: `controller`, `collector-github`, `collector-azure`, `collector-jmap`, `collector-rss`, `collector-testdata`, `persister-mysql`, `persister-yaml`
+    Available services: `controller`, `collector-github`, `collector-azure`, `collector-jmap`, `collector-rss`, `collector-testdata`, `persister-mysql`, `persister-yaml`, `frontend`
+
+    Use `ICEHIVE_SERVICE=frontend` to serve the production UI bundle (nginx). Optional: `ICEHIVE_FRONTEND_PORT` or `PORT` selects the listen port (default **8080**).
