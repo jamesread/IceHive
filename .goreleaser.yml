@@ -134,6 +134,7 @@ dockers:
       - services/controller/migrations
     build_flag_templates:
       - "--build-arg=ICEHIVE_VERSION={{ .Version }}"
+      - "--build-arg=ICEHIVE_CONTAINER_IMAGE=ghcr.io/jamesread/icehive:{{ .Tag }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.version={{ .Tag }}"
       - "--platform=linux/amd64"

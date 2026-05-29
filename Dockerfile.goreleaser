@@ -2,6 +2,8 @@ FROM alpine:3.21
 
 ARG ICEHIVE_VERSION=dev
 ENV ICEHIVE_VERSION=${ICEHIVE_VERSION}
+ARG ICEHIVE_CONTAINER_IMAGE=ghcr.io/jamesread/icehive
+ENV ICEHIVE_CONTAINER_IMAGE=${ICEHIVE_CONTAINER_IMAGE}
 
 LABEL org.opencontainers.image.title="IceHive" \
     org.opencontainers.image.description="Microservices that collect data from APIs, normalize it into a standard format, and store it via controller, collectors, and persisters." \

@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"os"
@@ -102,7 +103,7 @@ func Main(cfg MainConfig) {
 		panic("collector.Main: empty ConfigYAML")
 	}
 
-	listen := flag.String("listen", cfg.DefaultListen, "HTTP listen address for metrics and health")
+	listen := flag.String("listen", config.DefaultWorkerListen(cfg.DefaultListen), "HTTP listen address for metrics and health")
 	cfgDir := flag.String("configdir", ".", "directory containing YAML configuration files")
 	controllerURL := flag.String("controller", "", "Controller Connect base URL for bootstrap; if empty, ICEHIVE_CONTROLLER_URL is used")
 	flag.Parse()
@@ -188,7 +189,7 @@ func Main(cfg MainConfig) {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.WithError(err).Fatal("graceful shutdown")
 	}
-	if workErr != nil {
+	if workErr != nil && !errors.Is(workErr, context.Canceled) {
 		log.WithError(workErr).Fatal("collector work")
 	}
 }
