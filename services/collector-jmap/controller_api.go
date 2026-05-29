@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"strings"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/icehive/icehive/services/common/pkg/controllerurl"
 	icehivev1 "github.com/icehive/icehive/services/common/pkg/gen/icehive/v1"
 	"github.com/icehive/icehive/services/common/pkg/gen/icehive/v1/icehivev1connect"
 )
@@ -14,7 +14,7 @@ import (
 const collectorJmapType = "collector-jmap"
 
 func controllerClient(base string) icehivev1connect.ControllerServiceClient {
-	return icehivev1connect.NewControllerServiceClient(http.DefaultClient, strings.TrimRight(strings.TrimSpace(base), "/"))
+	return icehivev1connect.NewControllerServiceClient(controllerurl.HTTPClient(), strings.TrimRight(strings.TrimSpace(base), "/"))
 }
 
 func listJmapCollectionSources(ctx context.Context, base string) ([]*icehivev1.CollectionSource, error) {

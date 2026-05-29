@@ -185,4 +185,4 @@ release:
 
     Available services: `controller`, `collector-github`, `collector-azure`, `collector-jmap`, `collector-rss`, `collector-testdata`, `persister-mysql`, `persister-yaml`, `frontend`
 
-    Use `ICEHIVE_SERVICE=frontend` to serve the production UI bundle (nginx). Optional: `ICEHIVE_FRONTEND_PORT` or `PORT` selects the listen port (default **8080**).
+    Use `ICEHIVE_SERVICE=frontend` to serve the production UI bundle (nginx). NGINX proxies `/api` to the controller using **`ICEHIVE_CONTROLLER_PORT`** (Kubernetes service link, e.g. `tcp://10.96.79.247:8080`) or **`ICEHIVE_CONTROLLER_SERVICE_HOST`**. Optional: `ICEHIVE_FRONTEND_PORT` or `PORT` selects the listen port (default **8080**).

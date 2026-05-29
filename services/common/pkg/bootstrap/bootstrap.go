@@ -4,7 +4,6 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/icehive/icehive/services/common/pkg/amqpctl"
+	"github.com/icehive/icehive/services/common/pkg/controllerurl"
 	icehivev1 "github.com/icehive/icehive/services/common/pkg/gen/icehive/v1"
 	"github.com/icehive/icehive/services/common/pkg/gen/icehive/v1/icehivev1connect"
 )
@@ -36,20 +36,38 @@ type WorkerRuntime struct {
 	MySQLDatabase           string
 }
 
-// Fetch calls Controller.WorkerBootstrap and maps the response into WorkerRuntime.
-func Fetch(ctx context.Context, p Params) (*WorkerRuntime, error) {
-	base := strings.TrimSpace(p.BaseURL)
+// Fetch calls Controller.GetConfig and maps values into WorkerRuntime.
+// On HTTP 405 it retries with an /api prefix (frontend ingress). The returned base URL is the one that worked.
+func Fetch(ctx context.Context, p Params) (*WorkerRuntime, string, error) {
+	base := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/")
 	if base == "" {
-		return nil, fmt.Errorf("bootstrap: empty controller base URL")
+		return nil, "", fmt.Errorf("bootstrap: empty controller base URL")
 	}
 	if strings.TrimSpace(p.Kind) == "" || strings.TrimSpace(p.ID) == "" {
-		return nil, fmt.Errorf("bootstrap: kind and id are required")
+		return nil, "", fmt.Errorf("bootstrap: kind and id are required")
 	}
 	hc := p.HTTPClient
 	if hc == nil {
-		hc = http.DefaultClient
+		hc = controllerurl.HTTPClient()
 	}
 
+	wr, err := fetchAt(ctx, hc, base, p.Kind)
+	if err != nil && controllerurl.IsMethodNotAllowed(err) && !controllerurl.HasAPIPrefix(base) {
+		apiBase := controllerurl.WithAPIPrefix(base)
+		wr2, err2 := fetchAt(ctx, hc, apiBase, p.Kind)
+		if err2 == nil {
+			return wr2, apiBase, nil
+		}
+		err = fmt.Errorf("%w (retry via %s: %v; use ICEHIVE_CONTROLLER_URL=%s when behind a frontend ingress)",
+			err, apiBase, err2, apiBase)
+	}
+	if err != nil {
+		return nil, base, err
+	}
+	return wr, base, nil
+}
+
+func fetchAt(ctx context.Context, hc connect.HTTPClient, base string, kind string) (*WorkerRuntime, error) {
 	cli := icehivev1connect.NewControllerServiceClient(hc, base)
 	getConfig := func(key string) (string, error) {
 		resp, err := cli.GetConfig(ctx, connect.NewRequest(&icehivev1.GetConfigRequest{Key: key}))
@@ -109,7 +127,7 @@ func Fetch(ctx context.Context, p Params) (*WorkerRuntime, error) {
 		RoutingKeyControlEvents: amqpRK,
 	}
 	// Persister sink DB settings are loaded via config-key reads from controller.
-	if strings.EqualFold(strings.TrimSpace(p.Kind), "persister") {
+	if strings.EqualFold(strings.TrimSpace(kind), "persister") {
 		wr.MySQLHost, _ = getConfig("persister_mysql.host")
 		port, _ := getConfig("persister_mysql.port")
 		if port != "" {

@@ -19,6 +19,34 @@ parse_listen_port() {
     printf '%s' "$val"
 }
 
+# ICEHIVE_CONTROLLER_PORT is injected when the Pod links to the controller Service
+# (e.g. tcp://10.96.79.247:8080). Falls back to *_SERVICE_HOST / *_SERVICE_PORT, then localhost.
+resolve_controller_upstream() {
+    if [ -n "${ICEHIVE_CONTROLLER_PORT:-}" ]; then
+        val="$ICEHIVE_CONTROLLER_PORT"
+        case "$val" in
+        tcp://*)
+            CONTROLLER_UPSTREAM="http://${val#tcp://}"
+            CONTROLLER_UPSTREAM_FROM="ICEHIVE_CONTROLLER_PORT"
+            return
+            ;;
+        http://*|https://*)
+            CONTROLLER_UPSTREAM="$val"
+            CONTROLLER_UPSTREAM_FROM="ICEHIVE_CONTROLLER_PORT"
+            return
+            ;;
+        esac
+    fi
+    if [ -n "${ICEHIVE_CONTROLLER_SERVICE_HOST:-}" ]; then
+        port=$(parse_listen_port "${ICEHIVE_CONTROLLER_SERVICE_PORT:-8080}")
+        CONTROLLER_UPSTREAM="http://${ICEHIVE_CONTROLLER_SERVICE_HOST}:${port}"
+        CONTROLLER_UPSTREAM_FROM="ICEHIVE_CONTROLLER_SERVICE_HOST/ICEHIVE_CONTROLLER_SERVICE_PORT"
+        return
+    fi
+    CONTROLLER_UPSTREAM="http://127.0.0.1:8080"
+    CONTROLLER_UPSTREAM_FROM="default (http://127.0.0.1:8080)"
+}
+
 case "$ICEHIVE_SERVICE" in
 frontend)
     if [ -n "${ICEHIVE_FRONTEND_PORT:-}" ]; then
@@ -28,7 +56,11 @@ frontend)
     else
         FE_PORT=8080
     fi
-    sed "s/@LISTEN_PORT@/${FE_PORT}/g" /etc/nginx/icehive-frontend.conf.template >/tmp/icehive-frontend-nginx.conf
+    resolve_controller_upstream
+    printf '%s\n' "controller upstream ${CONTROLLER_UPSTREAM} (from ${CONTROLLER_UPSTREAM_FROM})"
+    sed -e "s/@LISTEN_PORT@/${FE_PORT}/g" \
+        -e "s|@CONTROLLER_UPSTREAM@|${CONTROLLER_UPSTREAM}|g" \
+        /etc/nginx/icehive-frontend.conf.template >/tmp/icehive-frontend-nginx.conf
     exec nginx -c /tmp/icehive-frontend-nginx.conf -g 'daemon off;'
     ;;
 *)

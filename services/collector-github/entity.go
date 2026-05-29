@@ -109,24 +109,7 @@ func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pu
 	uniqueID := norm.NFC.String(repo.GetNodeID())
 	now := time.Now().UnixMilli()
 
-	structure := map[string]fieldDescriptor{
-		"name":            {Type: "string", Length: 255},
-		"full_name":       {Type: "string", Length: 255},
-		"stars":           {Type: "int64"},
-		"forks":           {Type: "int64"},
-		"is_private":      {Type: "bool"},
-		"default_branch":  {Type: "string", Length: 255},
-		"url":             {Type: "string", Length: 2048},
-		"description":     {Type: "string", Length: 4096},
-		"open_issues":     {Type: "int64"},
-		"issue_count":     {Type: "int64"},
-		"has_issues":      {Type: "bool"},
-		"has_wiki":        {Type: "bool"},
-		"archived":        {Type: "bool"},
-		"disabled":        {Type: "bool"},
-		"language":        {Type: "string", Length: 64},
-		"license_spdx_id": {Type: "string", Length: 64},
-	}
+	structure := gitRepoScalarStructure()
 	values := repoToScalarValues(repo)
 
 	if dep != nil {
@@ -201,30 +184,22 @@ func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pu
 	}
 }
 
-func repoToScalarValues(repo *github.Repository) map[string]any {
-	out := map[string]any{
-		"name":           repo.GetName(),
-		"full_name":      repo.GetFullName(),
-		"stars":          int64(repo.GetStargazersCount()),
-		"forks":          int64(repo.GetForksCount()),
-		"is_private":     repo.GetPrivate(),
-		"default_branch": repo.GetDefaultBranch(),
-		"url":            repo.GetHTMLURL(),
-		"description":    repo.GetDescription(),
-		"open_issues":    int64(repo.GetOpenIssuesCount()),
-		"issue_count":    int64(repo.GetOpenIssuesCount()),
-		"has_issues":     repo.GetHasIssues(),
-		"has_wiki":       repo.GetHasWiki(),
-		"archived":       repo.GetArchived(),
-		"disabled":       repo.GetDisabled(),
-		"language":       repo.GetLanguage(),
+// repoTagsJSON returns a JSON array string of GitHub repository topics (UI "tags").
+func repoTagsJSON(topics []string) string {
+	if len(topics) == 0 {
+		return "[]"
 	}
-	if lic := repo.GetLicense(); lic != nil && lic.GetSPDXID() != "" {
-		out["license_spdx_id"] = lic.GetSPDXID()
-	} else {
-		out["license_spdx_id"] = ""
+	out := make([]string, 0, len(topics))
+	for _, t := range topics {
+		t = norm.NFC.String(strings.TrimSpace(t))
+		if t != "" {
+			out = append(out, t)
+		}
 	}
-	return out
+	if len(out) == 0 {
+		return "[]"
+	}
+	return jsonScalar(out)
 }
 
 // buildDependabotIssueEntity maps one GitHub Dependabot alert to a DependabotIssue entity.

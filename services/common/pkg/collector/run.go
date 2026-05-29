@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"net/http"
-	"os"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -20,6 +19,7 @@ import (
 	"github.com/icehive/icehive/services/common/pkg/buildinfo"
 	"github.com/icehive/icehive/services/common/pkg/common"
 	"github.com/icehive/icehive/services/common/pkg/config"
+	"github.com/icehive/icehive/services/common/pkg/controllerurl"
 	"github.com/icehive/icehive/services/common/pkg/logging"
 	"github.com/icehive/icehive/services/common/pkg/httpshim"
 )
@@ -46,23 +46,28 @@ func fetchBootstrapWithRetry(
 	ctrlBase string,
 	kind string,
 	workerID string,
-) (*bootstrap.WorkerRuntime, error) {
+) (*bootstrap.WorkerRuntime, string, error) {
 	for {
 		bootCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		boot, err := bootstrap.Fetch(bootCtx, bootstrap.Params{
-			BaseURL:    ctrlBase,
-			HTTPClient: http.DefaultClient,
-			Kind:       kind,
-			ID:         workerID,
+		boot, effective, err := bootstrap.Fetch(bootCtx, bootstrap.Params{
+			BaseURL: ctrlBase,
+			Kind:    kind,
+			ID:      workerID,
 		})
 		cancel()
 		if err == nil {
-			return boot, nil
+			if effective != strings.TrimRight(strings.TrimSpace(ctrlBase), "/") {
+				log.WithFields(logrus.Fields{
+					"controller":      effective,
+					"controller_from": "frontend ingress /api prefix",
+				}).Info("controller URL")
+			}
+			return boot, effective, nil
 		}
 		log.WithError(err).Warn("controller bootstrap failed; AMQP status=disconnected; retrying in 10s")
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, "", ctx.Err()
 		case <-time.After(10 * time.Second):
 		}
 	}
@@ -121,12 +126,14 @@ func Main(cfg MainConfig) {
 		log.WithError(err).Fatal("configuration")
 	}
 
-	ctrlBase := strings.TrimSpace(*controllerURL)
-	if ctrlBase == "" {
-		ctrlBase = strings.TrimSpace(os.Getenv("ICEHIVE_CONTROLLER_URL"))
-	}
-	if ctrlBase == "" {
-		ctrlBase = "http://localhost:8080"
+	ctrl := controllerurl.Resolve(*controllerURL)
+	ctrlBase := ctrl.URL
+	log.WithFields(logrus.Fields{
+		"controller":      ctrlBase,
+		"controller_from": ctrl.Source,
+	}).Info("controller URL")
+	if controllerurl.SkipVerify() {
+		log.Warn("ICEHIVE_CONTROLLER_SKIPVERIFY is set; TLS certificate verification disabled for controller")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -140,7 +147,7 @@ func Main(cfg MainConfig) {
 	if wid == "" {
 		wid = cfg.ID
 	}
-	b, err := fetchBootstrapWithRetry(ctx, log, ctrlBase, kind, wid)
+	b, ctrlBase, err := fetchBootstrapWithRetry(ctx, log, ctrlBase, kind, wid)
 	if err != nil {
 		log.WithError(err).Fatal("controller bootstrap")
 	}

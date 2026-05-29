@@ -1,13 +1,16 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { controllerProxyTargetFromEnv } from './vite.controllerProxy'
+
+const controllerProxyTarget = controllerProxyTargetFromEnv(process.env.ICEHIVE_CONTROLLER_PORT)
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      '/icehive.v1.ControllerService': {
-        target: 'http://127.0.0.1:8080',
+      '/api': {
+        target: controllerProxyTarget,
         changeOrigin: true,
       },
     },

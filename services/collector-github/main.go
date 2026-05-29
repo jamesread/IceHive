@@ -179,6 +179,14 @@ func runOneSource(
 	}
 
 	for _, repo := range repos {
+		if enriched, err := enrichRepo(ctx, ghClient, repo); err != nil {
+			log.WithError(err).WithFields(logrus.Fields{
+				"source_id": src.GetId(),
+				"repo":      repo.GetFullName(),
+			}).Warn("GitHub repo metadata enrich failed (using list payload)")
+		} else if enriched != nil {
+			repo = enriched
+		}
 		var depSnap *dependabotSnapshot
 		if srcOpts.Dependabot {
 			if repo.GetArchived() {

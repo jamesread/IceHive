@@ -596,7 +596,7 @@ const controllerWelcomeHTML = `<!DOCTYPE html>
 </head>
 <body>
 <h1>` + common.ProjectName + ` Controller</h1>
-<p>This server exposes the Connect RPC API at <code>/icehive.v1.ControllerService/</code> and Prometheus metrics at <code>/metrics</code>.</p>
+<p>This server exposes the Connect RPC API at <code>/api/icehive.v1.ControllerService/</code> (and at <code>/icehive.v1.ControllerService/</code> for direct clients) and Prometheus metrics at <code>/metrics</code>.</p>
 </body>
 </html>
 `
@@ -669,6 +669,9 @@ func main() {
 	ctrlSrv := &controllerSrv{db: sqlDB, k: k}
 	path, h := icehivev1connect.NewControllerServiceHandler(ctrlSrv)
 	mux.Handle(path, h)
+	apiInner := http.NewServeMux()
+	apiInner.Handle(path, h)
+	mux.Handle("/api/", http.StripPrefix("/api", apiInner))
 
 	httpSrv := &http.Server{
 		Addr:              listenAddr,

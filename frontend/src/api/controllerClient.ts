@@ -46,6 +46,7 @@ export function persistStoredControllerBaseUrl(url: string | null): void {
 export function normalizeControllerBaseUrl(raw: string): string {
   const t = raw.trim().replace(/\/+$/, '')
   if (!t) throw new Error('Controller URL is empty')
+  if (t.startsWith('/')) return t
   if (/^https?:\/\//i.test(t)) return t
   return `http://${t}`.replace(/\/+$/, '')
 }
@@ -55,9 +56,12 @@ function uniquePush(list: string[], v: string): void {
   list.push(v)
 }
 
+/** Same-origin Connect base URL (Vite dev proxy and production ingress both forward /api). */
+export const SAME_ORIGIN_CONTROLLER_BASE_URL = '/api'
+
 /**
- * Endpoints to try before prompting (order: saved override, build env, dev proxy,
- * host:8080, then same-origin in production).
+ * Endpoints to try before prompting (order: saved override, build env, same-origin /api,
+ * then host:8080).
  */
 export function controllerBaseUrlCandidates(): string[] {
   const out: string[] = []
@@ -74,23 +78,21 @@ export function controllerBaseUrlCandidates(): string[] {
     }
   }
 
-  if (import.meta.env.DEV) uniquePush(out, '')
+  uniquePush(out, SAME_ORIGIN_CONTROLLER_BASE_URL)
 
   if (typeof window !== 'undefined') {
     uniquePush(out, `${window.location.protocol}//${window.location.hostname}:8080`)
   }
 
-  if (!import.meta.env.DEV) uniquePush(out, '')
-
   return out
 }
 
 function displayCandidate(raw: string): string {
-  return raw === '' ? '(same-origin / Vite dev proxy)' : raw
+  return raw === SAME_ORIGIN_CONTROLLER_BASE_URL ? '(same-origin /api)' : raw
 }
 
 function resolveProbeBaseUrl(raw: string): string {
-  return raw === '' ? '' : normalizeControllerBaseUrl(raw)
+  return normalizeControllerBaseUrl(raw)
 }
 
 async function probeController(rawBaseUrl: string): Promise<void> {
@@ -101,7 +103,7 @@ async function probeController(rawBaseUrl: string): Promise<void> {
 }
 
 export function assignControllerClient(rawBaseUrl: string): void {
-  activeBaseUrl = rawBaseUrl === '' ? '' : normalizeControllerBaseUrl(rawBaseUrl)
+  activeBaseUrl = normalizeControllerBaseUrl(rawBaseUrl)
   activeClient = createClient(ControllerService, buildTransport(activeBaseUrl))
 }
 
@@ -121,7 +123,7 @@ export async function connectToFirstAvailableController(): Promise<ControllerCon
     attempted.push(displayCandidate(raw))
     try {
       await probeController(raw)
-      const normalized = raw === '' ? '' : normalizeControllerBaseUrl(raw)
+      const normalized = normalizeControllerBaseUrl(raw)
       assignControllerClient(normalized)
       return { ok: true, baseUrl: normalized }
     } catch (e) {
