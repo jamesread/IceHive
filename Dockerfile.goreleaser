@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.title="IceHive" \
     org.opencontainers.image.licenses="AGPL-3.0-only" \
     org.opencontainers.image.vendor="IceHive contributors"
 
-RUN apk add --no-cache ca-certificates tzdata nginx
+RUN apk add --no-cache ca-certificates tzdata nginx git
 
 COPY nginx-frontend.conf.template /etc/nginx/icehive-frontend.conf.template
 COPY frontend/dist /opt/ih/frontend
