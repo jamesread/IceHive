@@ -37,6 +37,30 @@ func gitCommitMessage() string {
 	return "persister-yaml: " + msg
 }
 
+type gitSyncResult struct {
+	committedFiles int
+	pushed         bool
+}
+
+func (s *yamlStore) runGitSync(ctx context.Context, log *logrus.Logger, message, phase string) {
+	fields := logrus.Fields{
+		"phase":      phase,
+		"data_dir":   s.root,
+		"git_commit": gitCommitEnabled(),
+		"git_push":   gitPushEnabled(),
+	}
+	log.WithFields(fields).Info("git sync starting")
+
+	res, err := s.syncGitYAML(ctx, log, message)
+	fields["committed_files"] = res.committedFiles
+	fields["pushed"] = res.pushed
+	if err != nil {
+		log.WithError(err).WithFields(fields).Warn("git sync failed")
+		return
+	}
+	log.WithFields(fields).Info("git sync completed")
+}
+
 func (s *yamlStore) runPeriodicGitCommit(ctx context.Context, log *logrus.Logger, message string) {
 	ticker := time.NewTicker(gitCommitInterval)
 	defer ticker.Stop()
@@ -45,41 +69,31 @@ func (s *yamlStore) runPeriodicGitCommit(ctx context.Context, log *logrus.Logger
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			n, err := s.syncGitYAML(ctx, log, message)
-			if err != nil {
-				log.WithError(err).Warn("periodic git sync failed")
-				continue
-			}
-			if n > 0 {
-				log.WithFields(logrus.Fields{
-					"files":    n,
-					"data_dir": s.root,
-				}).Info("committed untracked YAML entity files")
-			}
+			s.runGitSync(ctx, log, message, "periodic")
 		}
 	}
 }
 
 // syncGitYAML pauses entity writes, optionally commits untracked YAML, then optionally pushes.
-func (s *yamlStore) syncGitYAML(ctx context.Context, log *logrus.Logger, message string) (int, error) {
+func (s *yamlStore) syncGitYAML(ctx context.Context, log *logrus.Logger, message string) (gitSyncResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	log.Debug("pausing entity writes for git sync")
-	var committed int
+	var res gitSyncResult
 	if gitCommitEnabled() {
 		n, err := commitUntrackedYAMLLocked(ctx, s.root, message)
 		if err != nil {
-			return 0, err
+			return res, err
 		}
-		committed = n
+		res.committedFiles = n
 	}
 	if gitPushEnabled() {
 		if err := gitPushLocked(ctx, s.root); err != nil {
-			return committed, err
+			return res, err
 		}
-		log.WithField("data_dir", s.root).Info("git push completed")
+		res.pushed = true
 	}
-	return committed, nil
+	return res, nil
 }
 
 func gitPushArgs() []string {

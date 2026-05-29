@@ -51,7 +51,9 @@ func yamlWork(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *boo
 	}).Info("YAML persister consuming entity stream")
 
 	if gitPeriodicEnabled() {
-		go store.runPeriodicGitCommit(ctx, log, gitCommitMessage())
+		msg := gitCommitMessage()
+		store.runGitSync(ctx, log, msg, "startup")
+		go store.runPeriodicGitCommit(ctx, log, msg)
 		log.WithFields(logrus.Fields{
 			"interval":    gitCommitInterval.String(),
 			"data_dir":    store.root,

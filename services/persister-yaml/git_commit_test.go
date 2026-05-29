@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func initGitRepo(t *testing.T, dir string) {
@@ -88,6 +91,55 @@ func TestListUntrackedYAMLFiltersExtension(t *testing.T) {
 	for _, f := range files {
 		if !strings.HasSuffix(f, ".yaml") && !strings.HasSuffix(f, ".yml") {
 			t.Fatalf("unexpected file %q", f)
+		}
+	}
+}
+
+func TestSyncGitYAMLCommitsUntrackedOnStartup(t *testing.T) {
+	dir := t.TempDir()
+	initGitRepo(t, dir)
+	writeFile(t, dir, "Animal/a.yaml", "x: 1\n")
+
+	t.Setenv("GIT_COMMIT", "startup snapshot")
+	t.Setenv("GIT_PUSH", "")
+
+	store := &yamlStore{root: dir}
+	res, err := store.syncGitYAML(t.Context(), logrus.New(), gitCommitMessage())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.committedFiles != 1 {
+		t.Fatalf("committed %d files, want 1", res.committedFiles)
+	}
+	out, err := exec.Command("git", "-C", dir, "log", "-1", "--oneline").CombinedOutput()
+	if err != nil {
+		t.Fatalf("git log: %v (%s)", err, out)
+	}
+	if !strings.Contains(string(out), "startup snapshot") {
+		t.Fatalf("unexpected log: %s", out)
+	}
+}
+
+func TestRunGitSyncLogsStatus(t *testing.T) {
+	dir := t.TempDir()
+	initGitRepo(t, dir)
+	writeFile(t, dir, "Animal/a.yaml", "x: 1\n")
+
+	t.Setenv("GIT_COMMIT", "log test")
+	t.Setenv("GIT_PUSH", "")
+
+	log := logrus.New()
+	log.SetLevel(logrus.InfoLevel)
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
+	store := &yamlStore{root: dir}
+	store.runGitSync(t.Context(), log, gitCommitMessage(), "startup")
+
+	out := buf.String()
+	for _, want := range []string{"git sync starting", "git sync completed", "committed_files=1"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("log missing %q:\n%s", want, out)
 		}
 	}
 }
