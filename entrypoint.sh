@@ -47,6 +47,14 @@ resolve_controller_upstream() {
     CONTROLLER_UPSTREAM_FROM="default (http://127.0.0.1:8080)"
 }
 
+# persister-yaml commits YAML snapshots; git requires a configured identity in containers.
+configure_git_identity() {
+    git_email="${GIT_USER_EMAIL:-persister-yaml@icehive.local}"
+    git_name="${GIT_USER_NAME:-IceHive persister-yaml}"
+    git config --global user.email "$git_email"
+    git config --global user.name "$git_name"
+}
+
 case "$ICEHIVE_SERVICE" in
 frontend)
     if [ -n "${ICEHIVE_FRONTEND_PORT:-}" ]; then
@@ -62,6 +70,10 @@ frontend)
         -e "s|@CONTROLLER_UPSTREAM@|${CONTROLLER_UPSTREAM}|g" \
         /etc/nginx/icehive-frontend.conf.template >/tmp/icehive-frontend-nginx.conf
     exec nginx -c /tmp/icehive-frontend-nginx.conf -g 'daemon off;'
+    ;;
+persister-yaml)
+    configure_git_identity
+    exec "/usr/local/bin/persister-yaml" "$@"
     ;;
 *)
     exec "/usr/local/bin/${ICEHIVE_SERVICE}" "$@"
