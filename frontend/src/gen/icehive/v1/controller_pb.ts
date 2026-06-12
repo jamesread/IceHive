@@ -867,3 +867,4 @@ export const ControllerService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_icehive_v1_controller, 0);
+
