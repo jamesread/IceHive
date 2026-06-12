@@ -94,6 +94,15 @@ func heartbeatStatus(latestMs int64) string {
 	return "stale"
 }
 
+func (s *controllerSrv) Init(
+	_ context.Context,
+	_ *connect.Request[icehivev1.InitRequest],
+) (*connect.Response[icehivev1.InitResponse], error) {
+	return connect.NewResponse(&icehivev1.InitResponse{
+		Version: buildinfo.Version,
+	}), nil
+}
+
 func (s *controllerSrv) Health(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.HealthRequest],

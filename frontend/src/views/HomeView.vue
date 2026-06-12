@@ -1,21 +1,30 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
-import Header from 'picocrank/vue/components/Header.vue'
+import AppHeader from '../components/AppHeader.vue'
+import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Navigation from 'picocrank/vue/components/Navigation.vue'
 import NavigationGrid from 'picocrank/vue/components/NavigationGrid.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import Tabs from 'picocrank/vue/components/Tabs.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { ListServicesRequestSchema, type ServiceStatus } from '../gen/icehive/v1/controller_pb'
 
 /** Landing view — links to Controller-backed tools. */
+const router = useRouter()
 const navigation = ref<any>(null)
 const services = ref<ServiceStatus[]>([])
 const loadErr = ref<string | null>(null)
 const archHost = ref<HTMLElement | null>(null)
 const archErr = ref<string | null>(null)
+
+const statusTabs = [
+  { id: 'heartbeats', label: 'Service heartbeats' },
+  { id: 'architecture', label: 'Architecture' },
+] as const
 
 type HeartbeatUiStatus = 'healthy' | 'stale' | 'unknown'
 
@@ -138,6 +147,12 @@ async function loadServices() {
   }
 }
 
+function onStatusTabChange(_tab: (typeof statusTabs)[number], tabId: string | number) {
+  if (tabId === 'architecture') {
+    void renderArchitectureDiagram()
+  }
+}
+
 async function renderArchitectureDiagram() {
   archErr.value = null
   await nextTick()
@@ -169,23 +184,27 @@ onMounted(() => {
   navigation.value?.addRouterLink('sources', 'Collection sources', {
     description: 'Define collector targets and poll intervals (opaque specs per collector)',
   })
+  navigation.value?.addCallback(
+    'One-off collection',
+    () => {
+      void router.push({ name: 'sources', query: { oneOff: '1' } })
+    },
+    {
+      name: 'one-off-collection',
+      description: 'Enqueue a collection run immediately without persisting a source',
+    },
+  )
   void loadServices()
 })
 </script>
 
 <template>
   <div class="shell">
-    <Header
-      title="IceHive"
-      username="Guest"
-      :sidebar-enabled="false"
-      :show-branding="true"
-      logo-url="/favicon.svg"
-    >
+    <AppHeader>
       <template #toolbar>
         <QuickSearch placeholder="Quick search..." />
       </template>
-    </Header>
+    </AppHeader>
     <main class="welcome">
       <Section title="Home">
         <p>This UI talks to the Controller over Connect RPC.</p>
@@ -193,61 +212,75 @@ onMounted(() => {
           <NavigationGrid />
         </Navigation>
       </Section>
-      <Section title="Architecture">
-        <p class="arch-intro">
-          Collectors normalize vendor data and publish to RabbitMQ; persisters write to sinks. Workers bootstrap AMQP and
-          sink settings from the Controller; the UI uses the Controller API only.
-        </p>
-        <ul class="arch-legend" aria-label="Diagram color legend">
-          <li><span class="swatch swatch-client" /> Clients</li>
-          <li><span class="swatch swatch-control" /> Controller plane</li>
-          <li><span class="swatch swatch-bus" /> Messaging</li>
-          <li><span class="swatch swatch-coll" /> Collectors</li>
-          <li><span class="swatch swatch-pers" /> Persisters</li>
-          <li><span class="swatch swatch-sink" /> Sinks</li>
-          <li><span class="swatch swatch-ext" /> External</li>
-        </ul>
-        <p v-if="archErr" class="err">{{ archErr }}</p>
-        <div ref="archHost" class="mermaid-arch" aria-label="IceHive service architecture diagram" />
-      </Section>
-      <Section title="Service heartbeats">
-        <p v-if="loadErr" class="err">{{ loadErr }}</p>
-        <template v-else>
-          <ul class="hb-legend" aria-label="Heartbeat status legend">
-            <li><span class="pill pill-healthy">healthy</span> heartbeat within 30s</li>
-            <li><span class="pill pill-stale">stale</span> older than 30s</li>
-            <li><span class="pill pill-unknown">unknown</span> no heartbeat yet</li>
-          </ul>
-          <table class="svc-table">
-            <thead>
-              <tr>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Latest heartbeat</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="svc in services" :key="svc.serviceName" :class="heartbeatRowClass(svc.status)">
-                <td class="svc-name">{{ svc.serviceName }}</td>
-                <td>
-                  <span class="pill" :class="`pill-${normalizeHeartbeatStatus(svc.status)}`">{{ svc.status }}</span>
-                </td>
-                <td class="mono">{{ heartbeatRelativeTime(svc.latestHeartbeatUnixMs) }}</td>
-              </tr>
-              <tr v-if="services.length === 0">
-                <td colspan="3">No service heartbeats yet.</td>
-              </tr>
-            </tbody>
-          </table>
-        </template>
+      <Section title="Services">
+        <Tabs :tabs="[...statusTabs]" default-tab="heartbeats" @tab-change="onStatusTabChange">
+          <template #tab-heartbeats>
+            <p v-if="loadErr" class="err">{{ loadErr }}</p>
+            <template v-else>
+              <ul class="hb-legend" aria-label="Heartbeat status legend">
+                <li><span class="pill pill-healthy">healthy</span> heartbeat within 30s</li>
+                <li><span class="pill pill-stale">stale</span> older than 30s</li>
+                <li><span class="pill pill-unknown">unknown</span> no heartbeat yet</li>
+              </ul>
+              <table class="svc-table">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Latest heartbeat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="svc in services" :key="svc.serviceName" :class="heartbeatRowClass(svc.status)">
+                    <td class="svc-name">{{ svc.serviceName }}</td>
+                    <td>
+                      <span class="pill" :class="`pill-${normalizeHeartbeatStatus(svc.status)}`">{{ svc.status }}</span>
+                    </td>
+                    <td class="mono">{{ heartbeatRelativeTime(svc.latestHeartbeatUnixMs) }}</td>
+                  </tr>
+                  <tr v-if="services.length === 0">
+                    <td colspan="3">No service heartbeats yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+          </template>
+          <template #tab-architecture>
+            <p class="arch-intro">
+              Collectors normalize vendor data and publish to RabbitMQ; persisters write to sinks. Workers bootstrap AMQP
+              and sink settings from the Controller; the UI uses the Controller API only.
+            </p>
+            <ul class="arch-legend" aria-label="Diagram color legend">
+              <li><span class="swatch swatch-client" /> Clients</li>
+              <li><span class="swatch swatch-control" /> Controller plane</li>
+              <li><span class="swatch swatch-bus" /> Messaging</li>
+              <li><span class="swatch swatch-coll" /> Collectors</li>
+              <li><span class="swatch swatch-pers" /> Persisters</li>
+              <li><span class="swatch swatch-sink" /> Sinks</li>
+              <li><span class="swatch swatch-ext" /> External</li>
+            </ul>
+            <p v-if="archErr" class="err">{{ archErr }}</p>
+            <div ref="archHost" class="mermaid-arch" aria-label="IceHive service architecture diagram" />
+          </template>
+        </Tabs>
       </Section>
     </main>
+    <AppFooter />
   </div>
 </template>
 
 <style scoped>
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 .welcome {
+  flex: 1;
   padding: 1rem 1.5rem 2rem;
+}
+.welcome :deep(.tab-panel) {
+  padding: 0.75rem 0 0;
 }
 .svc-table {
   width: 100%;

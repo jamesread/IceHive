@@ -21,6 +21,87 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type InitRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InitRequest) Reset() {
+	*x = InitRequest{}
+	mi := &file_icehive_v1_controller_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitRequest) ProtoMessage() {}
+
+func (x *InitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_icehive_v1_controller_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitRequest.ProtoReflect.Descriptor instead.
+func (*InitRequest) Descriptor() ([]byte, []int) {
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{0}
+}
+
+type InitResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Application version (semver or dev snapshot) from the controller binary.
+	Version       string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InitResponse) Reset() {
+	*x = InitResponse{}
+	mi := &file_icehive_v1_controller_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitResponse) ProtoMessage() {}
+
+func (x *InitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_icehive_v1_controller_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitResponse.ProtoReflect.Descriptor instead.
+func (*InitResponse) Descriptor() ([]byte, []int) {
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *InitResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
 type HealthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -29,7 +110,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[0]
+	mi := &file_icehive_v1_controller_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +122,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[0]
+	mi := &file_icehive_v1_controller_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,7 +135,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{0}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{2}
 }
 
 type HealthResponse struct {
@@ -67,7 +148,7 @@ type HealthResponse struct {
 
 func (x *HealthResponse) Reset() {
 	*x = HealthResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[1]
+	mi := &file_icehive_v1_controller_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -79,7 +160,7 @@ func (x *HealthResponse) String() string {
 func (*HealthResponse) ProtoMessage() {}
 
 func (x *HealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[1]
+	mi := &file_icehive_v1_controller_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -92,7 +173,7 @@ func (x *HealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResponse.ProtoReflect.Descriptor instead.
 func (*HealthResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{1}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *HealthResponse) GetStatus() string {
@@ -113,7 +194,7 @@ type WorkerBootstrapRequest struct {
 
 func (x *WorkerBootstrapRequest) Reset() {
 	*x = WorkerBootstrapRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[2]
+	mi := &file_icehive_v1_controller_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -125,7 +206,7 @@ func (x *WorkerBootstrapRequest) String() string {
 func (*WorkerBootstrapRequest) ProtoMessage() {}
 
 func (x *WorkerBootstrapRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[2]
+	mi := &file_icehive_v1_controller_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -138,7 +219,7 @@ func (x *WorkerBootstrapRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerBootstrapRequest.ProtoReflect.Descriptor instead.
 func (*WorkerBootstrapRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{2}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *WorkerBootstrapRequest) GetWorkerKind() string {
@@ -167,7 +248,7 @@ type AMQPSettings struct {
 
 func (x *AMQPSettings) Reset() {
 	*x = AMQPSettings{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[3]
+	mi := &file_icehive_v1_controller_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +260,7 @@ func (x *AMQPSettings) String() string {
 func (*AMQPSettings) ProtoMessage() {}
 
 func (x *AMQPSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[3]
+	mi := &file_icehive_v1_controller_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -192,7 +273,7 @@ func (x *AMQPSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AMQPSettings.ProtoReflect.Descriptor instead.
 func (*AMQPSettings) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{3}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *AMQPSettings) GetUrl() string {
@@ -230,7 +311,7 @@ type MySQLSettings struct {
 
 func (x *MySQLSettings) Reset() {
 	*x = MySQLSettings{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[4]
+	mi := &file_icehive_v1_controller_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -242,7 +323,7 @@ func (x *MySQLSettings) String() string {
 func (*MySQLSettings) ProtoMessage() {}
 
 func (x *MySQLSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[4]
+	mi := &file_icehive_v1_controller_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -255,7 +336,7 @@ func (x *MySQLSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MySQLSettings.ProtoReflect.Descriptor instead.
 func (*MySQLSettings) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{4}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MySQLSettings) GetHost() string {
@@ -305,7 +386,7 @@ type WorkerBootstrapResponse struct {
 
 func (x *WorkerBootstrapResponse) Reset() {
 	*x = WorkerBootstrapResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[5]
+	mi := &file_icehive_v1_controller_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +398,7 @@ func (x *WorkerBootstrapResponse) String() string {
 func (*WorkerBootstrapResponse) ProtoMessage() {}
 
 func (x *WorkerBootstrapResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[5]
+	mi := &file_icehive_v1_controller_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +411,7 @@ func (x *WorkerBootstrapResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerBootstrapResponse.ProtoReflect.Descriptor instead.
 func (*WorkerBootstrapResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{5}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *WorkerBootstrapResponse) GetAmqp() *AMQPSettings {
@@ -355,7 +436,7 @@ type ListConfigRequest struct {
 
 func (x *ListConfigRequest) Reset() {
 	*x = ListConfigRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[6]
+	mi := &file_icehive_v1_controller_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +448,7 @@ func (x *ListConfigRequest) String() string {
 func (*ListConfigRequest) ProtoMessage() {}
 
 func (x *ListConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[6]
+	mi := &file_icehive_v1_controller_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +461,7 @@ func (x *ListConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConfigRequest.ProtoReflect.Descriptor instead.
 func (*ListConfigRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{6}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{8}
 }
 
 type ConfigVar struct {
@@ -395,7 +476,7 @@ type ConfigVar struct {
 
 func (x *ConfigVar) Reset() {
 	*x = ConfigVar{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[7]
+	mi := &file_icehive_v1_controller_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +488,7 @@ func (x *ConfigVar) String() string {
 func (*ConfigVar) ProtoMessage() {}
 
 func (x *ConfigVar) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[7]
+	mi := &file_icehive_v1_controller_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +501,7 @@ func (x *ConfigVar) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigVar.ProtoReflect.Descriptor instead.
 func (*ConfigVar) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{7}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ConfigVar) GetKey() string {
@@ -453,7 +534,7 @@ type ListConfigResponse struct {
 
 func (x *ListConfigResponse) Reset() {
 	*x = ListConfigResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[8]
+	mi := &file_icehive_v1_controller_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -465,7 +546,7 @@ func (x *ListConfigResponse) String() string {
 func (*ListConfigResponse) ProtoMessage() {}
 
 func (x *ListConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[8]
+	mi := &file_icehive_v1_controller_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -478,7 +559,7 @@ func (x *ListConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConfigResponse.ProtoReflect.Descriptor instead.
 func (*ListConfigResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{8}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListConfigResponse) GetVars() []*ConfigVar {
@@ -497,7 +578,7 @@ type GetConfigRequest struct {
 
 func (x *GetConfigRequest) Reset() {
 	*x = GetConfigRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[9]
+	mi := &file_icehive_v1_controller_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +590,7 @@ func (x *GetConfigRequest) String() string {
 func (*GetConfigRequest) ProtoMessage() {}
 
 func (x *GetConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[9]
+	mi := &file_icehive_v1_controller_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,7 +603,7 @@ func (x *GetConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConfigRequest.ProtoReflect.Descriptor instead.
 func (*GetConfigRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{9}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetConfigRequest) GetKey() string {
@@ -541,7 +622,7 @@ type GetConfigResponse struct {
 
 func (x *GetConfigResponse) Reset() {
 	*x = GetConfigResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[10]
+	mi := &file_icehive_v1_controller_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +634,7 @@ func (x *GetConfigResponse) String() string {
 func (*GetConfigResponse) ProtoMessage() {}
 
 func (x *GetConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[10]
+	mi := &file_icehive_v1_controller_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +647,7 @@ func (x *GetConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConfigResponse.ProtoReflect.Descriptor instead.
 func (*GetConfigResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{10}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetConfigResponse) GetVar() *ConfigVar {
@@ -586,7 +667,7 @@ type SetConfigRequest struct {
 
 func (x *SetConfigRequest) Reset() {
 	*x = SetConfigRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[11]
+	mi := &file_icehive_v1_controller_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -598,7 +679,7 @@ func (x *SetConfigRequest) String() string {
 func (*SetConfigRequest) ProtoMessage() {}
 
 func (x *SetConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[11]
+	mi := &file_icehive_v1_controller_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -611,7 +692,7 @@ func (x *SetConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetConfigRequest.ProtoReflect.Descriptor instead.
 func (*SetConfigRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{11}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SetConfigRequest) GetKey() string {
@@ -636,7 +717,7 @@ type SetConfigResponse struct {
 
 func (x *SetConfigResponse) Reset() {
 	*x = SetConfigResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[12]
+	mi := &file_icehive_v1_controller_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +729,7 @@ func (x *SetConfigResponse) String() string {
 func (*SetConfigResponse) ProtoMessage() {}
 
 func (x *SetConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[12]
+	mi := &file_icehive_v1_controller_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +742,7 @@ func (x *SetConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetConfigResponse.ProtoReflect.Descriptor instead.
 func (*SetConfigResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{12}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{14}
 }
 
 type ListServicesRequest struct {
@@ -672,7 +753,7 @@ type ListServicesRequest struct {
 
 func (x *ListServicesRequest) Reset() {
 	*x = ListServicesRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[13]
+	mi := &file_icehive_v1_controller_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +765,7 @@ func (x *ListServicesRequest) String() string {
 func (*ListServicesRequest) ProtoMessage() {}
 
 func (x *ListServicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[13]
+	mi := &file_icehive_v1_controller_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +778,7 @@ func (x *ListServicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServicesRequest.ProtoReflect.Descriptor instead.
 func (*ListServicesRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{13}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{15}
 }
 
 type ServiceStatus struct {
@@ -711,7 +792,7 @@ type ServiceStatus struct {
 
 func (x *ServiceStatus) Reset() {
 	*x = ServiceStatus{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[14]
+	mi := &file_icehive_v1_controller_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -723,7 +804,7 @@ func (x *ServiceStatus) String() string {
 func (*ServiceStatus) ProtoMessage() {}
 
 func (x *ServiceStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[14]
+	mi := &file_icehive_v1_controller_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -736,7 +817,7 @@ func (x *ServiceStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceStatus.ProtoReflect.Descriptor instead.
 func (*ServiceStatus) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{14}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ServiceStatus) GetServiceName() string {
@@ -769,7 +850,7 @@ type ListServicesResponse struct {
 
 func (x *ListServicesResponse) Reset() {
 	*x = ListServicesResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[15]
+	mi := &file_icehive_v1_controller_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -781,7 +862,7 @@ func (x *ListServicesResponse) String() string {
 func (*ListServicesResponse) ProtoMessage() {}
 
 func (x *ListServicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[15]
+	mi := &file_icehive_v1_controller_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -794,7 +875,7 @@ func (x *ListServicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServicesResponse.ProtoReflect.Descriptor instead.
 func (*ListServicesResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{15}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListServicesResponse) GetServices() []*ServiceStatus {
@@ -825,7 +906,7 @@ type CollectionSource struct {
 
 func (x *CollectionSource) Reset() {
 	*x = CollectionSource{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[16]
+	mi := &file_icehive_v1_controller_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +918,7 @@ func (x *CollectionSource) String() string {
 func (*CollectionSource) ProtoMessage() {}
 
 func (x *CollectionSource) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[16]
+	mi := &file_icehive_v1_controller_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -850,7 +931,7 @@ func (x *CollectionSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectionSource.ProtoReflect.Descriptor instead.
 func (*CollectionSource) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{16}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CollectionSource) GetId() string {
@@ -939,7 +1020,7 @@ type ListCollectionSourcesRequest struct {
 
 func (x *ListCollectionSourcesRequest) Reset() {
 	*x = ListCollectionSourcesRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[17]
+	mi := &file_icehive_v1_controller_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +1032,7 @@ func (x *ListCollectionSourcesRequest) String() string {
 func (*ListCollectionSourcesRequest) ProtoMessage() {}
 
 func (x *ListCollectionSourcesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[17]
+	mi := &file_icehive_v1_controller_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +1045,7 @@ func (x *ListCollectionSourcesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCollectionSourcesRequest.ProtoReflect.Descriptor instead.
 func (*ListCollectionSourcesRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{17}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListCollectionSourcesRequest) GetCollectorType() string {
@@ -983,7 +1064,7 @@ type ListCollectionSourcesResponse struct {
 
 func (x *ListCollectionSourcesResponse) Reset() {
 	*x = ListCollectionSourcesResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[18]
+	mi := &file_icehive_v1_controller_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -995,7 +1076,7 @@ func (x *ListCollectionSourcesResponse) String() string {
 func (*ListCollectionSourcesResponse) ProtoMessage() {}
 
 func (x *ListCollectionSourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[18]
+	mi := &file_icehive_v1_controller_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1008,7 +1089,7 @@ func (x *ListCollectionSourcesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCollectionSourcesResponse.ProtoReflect.Descriptor instead.
 func (*ListCollectionSourcesResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{18}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListCollectionSourcesResponse) GetSources() []*CollectionSource {
@@ -1031,7 +1112,7 @@ type CollectorSourceSchema struct {
 
 func (x *CollectorSourceSchema) Reset() {
 	*x = CollectorSourceSchema{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[19]
+	mi := &file_icehive_v1_controller_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1043,7 +1124,7 @@ func (x *CollectorSourceSchema) String() string {
 func (*CollectorSourceSchema) ProtoMessage() {}
 
 func (x *CollectorSourceSchema) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[19]
+	mi := &file_icehive_v1_controller_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1056,7 +1137,7 @@ func (x *CollectorSourceSchema) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSourceSchema.ProtoReflect.Descriptor instead.
 func (*CollectorSourceSchema) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{19}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CollectorSourceSchema) GetCollectorType() string {
@@ -1097,7 +1178,7 @@ type ListCollectorSourceSchemasRequest struct {
 
 func (x *ListCollectorSourceSchemasRequest) Reset() {
 	*x = ListCollectorSourceSchemasRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[20]
+	mi := &file_icehive_v1_controller_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1109,7 +1190,7 @@ func (x *ListCollectorSourceSchemasRequest) String() string {
 func (*ListCollectorSourceSchemasRequest) ProtoMessage() {}
 
 func (x *ListCollectorSourceSchemasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[20]
+	mi := &file_icehive_v1_controller_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1122,7 +1203,7 @@ func (x *ListCollectorSourceSchemasRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListCollectorSourceSchemasRequest.ProtoReflect.Descriptor instead.
 func (*ListCollectorSourceSchemasRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{20}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListCollectorSourceSchemasRequest) GetCollectorType() string {
@@ -1141,7 +1222,7 @@ type ListCollectorSourceSchemasResponse struct {
 
 func (x *ListCollectorSourceSchemasResponse) Reset() {
 	*x = ListCollectorSourceSchemasResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[21]
+	mi := &file_icehive_v1_controller_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1153,7 +1234,7 @@ func (x *ListCollectorSourceSchemasResponse) String() string {
 func (*ListCollectorSourceSchemasResponse) ProtoMessage() {}
 
 func (x *ListCollectorSourceSchemasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[21]
+	mi := &file_icehive_v1_controller_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1166,7 +1247,7 @@ func (x *ListCollectorSourceSchemasResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use ListCollectorSourceSchemasResponse.ProtoReflect.Descriptor instead.
 func (*ListCollectorSourceSchemasResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{21}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListCollectorSourceSchemasResponse) GetSchemas() []*CollectorSourceSchema {
@@ -1185,7 +1266,7 @@ type UpsertCollectionSourceRequest struct {
 
 func (x *UpsertCollectionSourceRequest) Reset() {
 	*x = UpsertCollectionSourceRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[22]
+	mi := &file_icehive_v1_controller_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1197,7 +1278,7 @@ func (x *UpsertCollectionSourceRequest) String() string {
 func (*UpsertCollectionSourceRequest) ProtoMessage() {}
 
 func (x *UpsertCollectionSourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[22]
+	mi := &file_icehive_v1_controller_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1210,7 +1291,7 @@ func (x *UpsertCollectionSourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertCollectionSourceRequest.ProtoReflect.Descriptor instead.
 func (*UpsertCollectionSourceRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{22}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpsertCollectionSourceRequest) GetSource() *CollectionSource {
@@ -1229,7 +1310,7 @@ type UpsertCollectionSourceResponse struct {
 
 func (x *UpsertCollectionSourceResponse) Reset() {
 	*x = UpsertCollectionSourceResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[23]
+	mi := &file_icehive_v1_controller_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1241,7 +1322,7 @@ func (x *UpsertCollectionSourceResponse) String() string {
 func (*UpsertCollectionSourceResponse) ProtoMessage() {}
 
 func (x *UpsertCollectionSourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[23]
+	mi := &file_icehive_v1_controller_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1254,7 +1335,7 @@ func (x *UpsertCollectionSourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertCollectionSourceResponse.ProtoReflect.Descriptor instead.
 func (*UpsertCollectionSourceResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{23}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UpsertCollectionSourceResponse) GetSource() *CollectionSource {
@@ -1273,7 +1354,7 @@ type DeleteCollectionSourceRequest struct {
 
 func (x *DeleteCollectionSourceRequest) Reset() {
 	*x = DeleteCollectionSourceRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[24]
+	mi := &file_icehive_v1_controller_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1285,7 +1366,7 @@ func (x *DeleteCollectionSourceRequest) String() string {
 func (*DeleteCollectionSourceRequest) ProtoMessage() {}
 
 func (x *DeleteCollectionSourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[24]
+	mi := &file_icehive_v1_controller_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1298,7 +1379,7 @@ func (x *DeleteCollectionSourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCollectionSourceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCollectionSourceRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{24}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *DeleteCollectionSourceRequest) GetId() string {
@@ -1316,7 +1397,7 @@ type DeleteCollectionSourceResponse struct {
 
 func (x *DeleteCollectionSourceResponse) Reset() {
 	*x = DeleteCollectionSourceResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[25]
+	mi := &file_icehive_v1_controller_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1328,7 +1409,7 @@ func (x *DeleteCollectionSourceResponse) String() string {
 func (*DeleteCollectionSourceResponse) ProtoMessage() {}
 
 func (x *DeleteCollectionSourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[25]
+	mi := &file_icehive_v1_controller_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1341,7 +1422,7 @@ func (x *DeleteCollectionSourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCollectionSourceResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCollectionSourceResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{25}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{27}
 }
 
 type ReportCollectionSourceRunRequest struct {
@@ -1357,7 +1438,7 @@ type ReportCollectionSourceRunRequest struct {
 
 func (x *ReportCollectionSourceRunRequest) Reset() {
 	*x = ReportCollectionSourceRunRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[26]
+	mi := &file_icehive_v1_controller_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1369,7 +1450,7 @@ func (x *ReportCollectionSourceRunRequest) String() string {
 func (*ReportCollectionSourceRunRequest) ProtoMessage() {}
 
 func (x *ReportCollectionSourceRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[26]
+	mi := &file_icehive_v1_controller_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1382,7 +1463,7 @@ func (x *ReportCollectionSourceRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCollectionSourceRunRequest.ProtoReflect.Descriptor instead.
 func (*ReportCollectionSourceRunRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{26}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ReportCollectionSourceRunRequest) GetId() string {
@@ -1428,7 +1509,7 @@ type ReportCollectionSourceRunResponse struct {
 
 func (x *ReportCollectionSourceRunResponse) Reset() {
 	*x = ReportCollectionSourceRunResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[27]
+	mi := &file_icehive_v1_controller_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1440,7 +1521,7 @@ func (x *ReportCollectionSourceRunResponse) String() string {
 func (*ReportCollectionSourceRunResponse) ProtoMessage() {}
 
 func (x *ReportCollectionSourceRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[27]
+	mi := &file_icehive_v1_controller_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1453,7 +1534,7 @@ func (x *ReportCollectionSourceRunResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ReportCollectionSourceRunResponse.ProtoReflect.Descriptor instead.
 func (*ReportCollectionSourceRunResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{27}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{29}
 }
 
 // CollectionRequest is the JSON (protojson) body published to AMQP for on-demand collection.
@@ -1466,7 +1547,7 @@ type CollectionRequest struct {
 
 func (x *CollectionRequest) Reset() {
 	*x = CollectionRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[28]
+	mi := &file_icehive_v1_controller_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1478,7 +1559,7 @@ func (x *CollectionRequest) String() string {
 func (*CollectionRequest) ProtoMessage() {}
 
 func (x *CollectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[28]
+	mi := &file_icehive_v1_controller_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1491,7 +1572,7 @@ func (x *CollectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectionRequest.ProtoReflect.Descriptor instead.
 func (*CollectionRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{28}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CollectionRequest) GetSource() *CollectionSource {
@@ -1516,7 +1597,7 @@ type EnqueueCollectionRequestRequest struct {
 
 func (x *EnqueueCollectionRequestRequest) Reset() {
 	*x = EnqueueCollectionRequestRequest{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[29]
+	mi := &file_icehive_v1_controller_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1528,7 +1609,7 @@ func (x *EnqueueCollectionRequestRequest) String() string {
 func (*EnqueueCollectionRequestRequest) ProtoMessage() {}
 
 func (x *EnqueueCollectionRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[29]
+	mi := &file_icehive_v1_controller_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1541,7 +1622,7 @@ func (x *EnqueueCollectionRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnqueueCollectionRequestRequest.ProtoReflect.Descriptor instead.
 func (*EnqueueCollectionRequestRequest) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{29}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *EnqueueCollectionRequestRequest) GetTarget() isEnqueueCollectionRequestRequest_Target {
@@ -1597,7 +1678,7 @@ type EnqueueCollectionRequestResponse struct {
 
 func (x *EnqueueCollectionRequestResponse) Reset() {
 	*x = EnqueueCollectionRequestResponse{}
-	mi := &file_icehive_v1_controller_proto_msgTypes[30]
+	mi := &file_icehive_v1_controller_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1609,7 +1690,7 @@ func (x *EnqueueCollectionRequestResponse) String() string {
 func (*EnqueueCollectionRequestResponse) ProtoMessage() {}
 
 func (x *EnqueueCollectionRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_icehive_v1_controller_proto_msgTypes[30]
+	mi := &file_icehive_v1_controller_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1622,7 +1703,7 @@ func (x *EnqueueCollectionRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnqueueCollectionRequestResponse.ProtoReflect.Descriptor instead.
 func (*EnqueueCollectionRequestResponse) Descriptor() ([]byte, []int) {
-	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{30}
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{32}
 }
 
 var File_icehive_v1_controller_proto protoreflect.FileDescriptor
@@ -1630,7 +1711,10 @@ var File_icehive_v1_controller_proto protoreflect.FileDescriptor
 const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\n" +
 	"\x1bicehive/v1/controller.proto\x12\n" +
-	"icehive.v1\"\x0f\n" +
+	"icehive.v1\"\r\n" +
+	"\vInitRequest\"(\n" +
+	"\fInitResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"\x0f\n" +
 	"\rHealthRequest\"(\n" +
 	"\x0eHealthResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\"V\n" +
@@ -1721,8 +1805,9 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x14collection_source_id\x18\x01 \x01(\tH\x00R\x12collectionSourceId\x12Q\n" +
 	"\x14ephemeral_collection\x18\x02 \x01(\v2\x1c.icehive.v1.CollectionSourceH\x00R\x13ephemeralCollectionB\b\n" +
 	"\x06target\"\"\n" +
-	" EnqueueCollectionRequestResponse2\xa2\t\n" +
-	"\x11ControllerService\x12?\n" +
+	" EnqueueCollectionRequestResponse2\xdd\t\n" +
+	"\x11ControllerService\x129\n" +
+	"\x04Init\x12\x17.icehive.v1.InitRequest\x1a\x18.icehive.v1.InitResponse\x12?\n" +
 	"\x06Health\x12\x19.icehive.v1.HealthRequest\x1a\x1a.icehive.v1.HealthResponse\x12Z\n" +
 	"\x0fWorkerBootstrap\x12\".icehive.v1.WorkerBootstrapRequest\x1a#.icehive.v1.WorkerBootstrapResponse\x12K\n" +
 	"\n" +
@@ -1752,78 +1837,82 @@ func file_icehive_v1_controller_proto_rawDescGZIP() []byte {
 	return file_icehive_v1_controller_proto_rawDescData
 }
 
-var file_icehive_v1_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_icehive_v1_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_icehive_v1_controller_proto_goTypes = []any{
-	(*HealthRequest)(nil),                      // 0: icehive.v1.HealthRequest
-	(*HealthResponse)(nil),                     // 1: icehive.v1.HealthResponse
-	(*WorkerBootstrapRequest)(nil),             // 2: icehive.v1.WorkerBootstrapRequest
-	(*AMQPSettings)(nil),                       // 3: icehive.v1.AMQPSettings
-	(*MySQLSettings)(nil),                      // 4: icehive.v1.MySQLSettings
-	(*WorkerBootstrapResponse)(nil),            // 5: icehive.v1.WorkerBootstrapResponse
-	(*ListConfigRequest)(nil),                  // 6: icehive.v1.ListConfigRequest
-	(*ConfigVar)(nil),                          // 7: icehive.v1.ConfigVar
-	(*ListConfigResponse)(nil),                 // 8: icehive.v1.ListConfigResponse
-	(*GetConfigRequest)(nil),                   // 9: icehive.v1.GetConfigRequest
-	(*GetConfigResponse)(nil),                  // 10: icehive.v1.GetConfigResponse
-	(*SetConfigRequest)(nil),                   // 11: icehive.v1.SetConfigRequest
-	(*SetConfigResponse)(nil),                  // 12: icehive.v1.SetConfigResponse
-	(*ListServicesRequest)(nil),                // 13: icehive.v1.ListServicesRequest
-	(*ServiceStatus)(nil),                      // 14: icehive.v1.ServiceStatus
-	(*ListServicesResponse)(nil),               // 15: icehive.v1.ListServicesResponse
-	(*CollectionSource)(nil),                   // 16: icehive.v1.CollectionSource
-	(*ListCollectionSourcesRequest)(nil),       // 17: icehive.v1.ListCollectionSourcesRequest
-	(*ListCollectionSourcesResponse)(nil),      // 18: icehive.v1.ListCollectionSourcesResponse
-	(*CollectorSourceSchema)(nil),              // 19: icehive.v1.CollectorSourceSchema
-	(*ListCollectorSourceSchemasRequest)(nil),  // 20: icehive.v1.ListCollectorSourceSchemasRequest
-	(*ListCollectorSourceSchemasResponse)(nil), // 21: icehive.v1.ListCollectorSourceSchemasResponse
-	(*UpsertCollectionSourceRequest)(nil),      // 22: icehive.v1.UpsertCollectionSourceRequest
-	(*UpsertCollectionSourceResponse)(nil),     // 23: icehive.v1.UpsertCollectionSourceResponse
-	(*DeleteCollectionSourceRequest)(nil),      // 24: icehive.v1.DeleteCollectionSourceRequest
-	(*DeleteCollectionSourceResponse)(nil),     // 25: icehive.v1.DeleteCollectionSourceResponse
-	(*ReportCollectionSourceRunRequest)(nil),   // 26: icehive.v1.ReportCollectionSourceRunRequest
-	(*ReportCollectionSourceRunResponse)(nil),  // 27: icehive.v1.ReportCollectionSourceRunResponse
-	(*CollectionRequest)(nil),                  // 28: icehive.v1.CollectionRequest
-	(*EnqueueCollectionRequestRequest)(nil),    // 29: icehive.v1.EnqueueCollectionRequestRequest
-	(*EnqueueCollectionRequestResponse)(nil),   // 30: icehive.v1.EnqueueCollectionRequestResponse
+	(*InitRequest)(nil),                        // 0: icehive.v1.InitRequest
+	(*InitResponse)(nil),                       // 1: icehive.v1.InitResponse
+	(*HealthRequest)(nil),                      // 2: icehive.v1.HealthRequest
+	(*HealthResponse)(nil),                     // 3: icehive.v1.HealthResponse
+	(*WorkerBootstrapRequest)(nil),             // 4: icehive.v1.WorkerBootstrapRequest
+	(*AMQPSettings)(nil),                       // 5: icehive.v1.AMQPSettings
+	(*MySQLSettings)(nil),                      // 6: icehive.v1.MySQLSettings
+	(*WorkerBootstrapResponse)(nil),            // 7: icehive.v1.WorkerBootstrapResponse
+	(*ListConfigRequest)(nil),                  // 8: icehive.v1.ListConfigRequest
+	(*ConfigVar)(nil),                          // 9: icehive.v1.ConfigVar
+	(*ListConfigResponse)(nil),                 // 10: icehive.v1.ListConfigResponse
+	(*GetConfigRequest)(nil),                   // 11: icehive.v1.GetConfigRequest
+	(*GetConfigResponse)(nil),                  // 12: icehive.v1.GetConfigResponse
+	(*SetConfigRequest)(nil),                   // 13: icehive.v1.SetConfigRequest
+	(*SetConfigResponse)(nil),                  // 14: icehive.v1.SetConfigResponse
+	(*ListServicesRequest)(nil),                // 15: icehive.v1.ListServicesRequest
+	(*ServiceStatus)(nil),                      // 16: icehive.v1.ServiceStatus
+	(*ListServicesResponse)(nil),               // 17: icehive.v1.ListServicesResponse
+	(*CollectionSource)(nil),                   // 18: icehive.v1.CollectionSource
+	(*ListCollectionSourcesRequest)(nil),       // 19: icehive.v1.ListCollectionSourcesRequest
+	(*ListCollectionSourcesResponse)(nil),      // 20: icehive.v1.ListCollectionSourcesResponse
+	(*CollectorSourceSchema)(nil),              // 21: icehive.v1.CollectorSourceSchema
+	(*ListCollectorSourceSchemasRequest)(nil),  // 22: icehive.v1.ListCollectorSourceSchemasRequest
+	(*ListCollectorSourceSchemasResponse)(nil), // 23: icehive.v1.ListCollectorSourceSchemasResponse
+	(*UpsertCollectionSourceRequest)(nil),      // 24: icehive.v1.UpsertCollectionSourceRequest
+	(*UpsertCollectionSourceResponse)(nil),     // 25: icehive.v1.UpsertCollectionSourceResponse
+	(*DeleteCollectionSourceRequest)(nil),      // 26: icehive.v1.DeleteCollectionSourceRequest
+	(*DeleteCollectionSourceResponse)(nil),     // 27: icehive.v1.DeleteCollectionSourceResponse
+	(*ReportCollectionSourceRunRequest)(nil),   // 28: icehive.v1.ReportCollectionSourceRunRequest
+	(*ReportCollectionSourceRunResponse)(nil),  // 29: icehive.v1.ReportCollectionSourceRunResponse
+	(*CollectionRequest)(nil),                  // 30: icehive.v1.CollectionRequest
+	(*EnqueueCollectionRequestRequest)(nil),    // 31: icehive.v1.EnqueueCollectionRequestRequest
+	(*EnqueueCollectionRequestResponse)(nil),   // 32: icehive.v1.EnqueueCollectionRequestResponse
 }
 var file_icehive_v1_controller_proto_depIdxs = []int32{
-	3,  // 0: icehive.v1.WorkerBootstrapResponse.amqp:type_name -> icehive.v1.AMQPSettings
-	4,  // 1: icehive.v1.WorkerBootstrapResponse.mysql:type_name -> icehive.v1.MySQLSettings
-	7,  // 2: icehive.v1.ListConfigResponse.vars:type_name -> icehive.v1.ConfigVar
-	7,  // 3: icehive.v1.GetConfigResponse.var:type_name -> icehive.v1.ConfigVar
-	14, // 4: icehive.v1.ListServicesResponse.services:type_name -> icehive.v1.ServiceStatus
-	16, // 5: icehive.v1.ListCollectionSourcesResponse.sources:type_name -> icehive.v1.CollectionSource
-	19, // 6: icehive.v1.ListCollectorSourceSchemasResponse.schemas:type_name -> icehive.v1.CollectorSourceSchema
-	16, // 7: icehive.v1.UpsertCollectionSourceRequest.source:type_name -> icehive.v1.CollectionSource
-	16, // 8: icehive.v1.UpsertCollectionSourceResponse.source:type_name -> icehive.v1.CollectionSource
-	16, // 9: icehive.v1.CollectionRequest.source:type_name -> icehive.v1.CollectionSource
-	16, // 10: icehive.v1.EnqueueCollectionRequestRequest.ephemeral_collection:type_name -> icehive.v1.CollectionSource
-	0,  // 11: icehive.v1.ControllerService.Health:input_type -> icehive.v1.HealthRequest
-	2,  // 12: icehive.v1.ControllerService.WorkerBootstrap:input_type -> icehive.v1.WorkerBootstrapRequest
-	6,  // 13: icehive.v1.ControllerService.ListConfig:input_type -> icehive.v1.ListConfigRequest
-	9,  // 14: icehive.v1.ControllerService.GetConfig:input_type -> icehive.v1.GetConfigRequest
-	11, // 15: icehive.v1.ControllerService.SetConfig:input_type -> icehive.v1.SetConfigRequest
-	13, // 16: icehive.v1.ControllerService.ListServices:input_type -> icehive.v1.ListServicesRequest
-	17, // 17: icehive.v1.ControllerService.ListCollectionSources:input_type -> icehive.v1.ListCollectionSourcesRequest
-	20, // 18: icehive.v1.ControllerService.ListCollectorSourceSchemas:input_type -> icehive.v1.ListCollectorSourceSchemasRequest
-	22, // 19: icehive.v1.ControllerService.UpsertCollectionSource:input_type -> icehive.v1.UpsertCollectionSourceRequest
-	24, // 20: icehive.v1.ControllerService.DeleteCollectionSource:input_type -> icehive.v1.DeleteCollectionSourceRequest
-	26, // 21: icehive.v1.ControllerService.ReportCollectionSourceRun:input_type -> icehive.v1.ReportCollectionSourceRunRequest
-	29, // 22: icehive.v1.ControllerService.EnqueueCollectionRequest:input_type -> icehive.v1.EnqueueCollectionRequestRequest
-	1,  // 23: icehive.v1.ControllerService.Health:output_type -> icehive.v1.HealthResponse
-	5,  // 24: icehive.v1.ControllerService.WorkerBootstrap:output_type -> icehive.v1.WorkerBootstrapResponse
-	8,  // 25: icehive.v1.ControllerService.ListConfig:output_type -> icehive.v1.ListConfigResponse
-	10, // 26: icehive.v1.ControllerService.GetConfig:output_type -> icehive.v1.GetConfigResponse
-	12, // 27: icehive.v1.ControllerService.SetConfig:output_type -> icehive.v1.SetConfigResponse
-	15, // 28: icehive.v1.ControllerService.ListServices:output_type -> icehive.v1.ListServicesResponse
-	18, // 29: icehive.v1.ControllerService.ListCollectionSources:output_type -> icehive.v1.ListCollectionSourcesResponse
-	21, // 30: icehive.v1.ControllerService.ListCollectorSourceSchemas:output_type -> icehive.v1.ListCollectorSourceSchemasResponse
-	23, // 31: icehive.v1.ControllerService.UpsertCollectionSource:output_type -> icehive.v1.UpsertCollectionSourceResponse
-	25, // 32: icehive.v1.ControllerService.DeleteCollectionSource:output_type -> icehive.v1.DeleteCollectionSourceResponse
-	27, // 33: icehive.v1.ControllerService.ReportCollectionSourceRun:output_type -> icehive.v1.ReportCollectionSourceRunResponse
-	30, // 34: icehive.v1.ControllerService.EnqueueCollectionRequest:output_type -> icehive.v1.EnqueueCollectionRequestResponse
-	23, // [23:35] is the sub-list for method output_type
-	11, // [11:23] is the sub-list for method input_type
+	5,  // 0: icehive.v1.WorkerBootstrapResponse.amqp:type_name -> icehive.v1.AMQPSettings
+	6,  // 1: icehive.v1.WorkerBootstrapResponse.mysql:type_name -> icehive.v1.MySQLSettings
+	9,  // 2: icehive.v1.ListConfigResponse.vars:type_name -> icehive.v1.ConfigVar
+	9,  // 3: icehive.v1.GetConfigResponse.var:type_name -> icehive.v1.ConfigVar
+	16, // 4: icehive.v1.ListServicesResponse.services:type_name -> icehive.v1.ServiceStatus
+	18, // 5: icehive.v1.ListCollectionSourcesResponse.sources:type_name -> icehive.v1.CollectionSource
+	21, // 6: icehive.v1.ListCollectorSourceSchemasResponse.schemas:type_name -> icehive.v1.CollectorSourceSchema
+	18, // 7: icehive.v1.UpsertCollectionSourceRequest.source:type_name -> icehive.v1.CollectionSource
+	18, // 8: icehive.v1.UpsertCollectionSourceResponse.source:type_name -> icehive.v1.CollectionSource
+	18, // 9: icehive.v1.CollectionRequest.source:type_name -> icehive.v1.CollectionSource
+	18, // 10: icehive.v1.EnqueueCollectionRequestRequest.ephemeral_collection:type_name -> icehive.v1.CollectionSource
+	0,  // 11: icehive.v1.ControllerService.Init:input_type -> icehive.v1.InitRequest
+	2,  // 12: icehive.v1.ControllerService.Health:input_type -> icehive.v1.HealthRequest
+	4,  // 13: icehive.v1.ControllerService.WorkerBootstrap:input_type -> icehive.v1.WorkerBootstrapRequest
+	8,  // 14: icehive.v1.ControllerService.ListConfig:input_type -> icehive.v1.ListConfigRequest
+	11, // 15: icehive.v1.ControllerService.GetConfig:input_type -> icehive.v1.GetConfigRequest
+	13, // 16: icehive.v1.ControllerService.SetConfig:input_type -> icehive.v1.SetConfigRequest
+	15, // 17: icehive.v1.ControllerService.ListServices:input_type -> icehive.v1.ListServicesRequest
+	19, // 18: icehive.v1.ControllerService.ListCollectionSources:input_type -> icehive.v1.ListCollectionSourcesRequest
+	22, // 19: icehive.v1.ControllerService.ListCollectorSourceSchemas:input_type -> icehive.v1.ListCollectorSourceSchemasRequest
+	24, // 20: icehive.v1.ControllerService.UpsertCollectionSource:input_type -> icehive.v1.UpsertCollectionSourceRequest
+	26, // 21: icehive.v1.ControllerService.DeleteCollectionSource:input_type -> icehive.v1.DeleteCollectionSourceRequest
+	28, // 22: icehive.v1.ControllerService.ReportCollectionSourceRun:input_type -> icehive.v1.ReportCollectionSourceRunRequest
+	31, // 23: icehive.v1.ControllerService.EnqueueCollectionRequest:input_type -> icehive.v1.EnqueueCollectionRequestRequest
+	1,  // 24: icehive.v1.ControllerService.Init:output_type -> icehive.v1.InitResponse
+	3,  // 25: icehive.v1.ControllerService.Health:output_type -> icehive.v1.HealthResponse
+	7,  // 26: icehive.v1.ControllerService.WorkerBootstrap:output_type -> icehive.v1.WorkerBootstrapResponse
+	10, // 27: icehive.v1.ControllerService.ListConfig:output_type -> icehive.v1.ListConfigResponse
+	12, // 28: icehive.v1.ControllerService.GetConfig:output_type -> icehive.v1.GetConfigResponse
+	14, // 29: icehive.v1.ControllerService.SetConfig:output_type -> icehive.v1.SetConfigResponse
+	17, // 30: icehive.v1.ControllerService.ListServices:output_type -> icehive.v1.ListServicesResponse
+	20, // 31: icehive.v1.ControllerService.ListCollectionSources:output_type -> icehive.v1.ListCollectionSourcesResponse
+	23, // 32: icehive.v1.ControllerService.ListCollectorSourceSchemas:output_type -> icehive.v1.ListCollectorSourceSchemasResponse
+	25, // 33: icehive.v1.ControllerService.UpsertCollectionSource:output_type -> icehive.v1.UpsertCollectionSourceResponse
+	27, // 34: icehive.v1.ControllerService.DeleteCollectionSource:output_type -> icehive.v1.DeleteCollectionSourceResponse
+	29, // 35: icehive.v1.ControllerService.ReportCollectionSourceRun:output_type -> icehive.v1.ReportCollectionSourceRunResponse
+	32, // 36: icehive.v1.ControllerService.EnqueueCollectionRequest:output_type -> icehive.v1.EnqueueCollectionRequestResponse
+	24, // [24:37] is the sub-list for method output_type
+	11, // [11:24] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1834,7 +1923,7 @@ func file_icehive_v1_controller_proto_init() {
 	if File_icehive_v1_controller_proto != nil {
 		return
 	}
-	file_icehive_v1_controller_proto_msgTypes[29].OneofWrappers = []any{
+	file_icehive_v1_controller_proto_msgTypes[31].OneofWrappers = []any{
 		(*EnqueueCollectionRequestRequest_CollectionSourceId)(nil),
 		(*EnqueueCollectionRequestRequest_EphemeralCollection)(nil),
 	}
@@ -1844,7 +1933,7 @@ func file_icehive_v1_controller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_icehive_v1_controller_proto_rawDesc), len(file_icehive_v1_controller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

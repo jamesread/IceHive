@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ControllerServiceInitProcedure is the fully-qualified name of the ControllerService's Init RPC.
+	ControllerServiceInitProcedure = "/icehive.v1.ControllerService/Init"
 	// ControllerServiceHealthProcedure is the fully-qualified name of the ControllerService's Health
 	// RPC.
 	ControllerServiceHealthProcedure = "/icehive.v1.ControllerService/Health"
@@ -73,6 +75,8 @@ const (
 
 // ControllerServiceClient is a client for the icehive.v1.ControllerService service.
 type ControllerServiceClient interface {
+	// Init should be the first call from UI clients; returns server version and confirms connectivity.
+	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
 	// Health indicates whether the Controller process is reachable.
 	Health(context.Context, *connect.Request[v1.HealthRequest]) (*connect.Response[v1.HealthResponse], error)
 	// WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.
@@ -108,6 +112,12 @@ func NewControllerServiceClient(httpClient connect.HTTPClient, baseURL string, o
 	baseURL = strings.TrimRight(baseURL, "/")
 	controllerServiceMethods := v1.File_icehive_v1_controller_proto.Services().ByName("ControllerService").Methods()
 	return &controllerServiceClient{
+		init: connect.NewClient[v1.InitRequest, v1.InitResponse](
+			httpClient,
+			baseURL+ControllerServiceInitProcedure,
+			connect.WithSchema(controllerServiceMethods.ByName("Init")),
+			connect.WithClientOptions(opts...),
+		),
 		health: connect.NewClient[v1.HealthRequest, v1.HealthResponse](
 			httpClient,
 			baseURL+ControllerServiceHealthProcedure,
@@ -185,6 +195,7 @@ func NewControllerServiceClient(httpClient connect.HTTPClient, baseURL string, o
 
 // controllerServiceClient implements ControllerServiceClient.
 type controllerServiceClient struct {
+	init                       *connect.Client[v1.InitRequest, v1.InitResponse]
 	health                     *connect.Client[v1.HealthRequest, v1.HealthResponse]
 	workerBootstrap            *connect.Client[v1.WorkerBootstrapRequest, v1.WorkerBootstrapResponse]
 	listConfig                 *connect.Client[v1.ListConfigRequest, v1.ListConfigResponse]
@@ -197,6 +208,11 @@ type controllerServiceClient struct {
 	deleteCollectionSource     *connect.Client[v1.DeleteCollectionSourceRequest, v1.DeleteCollectionSourceResponse]
 	reportCollectionSourceRun  *connect.Client[v1.ReportCollectionSourceRunRequest, v1.ReportCollectionSourceRunResponse]
 	enqueueCollectionRequest   *connect.Client[v1.EnqueueCollectionRequestRequest, v1.EnqueueCollectionRequestResponse]
+}
+
+// Init calls icehive.v1.ControllerService.Init.
+func (c *controllerServiceClient) Init(ctx context.Context, req *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error) {
+	return c.init.CallUnary(ctx, req)
 }
 
 // Health calls icehive.v1.ControllerService.Health.
@@ -261,6 +277,8 @@ func (c *controllerServiceClient) EnqueueCollectionRequest(ctx context.Context, 
 
 // ControllerServiceHandler is an implementation of the icehive.v1.ControllerService service.
 type ControllerServiceHandler interface {
+	// Init should be the first call from UI clients; returns server version and confirms connectivity.
+	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
 	// Health indicates whether the Controller process is reachable.
 	Health(context.Context, *connect.Request[v1.HealthRequest]) (*connect.Response[v1.HealthResponse], error)
 	// WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.
@@ -292,6 +310,12 @@ type ControllerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewControllerServiceHandler(svc ControllerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	controllerServiceMethods := v1.File_icehive_v1_controller_proto.Services().ByName("ControllerService").Methods()
+	controllerServiceInitHandler := connect.NewUnaryHandler(
+		ControllerServiceInitProcedure,
+		svc.Init,
+		connect.WithSchema(controllerServiceMethods.ByName("Init")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controllerServiceHealthHandler := connect.NewUnaryHandler(
 		ControllerServiceHealthProcedure,
 		svc.Health,
@@ -366,6 +390,8 @@ func NewControllerServiceHandler(svc ControllerServiceHandler, opts ...connect.H
 	)
 	return "/icehive.v1.ControllerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ControllerServiceInitProcedure:
+			controllerServiceInitHandler.ServeHTTP(w, r)
 		case ControllerServiceHealthProcedure:
 			controllerServiceHealthHandler.ServeHTTP(w, r)
 		case ControllerServiceWorkerBootstrapProcedure:
@@ -398,6 +424,10 @@ func NewControllerServiceHandler(svc ControllerServiceHandler, opts ...connect.H
 
 // UnimplementedControllerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedControllerServiceHandler struct{}
+
+func (UnimplementedControllerServiceHandler) Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("icehive.v1.ControllerService.Init is not implemented"))
+}
 
 func (UnimplementedControllerServiceHandler) Health(context.Context, *connect.Request[v1.HealthRequest]) (*connect.Response[v1.HealthResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("icehive.v1.ControllerService.Health is not implemented"))

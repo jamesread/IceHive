@@ -1,17 +1,18 @@
+import { ref } from 'vue'
 import { createClient, type Client } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
-import {
-  ControllerService,
-  ListServicesRequestSchema,
-} from '../gen/icehive/v1/controller_pb'
+import { ControllerService, InitRequestSchema } from '../gen/icehive/v1/controller_pb'
 
 const STORAGE_KEY = 'icehive.controllerBaseUrl'
 const DEFAULT_TIMEOUT_MS = 10_000
 
 let activeClient: Client<typeof ControllerService> | null = null
 let activeBaseUrl = ''
+
+/** Controller version from the most recent successful Init call. */
+export const controllerVersion = ref<string | null>(null)
 
 function buildTransport(baseUrl: string) {
   return createConnectTransport({
@@ -95,11 +96,14 @@ function resolveProbeBaseUrl(raw: string): string {
   return normalizeControllerBaseUrl(raw)
 }
 
-async function probeController(rawBaseUrl: string): Promise<void> {
+async function probeController(rawBaseUrl: string): Promise<string> {
   const baseUrl = resolveProbeBaseUrl(rawBaseUrl)
   const transport = buildTransport(baseUrl)
   const client = createClient(ControllerService, transport)
-  await client.listServices(create(ListServicesRequestSchema, {}))
+  const res = await client.init(create(InitRequestSchema, {}))
+  const version = res.version?.trim()
+  if (!version) throw new Error('Init returned empty version')
+  return version
 }
 
 export function assignControllerClient(rawBaseUrl: string): void {
@@ -117,14 +121,16 @@ export type ControllerConnectResult =
   | { ok: false; attempted: string[]; lastError: string }
 
 export async function connectToFirstAvailableController(): Promise<ControllerConnectResult> {
+  controllerVersion.value = null
   const attempted: string[] = []
   let lastError = 'No connection candidates'
   for (const raw of controllerBaseUrlCandidates()) {
     attempted.push(displayCandidate(raw))
     try {
-      await probeController(raw)
+      const version = await probeController(raw)
       const normalized = normalizeControllerBaseUrl(raw)
       assignControllerClient(normalized)
+      controllerVersion.value = version
       return { ok: true, baseUrl: normalized }
     } catch (e) {
       lastError =
@@ -137,7 +143,8 @@ export async function connectToFirstAvailableController(): Promise<ControllerCon
 /** Probe, install global client, and optionally persist for the next visit. */
 export async function connectWithUserSuppliedBaseUrl(raw: string, persist: boolean): Promise<void> {
   const normalized = normalizeControllerBaseUrl(raw)
-  await probeController(normalized)
+  const version = await probeController(normalized)
   assignControllerClient(normalized)
+  controllerVersion.value = version
   persistStoredControllerBaseUrl(persist ? normalized : null)
 }

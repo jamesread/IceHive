@@ -3,7 +3,8 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
-import Header from 'picocrank/vue/components/Header.vue'
+import AppHeader from '../components/AppHeader.vue'
+import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import type { ConfigVar } from '../gen/icehive/v1/controller_pb'
@@ -95,17 +96,11 @@ onMounted(() => {
 
 <template>
   <div class="shell">
-    <Header
-      title="IceHive"
-      username="Guest"
-      :sidebar-enabled="false"
-      :show-branding="true"
-      logo-url="/favicon.svg"
-    >
+    <AppHeader>
       <template #toolbar>
         <QuickSearch placeholder="Quick search..." />
       </template>
-    </Header>
+    </AppHeader>
     <main class="config-main">
       <nav class="crumb">
         <RouterLink to="/">Home</RouterLink>
@@ -189,6 +184,7 @@ onMounted(() => {
         </div>
       </Section>
     </main>
+    <AppFooter />
   </div>
 </template>
 
@@ -199,6 +195,7 @@ onMounted(() => {
   flex-direction: column;
 }
 .config-main {
+  flex: 1;
   padding: 1rem 1.5rem 2rem;
 }
 .crumb {

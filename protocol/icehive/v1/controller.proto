@@ -4,6 +4,8 @@ package icehive.v1;
 
 // ControllerService exposes the primary API clients use to request and inspect data.
 service ControllerService {
+  // Init should be the first call from UI clients; returns server version and confirms connectivity.
+  rpc Init(InitRequest) returns (InitResponse);
   // Health indicates whether the Controller process is reachable.
   rpc Health(HealthRequest) returns (HealthResponse);
   // WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.
@@ -26,6 +28,13 @@ service ControllerService {
   // EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.
   // Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).
   rpc EnqueueCollectionRequest(EnqueueCollectionRequestRequest) returns (EnqueueCollectionRequestResponse);
+}
+
+message InitRequest {}
+
+message InitResponse {
+  // Application version (semver or dev snapshot) from the controller binary.
+  string version = 1;
 }
 
 message HealthRequest {}

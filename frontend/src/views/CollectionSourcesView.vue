@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
-import Header from 'picocrank/vue/components/Header.vue'
+import AppHeader from '../components/AppHeader.vue'
+import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { getControllerClient } from '../api/controllerClient'
@@ -27,6 +28,9 @@ import {
   ListServicesRequestSchema,
   UpsertCollectionSourceRequestSchema,
 } from '../gen/icehive/v1/controller_pb'
+
+const route = useRoute()
+const router = useRouter()
 
 const sources = ref<CollectionSource[]>([])
 /** Latest SourceSchema rows from the controller (populated from collector AMQP at startup). */
@@ -477,24 +481,34 @@ async function removeSource(id: string) {
   }
 }
 
-onMounted(() => {
-  void reloadAll()
+async function openOneOffFromQueryIfNeeded() {
+  if (route.query.oneOff !== '1') return
+  openOneOffCollect()
+  await router.replace({ name: 'sources' })
+}
+
+onMounted(async () => {
+  await reloadAll()
+  await openOneOffFromQueryIfNeeded()
 })
+
+watch(
+  () => route.query.oneOff,
+  (v) => {
+    if (v === '1') {
+      void openOneOffFromQueryIfNeeded()
+    }
+  },
+)
 </script>
 
 <template>
   <div class="shell">
-    <Header
-      title="IceHive"
-      username="Guest"
-      :sidebar-enabled="false"
-      :show-branding="true"
-      logo-url="/favicon.svg"
-    >
+    <AppHeader>
       <template #toolbar>
         <QuickSearch placeholder="Quick search..." />
       </template>
-    </Header>
+    </AppHeader>
     <main class="main">
       <nav class="crumb">
         <RouterLink to="/">Home</RouterLink>
@@ -770,6 +784,8 @@ onMounted(() => {
         </div>
       </div>
     </dialog>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -780,6 +796,7 @@ onMounted(() => {
   flex-direction: column;
 }
 .main {
+  flex: 1;
   padding: 1rem 1.5rem 2rem;
 }
 .crumb {

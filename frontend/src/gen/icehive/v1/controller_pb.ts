@@ -10,7 +10,39 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file icehive/v1/controller.proto.
  */
 export const file_icehive_v1_controller: GenFile = /*@__PURE__*/
-  fileDesc("ChtpY2VoaXZlL3YxL2NvbnRyb2xsZXIucHJvdG8SCmljZWhpdmUudjEiDwoNSGVhbHRoUmVxdWVzdCIgCg5IZWFsdGhSZXNwb25zZRIOCgZzdGF0dXMYASABKAkiQAoWV29ya2VyQm9vdHN0cmFwUmVxdWVzdBITCgt3b3JrZXJfa2luZBgBIAEoCRIRCgl3b3JrZXJfaWQYAiABKAkiUQoMQU1RUFNldHRpbmdzEgsKA3VybBgBIAEoCRIQCghleGNoYW5nZRgCIAEoCRIiChpyb3V0aW5nX2tleV9jb250cm9sX2V2ZW50cxgDIAEoCSJdCg1NeVNRTFNldHRpbmdzEgwKBGhvc3QYASABKAkSDAoEcG9ydBgCIAEoBRIMCgR1c2VyGAMgASgJEhAKCHBhc3N3b3JkGAQgASgJEhAKCGRhdGFiYXNlGAUgASgJImsKF1dvcmtlckJvb3RzdHJhcFJlc3BvbnNlEiYKBGFtcXAYASABKAsyGC5pY2VoaXZlLnYxLkFNUVBTZXR0aW5ncxIoCgVteXNxbBgCIAEoCzIZLmljZWhpdmUudjEuTXlTUUxTZXR0aW5ncyITChFMaXN0Q29uZmlnUmVxdWVzdCI5CglDb25maWdWYXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJEhAKCHJlZGFjdGVkGAMgASgIIjkKEkxpc3RDb25maWdSZXNwb25zZRIjCgR2YXJzGAEgAygLMhUuaWNlaGl2ZS52MS5Db25maWdWYXIiHwoQR2V0Q29uZmlnUmVxdWVzdBILCgNrZXkYASABKAkiNwoRR2V0Q29uZmlnUmVzcG9uc2USIgoDdmFyGAEgASgLMhUuaWNlaGl2ZS52MS5Db25maWdWYXIiLgoQU2V0Q29uZmlnUmVxdWVzdBILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAkiEwoRU2V0Q29uZmlnUmVzcG9uc2UiFQoTTGlzdFNlcnZpY2VzUmVxdWVzdCJXCg1TZXJ2aWNlU3RhdHVzEhQKDHNlcnZpY2VfbmFtZRgBIAEoCRIgChhsYXRlc3RfaGVhcnRiZWF0X3VuaXhfbXMYAiABKAMSDgoGc3RhdHVzGAMgASgJIkMKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEisKCHNlcnZpY2VzGAEgAygLMhkuaWNlaGl2ZS52MS5TZXJ2aWNlU3RhdHVzIocCChBDb2xsZWN0aW9uU291cmNlEgoKAmlkGAEgASgJEhYKDmNvbGxlY3Rvcl90eXBlGAIgASgJEhMKC3NvdXJjZV9zcGVjGAMgASgJEhEKCWNyb25fbGluZRgEIAEoCRIPCgdlbmFibGVkGAUgASgIEhgKEGxhc3RfcnVuX3VuaXhfbXMYBiABKAMSHAoUbGFzdF9zdWNjZXNzX3VuaXhfbXMYByABKAMSEgoKbGFzdF9lcnJvchgIIAEoCRIYChBuZXh0X2R1ZV91bml4X21zGAkgASgDEhcKD2NyZWF0ZWRfdW5peF9tcxgKIAEoAxIXCg91cGRhdGVkX3VuaXhfbXMYCyABKAMiNgocTGlzdENvbGxlY3Rpb25Tb3VyY2VzUmVxdWVzdBIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCSJOCh1MaXN0Q29sbGVjdGlvblNvdXJjZXNSZXNwb25zZRItCgdzb3VyY2VzGAEgAygLMhwuaWNlaGl2ZS52MS5Db2xsZWN0aW9uU291cmNlInMKFUNvbGxlY3RvclNvdXJjZVNjaGVtYRIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCRIWCg5zY2hlbWFfdmVyc2lvbhgCIAEoCRIRCglib2R5X2pzb24YAyABKAkSFwoPdXBkYXRlZF91bml4X21zGAQgASgDIjsKIUxpc3RDb2xsZWN0b3JTb3VyY2VTY2hlbWFzUmVxdWVzdBIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCSJYCiJMaXN0Q29sbGVjdG9yU291cmNlU2NoZW1hc1Jlc3BvbnNlEjIKB3NjaGVtYXMYASADKAsyIS5pY2VoaXZlLnYxLkNvbGxlY3RvclNvdXJjZVNjaGVtYSJNCh1VcHNlcnRDb2xsZWN0aW9uU291cmNlUmVxdWVzdBIsCgZzb3VyY2UYASABKAsyHC5pY2VoaXZlLnYxLkNvbGxlY3Rpb25Tb3VyY2UiTgoeVXBzZXJ0Q29sbGVjdGlvblNvdXJjZVJlc3BvbnNlEiwKBnNvdXJjZRgBIAEoCzIcLmljZWhpdmUudjEuQ29sbGVjdGlvblNvdXJjZSIrCh1EZWxldGVDb2xsZWN0aW9uU291cmNlUmVxdWVzdBIKCgJpZBgBIAEoCSIgCh5EZWxldGVDb2xsZWN0aW9uU291cmNlUmVzcG9uc2UifQogUmVwb3J0Q29sbGVjdGlvblNvdXJjZVJ1blJlcXVlc3QSCgoCaWQYASABKAkSEwoLcnVuX3VuaXhfbXMYAiABKAMSDwoHc3VjY2VzcxgDIAEoCBINCgVlcnJvchgEIAEoCRIYChBuZXh0X2R1ZV91bml4X21zGAUgASgDIiMKIVJlcG9ydENvbGxlY3Rpb25Tb3VyY2VSdW5SZXNwb25zZSJBChFDb2xsZWN0aW9uUmVxdWVzdBIsCgZzb3VyY2UYASABKAsyHC5pY2VoaXZlLnYxLkNvbGxlY3Rpb25Tb3VyY2UiiQEKH0VucXVldWVDb2xsZWN0aW9uUmVxdWVzdFJlcXVlc3QSHgoUY29sbGVjdGlvbl9zb3VyY2VfaWQYASABKAlIABI8ChRlcGhlbWVyYWxfY29sbGVjdGlvbhgCIAEoCzIcLmljZWhpdmUudjEuQ29sbGVjdGlvblNvdXJjZUgAQggKBnRhcmdldCIiCiBFbnF1ZXVlQ29sbGVjdGlvblJlcXVlc3RSZXNwb25zZTKiCQoRQ29udHJvbGxlclNlcnZpY2USPwoGSGVhbHRoEhkuaWNlaGl2ZS52MS5IZWFsdGhSZXF1ZXN0GhouaWNlaGl2ZS52MS5IZWFsdGhSZXNwb25zZRJaCg9Xb3JrZXJCb290c3RyYXASIi5pY2VoaXZlLnYxLldvcmtlckJvb3RzdHJhcFJlcXVlc3QaIy5pY2VoaXZlLnYxLldvcmtlckJvb3RzdHJhcFJlc3BvbnNlEksKCkxpc3RDb25maWcSHS5pY2VoaXZlLnYxLkxpc3RDb25maWdSZXF1ZXN0Gh4uaWNlaGl2ZS52MS5MaXN0Q29uZmlnUmVzcG9uc2USSAoJR2V0Q29uZmlnEhwuaWNlaGl2ZS52MS5HZXRDb25maWdSZXF1ZXN0Gh0uaWNlaGl2ZS52MS5HZXRDb25maWdSZXNwb25zZRJICglTZXRDb25maWcSHC5pY2VoaXZlLnYxLlNldENvbmZpZ1JlcXVlc3QaHS5pY2VoaXZlLnYxLlNldENvbmZpZ1Jlc3BvbnNlElEKDExpc3RTZXJ2aWNlcxIfLmljZWhpdmUudjEuTGlzdFNlcnZpY2VzUmVxdWVzdBogLmljZWhpdmUudjEuTGlzdFNlcnZpY2VzUmVzcG9uc2USbAoVTGlzdENvbGxlY3Rpb25Tb3VyY2VzEiguaWNlaGl2ZS52MS5MaXN0Q29sbGVjdGlvblNvdXJjZXNSZXF1ZXN0GikuaWNlaGl2ZS52MS5MaXN0Q29sbGVjdGlvblNvdXJjZXNSZXNwb25zZRJ7ChpMaXN0Q29sbGVjdG9yU291cmNlU2NoZW1hcxItLmljZWhpdmUudjEuTGlzdENvbGxlY3RvclNvdXJjZVNjaGVtYXNSZXF1ZXN0Gi4uaWNlaGl2ZS52MS5MaXN0Q29sbGVjdG9yU291cmNlU2NoZW1hc1Jlc3BvbnNlEm8KFlVwc2VydENvbGxlY3Rpb25Tb3VyY2USKS5pY2VoaXZlLnYxLlVwc2VydENvbGxlY3Rpb25Tb3VyY2VSZXF1ZXN0GiouaWNlaGl2ZS52MS5VcHNlcnRDb2xsZWN0aW9uU291cmNlUmVzcG9uc2USbwoWRGVsZXRlQ29sbGVjdGlvblNvdXJjZRIpLmljZWhpdmUudjEuRGVsZXRlQ29sbGVjdGlvblNvdXJjZVJlcXVlc3QaKi5pY2VoaXZlLnYxLkRlbGV0ZUNvbGxlY3Rpb25Tb3VyY2VSZXNwb25zZRJ4ChlSZXBvcnRDb2xsZWN0aW9uU291cmNlUnVuEiwuaWNlaGl2ZS52MS5SZXBvcnRDb2xsZWN0aW9uU291cmNlUnVuUmVxdWVzdBotLmljZWhpdmUudjEuUmVwb3J0Q29sbGVjdGlvblNvdXJjZVJ1blJlc3BvbnNlEnUKGEVucXVldWVDb2xsZWN0aW9uUmVxdWVzdBIrLmljZWhpdmUudjEuRW5xdWV1ZUNvbGxlY3Rpb25SZXF1ZXN0UmVxdWVzdBosLmljZWhpdmUudjEuRW5xdWV1ZUNvbGxlY3Rpb25SZXF1ZXN0UmVzcG9uc2VCswEKDmNvbS5pY2VoaXZlLnYxQg9Db250cm9sbGVyUHJvdG9QAVpHZ2l0aHViLmNvbS9pY2VoaXZlL2ljZWhpdmUvc2VydmljZXMvY29tbW9uL3BrZy9nZW4vaWNlaGl2ZS92MTtpY2VoaXZldjGiAgNJWFiqAgpJY2VoaXZlLlYxygIKSWNlaGl2ZVxWMeICFkljZWhpdmVcVjFcR1BCTWV0YWRhdGHqAgtJY2VoaXZlOjpWMWIGcHJvdG8z");
+  fileDesc("ChtpY2VoaXZlL3YxL2NvbnRyb2xsZXIucHJvdG8SCmljZWhpdmUudjEiDQoLSW5pdFJlcXVlc3QiHwoMSW5pdFJlc3BvbnNlEg8KB3ZlcnNpb24YASABKAkiDwoNSGVhbHRoUmVxdWVzdCIgCg5IZWFsdGhSZXNwb25zZRIOCgZzdGF0dXMYASABKAkiQAoWV29ya2VyQm9vdHN0cmFwUmVxdWVzdBITCgt3b3JrZXJfa2luZBgBIAEoCRIRCgl3b3JrZXJfaWQYAiABKAkiUQoMQU1RUFNldHRpbmdzEgsKA3VybBgBIAEoCRIQCghleGNoYW5nZRgCIAEoCRIiChpyb3V0aW5nX2tleV9jb250cm9sX2V2ZW50cxgDIAEoCSJdCg1NeVNRTFNldHRpbmdzEgwKBGhvc3QYASABKAkSDAoEcG9ydBgCIAEoBRIMCgR1c2VyGAMgASgJEhAKCHBhc3N3b3JkGAQgASgJEhAKCGRhdGFiYXNlGAUgASgJImsKF1dvcmtlckJvb3RzdHJhcFJlc3BvbnNlEiYKBGFtcXAYASABKAsyGC5pY2VoaXZlLnYxLkFNUVBTZXR0aW5ncxIoCgVteXNxbBgCIAEoCzIZLmljZWhpdmUudjEuTXlTUUxTZXR0aW5ncyITChFMaXN0Q29uZmlnUmVxdWVzdCI5CglDb25maWdWYXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJEhAKCHJlZGFjdGVkGAMgASgIIjkKEkxpc3RDb25maWdSZXNwb25zZRIjCgR2YXJzGAEgAygLMhUuaWNlaGl2ZS52MS5Db25maWdWYXIiHwoQR2V0Q29uZmlnUmVxdWVzdBILCgNrZXkYASABKAkiNwoRR2V0Q29uZmlnUmVzcG9uc2USIgoDdmFyGAEgASgLMhUuaWNlaGl2ZS52MS5Db25maWdWYXIiLgoQU2V0Q29uZmlnUmVxdWVzdBILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAkiEwoRU2V0Q29uZmlnUmVzcG9uc2UiFQoTTGlzdFNlcnZpY2VzUmVxdWVzdCJXCg1TZXJ2aWNlU3RhdHVzEhQKDHNlcnZpY2VfbmFtZRgBIAEoCRIgChhsYXRlc3RfaGVhcnRiZWF0X3VuaXhfbXMYAiABKAMSDgoGc3RhdHVzGAMgASgJIkMKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEisKCHNlcnZpY2VzGAEgAygLMhkuaWNlaGl2ZS52MS5TZXJ2aWNlU3RhdHVzIocCChBDb2xsZWN0aW9uU291cmNlEgoKAmlkGAEgASgJEhYKDmNvbGxlY3Rvcl90eXBlGAIgASgJEhMKC3NvdXJjZV9zcGVjGAMgASgJEhEKCWNyb25fbGluZRgEIAEoCRIPCgdlbmFibGVkGAUgASgIEhgKEGxhc3RfcnVuX3VuaXhfbXMYBiABKAMSHAoUbGFzdF9zdWNjZXNzX3VuaXhfbXMYByABKAMSEgoKbGFzdF9lcnJvchgIIAEoCRIYChBuZXh0X2R1ZV91bml4X21zGAkgASgDEhcKD2NyZWF0ZWRfdW5peF9tcxgKIAEoAxIXCg91cGRhdGVkX3VuaXhfbXMYCyABKAMiNgocTGlzdENvbGxlY3Rpb25Tb3VyY2VzUmVxdWVzdBIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCSJOCh1MaXN0Q29sbGVjdGlvblNvdXJjZXNSZXNwb25zZRItCgdzb3VyY2VzGAEgAygLMhwuaWNlaGl2ZS52MS5Db2xsZWN0aW9uU291cmNlInMKFUNvbGxlY3RvclNvdXJjZVNjaGVtYRIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCRIWCg5zY2hlbWFfdmVyc2lvbhgCIAEoCRIRCglib2R5X2pzb24YAyABKAkSFwoPdXBkYXRlZF91bml4X21zGAQgASgDIjsKIUxpc3RDb2xsZWN0b3JTb3VyY2VTY2hlbWFzUmVxdWVzdBIWCg5jb2xsZWN0b3JfdHlwZRgBIAEoCSJYCiJMaXN0Q29sbGVjdG9yU291cmNlU2NoZW1hc1Jlc3BvbnNlEjIKB3NjaGVtYXMYASADKAsyIS5pY2VoaXZlLnYxLkNvbGxlY3RvclNvdXJjZVNjaGVtYSJNCh1VcHNlcnRDb2xsZWN0aW9uU291cmNlUmVxdWVzdBIsCgZzb3VyY2UYASABKAsyHC5pY2VoaXZlLnYxLkNvbGxlY3Rpb25Tb3VyY2UiTgoeVXBzZXJ0Q29sbGVjdGlvblNvdXJjZVJlc3BvbnNlEiwKBnNvdXJjZRgBIAEoCzIcLmljZWhpdmUudjEuQ29sbGVjdGlvblNvdXJjZSIrCh1EZWxldGVDb2xsZWN0aW9uU291cmNlUmVxdWVzdBIKCgJpZBgBIAEoCSIgCh5EZWxldGVDb2xsZWN0aW9uU291cmNlUmVzcG9uc2UifQogUmVwb3J0Q29sbGVjdGlvblNvdXJjZVJ1blJlcXVlc3QSCgoCaWQYASABKAkSEwoLcnVuX3VuaXhfbXMYAiABKAMSDwoHc3VjY2VzcxgDIAEoCBINCgVlcnJvchgEIAEoCRIYChBuZXh0X2R1ZV91bml4X21zGAUgASgDIiMKIVJlcG9ydENvbGxlY3Rpb25Tb3VyY2VSdW5SZXNwb25zZSJBChFDb2xsZWN0aW9uUmVxdWVzdBIsCgZzb3VyY2UYASABKAsyHC5pY2VoaXZlLnYxLkNvbGxlY3Rpb25Tb3VyY2UiiQEKH0VucXVldWVDb2xsZWN0aW9uUmVxdWVzdFJlcXVlc3QSHgoUY29sbGVjdGlvbl9zb3VyY2VfaWQYASABKAlIABI8ChRlcGhlbWVyYWxfY29sbGVjdGlvbhgCIAEoCzIcLmljZWhpdmUudjEuQ29sbGVjdGlvblNvdXJjZUgAQggKBnRhcmdldCIiCiBFbnF1ZXVlQ29sbGVjdGlvblJlcXVlc3RSZXNwb25zZTLdCQoRQ29udHJvbGxlclNlcnZpY2USOQoESW5pdBIXLmljZWhpdmUudjEuSW5pdFJlcXVlc3QaGC5pY2VoaXZlLnYxLkluaXRSZXNwb25zZRI/CgZIZWFsdGgSGS5pY2VoaXZlLnYxLkhlYWx0aFJlcXVlc3QaGi5pY2VoaXZlLnYxLkhlYWx0aFJlc3BvbnNlEloKD1dvcmtlckJvb3RzdHJhcBIiLmljZWhpdmUudjEuV29ya2VyQm9vdHN0cmFwUmVxdWVzdBojLmljZWhpdmUudjEuV29ya2VyQm9vdHN0cmFwUmVzcG9uc2USSwoKTGlzdENvbmZpZxIdLmljZWhpdmUudjEuTGlzdENvbmZpZ1JlcXVlc3QaHi5pY2VoaXZlLnYxLkxpc3RDb25maWdSZXNwb25zZRJICglHZXRDb25maWcSHC5pY2VoaXZlLnYxLkdldENvbmZpZ1JlcXVlc3QaHS5pY2VoaXZlLnYxLkdldENvbmZpZ1Jlc3BvbnNlEkgKCVNldENvbmZpZxIcLmljZWhpdmUudjEuU2V0Q29uZmlnUmVxdWVzdBodLmljZWhpdmUudjEuU2V0Q29uZmlnUmVzcG9uc2USUQoMTGlzdFNlcnZpY2VzEh8uaWNlaGl2ZS52MS5MaXN0U2VydmljZXNSZXF1ZXN0GiAuaWNlaGl2ZS52MS5MaXN0U2VydmljZXNSZXNwb25zZRJsChVMaXN0Q29sbGVjdGlvblNvdXJjZXMSKC5pY2VoaXZlLnYxLkxpc3RDb2xsZWN0aW9uU291cmNlc1JlcXVlc3QaKS5pY2VoaXZlLnYxLkxpc3RDb2xsZWN0aW9uU291cmNlc1Jlc3BvbnNlEnsKGkxpc3RDb2xsZWN0b3JTb3VyY2VTY2hlbWFzEi0uaWNlaGl2ZS52MS5MaXN0Q29sbGVjdG9yU291cmNlU2NoZW1hc1JlcXVlc3QaLi5pY2VoaXZlLnYxLkxpc3RDb2xsZWN0b3JTb3VyY2VTY2hlbWFzUmVzcG9uc2USbwoWVXBzZXJ0Q29sbGVjdGlvblNvdXJjZRIpLmljZWhpdmUudjEuVXBzZXJ0Q29sbGVjdGlvblNvdXJjZVJlcXVlc3QaKi5pY2VoaXZlLnYxLlVwc2VydENvbGxlY3Rpb25Tb3VyY2VSZXNwb25zZRJvChZEZWxldGVDb2xsZWN0aW9uU291cmNlEikuaWNlaGl2ZS52MS5EZWxldGVDb2xsZWN0aW9uU291cmNlUmVxdWVzdBoqLmljZWhpdmUudjEuRGVsZXRlQ29sbGVjdGlvblNvdXJjZVJlc3BvbnNlEngKGVJlcG9ydENvbGxlY3Rpb25Tb3VyY2VSdW4SLC5pY2VoaXZlLnYxLlJlcG9ydENvbGxlY3Rpb25Tb3VyY2VSdW5SZXF1ZXN0Gi0uaWNlaGl2ZS52MS5SZXBvcnRDb2xsZWN0aW9uU291cmNlUnVuUmVzcG9uc2USdQoYRW5xdWV1ZUNvbGxlY3Rpb25SZXF1ZXN0EisuaWNlaGl2ZS52MS5FbnF1ZXVlQ29sbGVjdGlvblJlcXVlc3RSZXF1ZXN0GiwuaWNlaGl2ZS52MS5FbnF1ZXVlQ29sbGVjdGlvblJlcXVlc3RSZXNwb25zZUKzAQoOY29tLmljZWhpdmUudjFCD0NvbnRyb2xsZXJQcm90b1ABWkdnaXRodWIuY29tL2ljZWhpdmUvaWNlaGl2ZS9zZXJ2aWNlcy9jb21tb24vcGtnL2dlbi9pY2VoaXZlL3YxO2ljZWhpdmV2MaICA0lYWKoCCkljZWhpdmUuVjHKAgpJY2VoaXZlXFYx4gIWSWNlaGl2ZVxWMVxHUEJNZXRhZGF0YeoCC0ljZWhpdmU6OlYxYgZwcm90bzM");
+
+/**
+ * @generated from message icehive.v1.InitRequest
+ */
+export type InitRequest = Message<"icehive.v1.InitRequest"> & {
+};
+
+/**
+ * Describes the message icehive.v1.InitRequest.
+ * Use `create(InitRequestSchema)` to create a new message.
+ */
+export const InitRequestSchema: GenMessage<InitRequest> = /*@__PURE__*/
+  messageDesc(file_icehive_v1_controller, 0);
+
+/**
+ * @generated from message icehive.v1.InitResponse
+ */
+export type InitResponse = Message<"icehive.v1.InitResponse"> & {
+  /**
+   * Application version (semver or dev snapshot) from the controller binary.
+   *
+   * @generated from field: string version = 1;
+   */
+  version: string;
+};
+
+/**
+ * Describes the message icehive.v1.InitResponse.
+ * Use `create(InitResponseSchema)` to create a new message.
+ */
+export const InitResponseSchema: GenMessage<InitResponse> = /*@__PURE__*/
+  messageDesc(file_icehive_v1_controller, 1);
 
 /**
  * @generated from message icehive.v1.HealthRequest
@@ -23,7 +55,7 @@ export type HealthRequest = Message<"icehive.v1.HealthRequest"> & {
  * Use `create(HealthRequestSchema)` to create a new message.
  */
 export const HealthRequestSchema: GenMessage<HealthRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 0);
+  messageDesc(file_icehive_v1_controller, 2);
 
 /**
  * @generated from message icehive.v1.HealthResponse
@@ -42,7 +74,7 @@ export type HealthResponse = Message<"icehive.v1.HealthResponse"> & {
  * Use `create(HealthResponseSchema)` to create a new message.
  */
 export const HealthResponseSchema: GenMessage<HealthResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 1);
+  messageDesc(file_icehive_v1_controller, 3);
 
 /**
  * WorkerBootstrapRequest identifies the calling worker binary.
@@ -66,7 +98,7 @@ export type WorkerBootstrapRequest = Message<"icehive.v1.WorkerBootstrapRequest"
  * Use `create(WorkerBootstrapRequestSchema)` to create a new message.
  */
 export const WorkerBootstrapRequestSchema: GenMessage<WorkerBootstrapRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 2);
+  messageDesc(file_icehive_v1_controller, 4);
 
 /**
  * AMQPSettings describes how workers should connect to the message broker.
@@ -95,7 +127,7 @@ export type AMQPSettings = Message<"icehive.v1.AMQPSettings"> & {
  * Use `create(AMQPSettingsSchema)` to create a new message.
  */
 export const AMQPSettingsSchema: GenMessage<AMQPSettings> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 3);
+  messageDesc(file_icehive_v1_controller, 5);
 
 /**
  * MySQLSettings describes how workers should connect to a MySQL database.
@@ -134,7 +166,7 @@ export type MySQLSettings = Message<"icehive.v1.MySQLSettings"> & {
  * Use `create(MySQLSettingsSchema)` to create a new message.
  */
 export const MySQLSettingsSchema: GenMessage<MySQLSettings> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 4);
+  messageDesc(file_icehive_v1_controller, 6);
 
 /**
  * WorkerBootstrapResponse is returned by the Controller for collector/persister startup.
@@ -160,7 +192,7 @@ export type WorkerBootstrapResponse = Message<"icehive.v1.WorkerBootstrapRespons
  * Use `create(WorkerBootstrapResponseSchema)` to create a new message.
  */
 export const WorkerBootstrapResponseSchema: GenMessage<WorkerBootstrapResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 5);
+  messageDesc(file_icehive_v1_controller, 7);
 
 /**
  * @generated from message icehive.v1.ListConfigRequest
@@ -173,7 +205,7 @@ export type ListConfigRequest = Message<"icehive.v1.ListConfigRequest"> & {
  * Use `create(ListConfigRequestSchema)` to create a new message.
  */
 export const ListConfigRequestSchema: GenMessage<ListConfigRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 6);
+  messageDesc(file_icehive_v1_controller, 8);
 
 /**
  * @generated from message icehive.v1.ConfigVar
@@ -202,7 +234,7 @@ export type ConfigVar = Message<"icehive.v1.ConfigVar"> & {
  * Use `create(ConfigVarSchema)` to create a new message.
  */
 export const ConfigVarSchema: GenMessage<ConfigVar> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 7);
+  messageDesc(file_icehive_v1_controller, 9);
 
 /**
  * @generated from message icehive.v1.ListConfigResponse
@@ -219,7 +251,7 @@ export type ListConfigResponse = Message<"icehive.v1.ListConfigResponse"> & {
  * Use `create(ListConfigResponseSchema)` to create a new message.
  */
 export const ListConfigResponseSchema: GenMessage<ListConfigResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 8);
+  messageDesc(file_icehive_v1_controller, 10);
 
 /**
  * @generated from message icehive.v1.GetConfigRequest
@@ -236,7 +268,7 @@ export type GetConfigRequest = Message<"icehive.v1.GetConfigRequest"> & {
  * Use `create(GetConfigRequestSchema)` to create a new message.
  */
 export const GetConfigRequestSchema: GenMessage<GetConfigRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 9);
+  messageDesc(file_icehive_v1_controller, 11);
 
 /**
  * @generated from message icehive.v1.GetConfigResponse
@@ -253,7 +285,7 @@ export type GetConfigResponse = Message<"icehive.v1.GetConfigResponse"> & {
  * Use `create(GetConfigResponseSchema)` to create a new message.
  */
 export const GetConfigResponseSchema: GenMessage<GetConfigResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 10);
+  messageDesc(file_icehive_v1_controller, 12);
 
 /**
  * @generated from message icehive.v1.SetConfigRequest
@@ -275,7 +307,7 @@ export type SetConfigRequest = Message<"icehive.v1.SetConfigRequest"> & {
  * Use `create(SetConfigRequestSchema)` to create a new message.
  */
 export const SetConfigRequestSchema: GenMessage<SetConfigRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 11);
+  messageDesc(file_icehive_v1_controller, 13);
 
 /**
  * @generated from message icehive.v1.SetConfigResponse
@@ -288,7 +320,7 @@ export type SetConfigResponse = Message<"icehive.v1.SetConfigResponse"> & {
  * Use `create(SetConfigResponseSchema)` to create a new message.
  */
 export const SetConfigResponseSchema: GenMessage<SetConfigResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 12);
+  messageDesc(file_icehive_v1_controller, 14);
 
 /**
  * @generated from message icehive.v1.ListServicesRequest
@@ -301,7 +333,7 @@ export type ListServicesRequest = Message<"icehive.v1.ListServicesRequest"> & {
  * Use `create(ListServicesRequestSchema)` to create a new message.
  */
 export const ListServicesRequestSchema: GenMessage<ListServicesRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 13);
+  messageDesc(file_icehive_v1_controller, 15);
 
 /**
  * @generated from message icehive.v1.ServiceStatus
@@ -328,7 +360,7 @@ export type ServiceStatus = Message<"icehive.v1.ServiceStatus"> & {
  * Use `create(ServiceStatusSchema)` to create a new message.
  */
 export const ServiceStatusSchema: GenMessage<ServiceStatus> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 14);
+  messageDesc(file_icehive_v1_controller, 16);
 
 /**
  * @generated from message icehive.v1.ListServicesResponse
@@ -345,7 +377,7 @@ export type ListServicesResponse = Message<"icehive.v1.ListServicesResponse"> & 
  * Use `create(ListServicesResponseSchema)` to create a new message.
  */
 export const ListServicesResponseSchema: GenMessage<ListServicesResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 15);
+  messageDesc(file_icehive_v1_controller, 17);
 
 /**
  * @generated from message icehive.v1.CollectionSource
@@ -415,7 +447,7 @@ export type CollectionSource = Message<"icehive.v1.CollectionSource"> & {
  * Use `create(CollectionSourceSchema)` to create a new message.
  */
 export const CollectionSourceSchema: GenMessage<CollectionSource> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 16);
+  messageDesc(file_icehive_v1_controller, 18);
 
 /**
  * @generated from message icehive.v1.ListCollectionSourcesRequest
@@ -432,7 +464,7 @@ export type ListCollectionSourcesRequest = Message<"icehive.v1.ListCollectionSou
  * Use `create(ListCollectionSourcesRequestSchema)` to create a new message.
  */
 export const ListCollectionSourcesRequestSchema: GenMessage<ListCollectionSourcesRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 17);
+  messageDesc(file_icehive_v1_controller, 19);
 
 /**
  * @generated from message icehive.v1.ListCollectionSourcesResponse
@@ -449,7 +481,7 @@ export type ListCollectionSourcesResponse = Message<"icehive.v1.ListCollectionSo
  * Use `create(ListCollectionSourcesResponseSchema)` to create a new message.
  */
 export const ListCollectionSourcesResponseSchema: GenMessage<ListCollectionSourcesResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 18);
+  messageDesc(file_icehive_v1_controller, 20);
 
 /**
  * @generated from message icehive.v1.CollectorSourceSchema
@@ -483,7 +515,7 @@ export type CollectorSourceSchema = Message<"icehive.v1.CollectorSourceSchema"> 
  * Use `create(CollectorSourceSchemaSchema)` to create a new message.
  */
 export const CollectorSourceSchemaSchema: GenMessage<CollectorSourceSchema> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 19);
+  messageDesc(file_icehive_v1_controller, 21);
 
 /**
  * @generated from message icehive.v1.ListCollectorSourceSchemasRequest
@@ -502,7 +534,7 @@ export type ListCollectorSourceSchemasRequest = Message<"icehive.v1.ListCollecto
  * Use `create(ListCollectorSourceSchemasRequestSchema)` to create a new message.
  */
 export const ListCollectorSourceSchemasRequestSchema: GenMessage<ListCollectorSourceSchemasRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 20);
+  messageDesc(file_icehive_v1_controller, 22);
 
 /**
  * @generated from message icehive.v1.ListCollectorSourceSchemasResponse
@@ -519,7 +551,7 @@ export type ListCollectorSourceSchemasResponse = Message<"icehive.v1.ListCollect
  * Use `create(ListCollectorSourceSchemasResponseSchema)` to create a new message.
  */
 export const ListCollectorSourceSchemasResponseSchema: GenMessage<ListCollectorSourceSchemasResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 21);
+  messageDesc(file_icehive_v1_controller, 23);
 
 /**
  * @generated from message icehive.v1.UpsertCollectionSourceRequest
@@ -536,7 +568,7 @@ export type UpsertCollectionSourceRequest = Message<"icehive.v1.UpsertCollection
  * Use `create(UpsertCollectionSourceRequestSchema)` to create a new message.
  */
 export const UpsertCollectionSourceRequestSchema: GenMessage<UpsertCollectionSourceRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 22);
+  messageDesc(file_icehive_v1_controller, 24);
 
 /**
  * @generated from message icehive.v1.UpsertCollectionSourceResponse
@@ -553,7 +585,7 @@ export type UpsertCollectionSourceResponse = Message<"icehive.v1.UpsertCollectio
  * Use `create(UpsertCollectionSourceResponseSchema)` to create a new message.
  */
 export const UpsertCollectionSourceResponseSchema: GenMessage<UpsertCollectionSourceResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 23);
+  messageDesc(file_icehive_v1_controller, 25);
 
 /**
  * @generated from message icehive.v1.DeleteCollectionSourceRequest
@@ -570,7 +602,7 @@ export type DeleteCollectionSourceRequest = Message<"icehive.v1.DeleteCollection
  * Use `create(DeleteCollectionSourceRequestSchema)` to create a new message.
  */
 export const DeleteCollectionSourceRequestSchema: GenMessage<DeleteCollectionSourceRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 24);
+  messageDesc(file_icehive_v1_controller, 26);
 
 /**
  * @generated from message icehive.v1.DeleteCollectionSourceResponse
@@ -583,7 +615,7 @@ export type DeleteCollectionSourceResponse = Message<"icehive.v1.DeleteCollectio
  * Use `create(DeleteCollectionSourceResponseSchema)` to create a new message.
  */
 export const DeleteCollectionSourceResponseSchema: GenMessage<DeleteCollectionSourceResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 25);
+  messageDesc(file_icehive_v1_controller, 27);
 
 /**
  * @generated from message icehive.v1.ReportCollectionSourceRunRequest
@@ -620,7 +652,7 @@ export type ReportCollectionSourceRunRequest = Message<"icehive.v1.ReportCollect
  * Use `create(ReportCollectionSourceRunRequestSchema)` to create a new message.
  */
 export const ReportCollectionSourceRunRequestSchema: GenMessage<ReportCollectionSourceRunRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 26);
+  messageDesc(file_icehive_v1_controller, 28);
 
 /**
  * @generated from message icehive.v1.ReportCollectionSourceRunResponse
@@ -633,7 +665,7 @@ export type ReportCollectionSourceRunResponse = Message<"icehive.v1.ReportCollec
  * Use `create(ReportCollectionSourceRunResponseSchema)` to create a new message.
  */
 export const ReportCollectionSourceRunResponseSchema: GenMessage<ReportCollectionSourceRunResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 27);
+  messageDesc(file_icehive_v1_controller, 29);
 
 /**
  * CollectionRequest is the JSON (protojson) body published to AMQP for on-demand collection.
@@ -652,7 +684,7 @@ export type CollectionRequest = Message<"icehive.v1.CollectionRequest"> & {
  * Use `create(CollectionRequestSchema)` to create a new message.
  */
 export const CollectionRequestSchema: GenMessage<CollectionRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 28);
+  messageDesc(file_icehive_v1_controller, 30);
 
 /**
  * @generated from message icehive.v1.EnqueueCollectionRequestRequest
@@ -687,7 +719,7 @@ export type EnqueueCollectionRequestRequest = Message<"icehive.v1.EnqueueCollect
  * Use `create(EnqueueCollectionRequestRequestSchema)` to create a new message.
  */
 export const EnqueueCollectionRequestRequestSchema: GenMessage<EnqueueCollectionRequestRequest> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 29);
+  messageDesc(file_icehive_v1_controller, 31);
 
 /**
  * @generated from message icehive.v1.EnqueueCollectionRequestResponse
@@ -700,7 +732,7 @@ export type EnqueueCollectionRequestResponse = Message<"icehive.v1.EnqueueCollec
  * Use `create(EnqueueCollectionRequestResponseSchema)` to create a new message.
  */
 export const EnqueueCollectionRequestResponseSchema: GenMessage<EnqueueCollectionRequestResponse> = /*@__PURE__*/
-  messageDesc(file_icehive_v1_controller, 30);
+  messageDesc(file_icehive_v1_controller, 32);
 
 /**
  * ControllerService exposes the primary API clients use to request and inspect data.
@@ -708,6 +740,16 @@ export const EnqueueCollectionRequestResponseSchema: GenMessage<EnqueueCollectio
  * @generated from service icehive.v1.ControllerService
  */
 export const ControllerService: GenService<{
+  /**
+   * Init should be the first call from UI clients; returns server version and confirms connectivity.
+   *
+   * @generated from rpc icehive.v1.ControllerService.Init
+   */
+  init: {
+    methodKind: "unary";
+    input: typeof InitRequestSchema;
+    output: typeof InitResponseSchema;
+  },
   /**
    * Health indicates whether the Controller process is reachable.
    *
@@ -825,4 +867,3 @@ export const ControllerService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_icehive_v1_controller, 0);
-
