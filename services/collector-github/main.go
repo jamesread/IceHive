@@ -43,6 +43,7 @@ func githubWork(
 	if amqpClient == nil {
 		return errors.New("nil AMQP client")
 	}
+	issueColl := newIssueCollector(k)
 	if err := sourceschema.Publish(ctx, amqpClient, sourceschema.GitHubV1()); err != nil {
 		log.WithError(err).Warn("publish SourceSchema failed")
 	}
@@ -52,13 +53,13 @@ func githubWork(
 			pollSec = v
 		}
 	}
-	startCollectionRequestConsumer(ctx, log, amqpClient, controllerBaseURL)
+	startCollectionRequestConsumer(ctx, log, amqpClient, controllerBaseURL, issueColl)
 
 	ticker := time.NewTicker(time.Duration(pollSec) * time.Second)
 	defer ticker.Stop()
 
 	for {
-		if err := runGithubPoll(ctx, log, amqpClient, controllerBaseURL); err != nil && !errors.Is(err, context.Canceled) {
+		if err := runGithubPoll(ctx, log, amqpClient, controllerBaseURL, issueColl); err != nil && !errors.Is(err, context.Canceled) {
 			log.WithError(err).Warn("github collector poll tick failed")
 		}
 		select {
@@ -69,7 +70,7 @@ func githubWork(
 	}
 }
 
-func runGithubPoll(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) error {
+func runGithubPoll(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) error {
 	token, err := getGitHubToken(ctx, controllerBaseURL)
 	if err != nil {
 		return err
@@ -88,7 +89,7 @@ func runGithubPoll(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.
 		if !collectionSourceDue(src, now) {
 			continue
 		}
-		runOneSource(ctx, log, amqpClient, controllerBaseURL, ghClient, src, now)
+		runOneSource(ctx, log, amqpClient, controllerBaseURL, ghClient, src, now, issueColl)
 	}
 	return nil
 }
@@ -133,6 +134,7 @@ func runOneSource(
 	ghClient *github.Client,
 	src *icehivev1.CollectionSource,
 	now time.Time,
+	issueColl *issueCollector,
 ) {
 	cronLine := strings.TrimSpace(src.GetCronLine())
 	runNowOnly := cronLine == ""
@@ -159,6 +161,7 @@ func runOneSource(
 		"source_spec":     src.GetSourceSpec(),
 		"opt_dependabot":  srcOpts.Dependabot,
 		"opt_prs":         srcOpts.PRs,
+		"opt_issues":      srcOpts.Issues,
 		"all_under_login": allUnderLogin,
 		"resolved_owner":  owner,
 		"resolved_repo":   repoName,
@@ -236,6 +239,40 @@ func runOneSource(
 				}
 			}
 		}
+		var issueResult issuesCollectionResult
+		if srcOpts.Issues {
+			if repo.GetArchived() {
+				log.WithFields(logrus.Fields{
+					"source_id": src.GetId(),
+					"repo":      repo.GetFullName(),
+					"reason":    "archived_repo_issue_snap_nil",
+				}).Warn("github +issue: skipping issue list for archived repo")
+			} else {
+				issueResult = issueColl.Collect(ctx, log, ghClient, repoOwnerLogin(repo), repo.GetName(), repo)
+				if issueResult.Err != "" {
+					log.WithFields(logrus.Fields{
+						"source_id": src.GetId(),
+						"repo":      repo.GetFullName(),
+						"error":     issueResult.Err,
+					}).Warn("github issues fetch failed")
+				} else if issueResult.CacheHit {
+					log.WithFields(logrus.Fields{
+						"source_id":         src.GetId(),
+						"repo":              repo.GetFullName(),
+						"unchanged_skipped": issueResult.UnchangedSkipped,
+					}).Info("github issues unchanged; skipped fetch and publish")
+				} else {
+					log.WithFields(logrus.Fields{
+						"source_id":         src.GetId(),
+						"repo":              repo.GetFullName(),
+						"issue_fetched":     issueResult.FetchedCount,
+						"issue_published":   len(issueResult.IssuesToPublish),
+						"unchanged_skipped": issueResult.UnchangedSkipped,
+						"issue_fetch_capped": issueResult.FetchCapped,
+					}).Debug("github issues collection attached to collection run")
+				}
+			}
+		}
 		entity := buildGitRepoEntity(repo, depSnap, prSnap)
 		if err := publishCollectorEntity(ctx, amqpClient, entity); err != nil {
 			_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
@@ -255,6 +292,23 @@ func runOneSource(
 					log.WithError(err).WithFields(logrus.Fields{
 						"source_id": src.GetId(), "repo": repo.GetFullName(),
 					}).Warn("publish DependabotIssue entity failed")
+					return
+				}
+			}
+		}
+		if issueResult.Err == "" {
+			for _, issue := range issueResult.IssuesToPublish {
+				ghIssueEntity, ok := buildGitHubIssueEntity(repo, issue)
+				if !ok {
+					continue
+				}
+				if err := publishCollectorEntity(ctx, amqpClient, ghIssueEntity); err != nil {
+					after := time.Now().UTC()
+					nextDue = nextDueForReport(sched, after, runNowOnly)
+					_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
+					log.WithError(err).WithFields(logrus.Fields{
+						"source_id": src.GetId(), "repo": repo.GetFullName(),
+					}).Warn("publish GitHubIssue entity failed")
 					return
 				}
 			}

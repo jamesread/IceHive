@@ -105,6 +105,7 @@ func GitHubV1() *Document {
 		Modifiers: []Modifier{
 			{ID: "dependabot", Label: "Dependabot alerts", Kind: "boolean", SyntaxSuffix: "dependabot"},
 			{ID: "pr", Label: "Pull requests (open + closed, non-archived repos)", Kind: "boolean", SyntaxSuffix: "pr"},
+			{ID: "issue", Label: "Issues (open + closed, non-archived repos)", Kind: "boolean", SyntaxSuffix: "issue"},
 		},
 		Cron: &CronHint{
 			Optional:    true,

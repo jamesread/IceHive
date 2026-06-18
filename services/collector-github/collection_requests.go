@@ -16,7 +16,7 @@ const collectionRequestQueueLogical = "collector-github-collection-requests"
 var collectionRequestJSON = protojson.UnmarshalOptions{DiscardUnknown: true}
 
 // consumeCollectionRequests blocks until ctx is cancelled, dispatching AMQP CollectionRequest payloads.
-func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) error {
+func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) error {
 	rk := amqpctl.CollectorCollectionRequestRoutingKey(collectorGitHubType)
 	q := amqpctl.QueueName(collectionRequestQueueLogical)
 	if err := amqpClient.EnsureQueue(q, rk); err != nil {
@@ -41,15 +41,15 @@ func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClie
 			return err
 		}
 		gh := newGitHubHTTPClient(hctx, token)
-		runOneSource(hctx, log, amqpClient, controllerBaseURL, gh, src, time.Now().UTC())
+		runOneSource(hctx, log, amqpClient, controllerBaseURL, gh, src, time.Now().UTC(), issueColl)
 		return nil
 	})
 }
 
-func startCollectionRequestConsumer(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) {
+func startCollectionRequestConsumer(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) {
 	go func() {
 		for {
-			err := consumeCollectionRequests(ctx, log, amqpClient, controllerBaseURL)
+			err := consumeCollectionRequests(ctx, log, amqpClient, controllerBaseURL, issueColl)
 			if err == nil || errors.Is(err, context.Canceled) {
 				return
 			}

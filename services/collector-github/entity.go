@@ -15,7 +15,9 @@ import (
 const (
 	entityTypeGitRepo          = "GitRepo"
 	entityTypeDependabotIssue  = "DependabotIssue"
+	entityTypeGitHubIssue      = "GitHubIssue"
 	maxSummaryLen              = 4096
+	maxBodyLen                 = 16384
 	maxURLLen                  = 2048
 )
 
@@ -75,6 +77,29 @@ func dependabotIssueSourceUniqueID(repoNodeID string, a *github.DependabotAlert)
 	}
 	sum := sha256.Sum256([]byte(repoNodeID + ":" + u))
 	return norm.NFC.String(fmt.Sprintf("%s:dependabot:url:%x", repoNodeID, sum[:12]))
+}
+
+// githubIssueSourceUniqueID returns a stable id for this issue within GitHub.
+func githubIssueSourceUniqueID(repoNodeID string, issue *github.Issue) string {
+	if issue == nil {
+		return ""
+	}
+	if nid := norm.NFC.String(strings.TrimSpace(issue.GetNodeID())); nid != "" {
+		return nid
+	}
+	repoNodeID = norm.NFC.String(strings.TrimSpace(repoNodeID))
+	if repoNodeID == "" {
+		return ""
+	}
+	if n := issue.GetNumber(); n != 0 {
+		return norm.NFC.String(fmt.Sprintf("%s:issue:%d", repoNodeID, n))
+	}
+	u := norm.NFC.String(strings.TrimSpace(issue.GetHTMLURL()))
+	if u == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(repoNodeID + ":" + u))
+	return norm.NFC.String(fmt.Sprintf("%s:issue:url:%x", repoNodeID, sum[:12]))
 }
 
 type sourceHash struct {
@@ -297,6 +322,105 @@ func buildDependabotIssueEntity(repo *github.Repository, a *github.DependabotAle
 		SchemaVersion: "v1",
 		Metadata: collectorMetadata{
 			EntityType:          entityTypeDependabotIssue,
+			SourceSystem:        "github",
+			SourceCollectorType: collectorGitHubType,
+			SourceUniqueID:      issueUID,
+			SourceHash:          sourceHashForUniqueID(issueUID),
+			ObservedUnixMS:      now,
+			RecollectSpec:       gitHubRepoRecollectSpec(repo),
+		},
+		Structure: structure,
+		Values:    values,
+	}, true
+}
+
+// buildGitHubIssueEntity maps one GitHub issue to a GitHubIssue entity.
+// values.git_repo_source_unique_id matches collectormetadata.source_unique_id on the GitRepo entity
+// for the same repository (GitHub repository node_id, NFC).
+func buildGitHubIssueEntity(repo *github.Repository, issue *github.Issue) (entityMessage, bool) {
+	if repo == nil || issue == nil || issue.IsPullRequest() {
+		return entityMessage{}, false
+	}
+	repoUID := norm.NFC.String(repo.GetNodeID())
+	issueUID := githubIssueSourceUniqueID(repoUID, issue)
+	if issueUID == "" {
+		return entityMessage{}, false
+	}
+	now := time.Now().UnixMilli()
+
+	structure := map[string]fieldDescriptor{
+		"git_repo_source_unique_id": {Type: "string", Length: 255},
+		"git_repo_full_name":        {Type: "string", Length: 255},
+		"git_repo_html_url":         {Type: "string", Length: maxURLLen},
+		"issue_number":              {Type: "int64"},
+		"html_url":                  {Type: "string", Length: maxURLLen},
+		"api_url":                   {Type: "string", Length: maxURLLen},
+		"state":                     {Type: "string", Length: 64},
+		"state_reason":              {Type: "string", Length: 64},
+		"title":                     {Type: "string", Length: 2048},
+		"body":                      {Type: "string", Length: maxBodyLen},
+		"user_login":                {Type: "string", Length: 255},
+		"locked":                    {Type: "bool"},
+		"draft":                     {Type: "bool"},
+		"comments_count":            {Type: "int64"},
+		"labels":                    {Type: "string", Length: 4096},
+		"assignees":                 {Type: "string", Length: 4096},
+		"milestone_title":           {Type: "string", Length: 512},
+		"milestone_number":          {Type: "int64"},
+		"issue_created_at":          {Type: "string", Length: 64},
+		"issue_updated_at":          {Type: "string", Length: 64},
+		"issue_closed_at":           {Type: "string", Length: 64},
+	}
+
+	userLogin := ""
+	if u := issue.GetUser(); u != nil {
+		userLogin = norm.NFC.String(u.GetLogin())
+	}
+	milestoneTitle := ""
+	var milestoneNumber int64
+	if m := issue.GetMilestone(); m != nil {
+		milestoneTitle = truncStr(norm.NFC.String(m.GetTitle()), 512)
+		milestoneNumber = int64(m.GetNumber())
+	}
+
+	values := map[string]any{
+		"git_repo_source_unique_id": repoUID,
+		"git_repo_full_name":        norm.NFC.String(repo.GetFullName()),
+		"git_repo_html_url":         truncStr(norm.NFC.String(repo.GetHTMLURL()), maxURLLen),
+		"issue_number":              int64(issue.GetNumber()),
+		"html_url":                  truncStr(norm.NFC.String(issue.GetHTMLURL()), maxURLLen),
+		"api_url":                   truncStr(norm.NFC.String(issue.GetURL()), maxURLLen),
+		"state":                     norm.NFC.String(issue.GetState()),
+		"state_reason":              norm.NFC.String(issue.GetStateReason()),
+		"title":                     truncStr(norm.NFC.String(issue.GetTitle()), 2048),
+		"body":                      truncStr(norm.NFC.String(issue.GetBody()), maxBodyLen),
+		"user_login":                userLogin,
+		"locked":                    issue.GetLocked(),
+		"draft":                     issue.GetDraft(),
+		"comments_count":            int64(issue.GetComments()),
+		"labels":                    issueLabelsJSON(issue.Labels),
+		"assignees":                 issueAssigneesJSON(issue.Assignees),
+		"milestone_title":           milestoneTitle,
+		"milestone_number":          milestoneNumber,
+		"issue_created_at":          "",
+		"issue_updated_at":          "",
+		"issue_closed_at":           "",
+	}
+	if t := issue.GetCreatedAt(); !t.IsZero() {
+		values["issue_created_at"] = t.Format(time.RFC3339)
+	}
+	if t := issue.GetUpdatedAt(); !t.IsZero() {
+		values["issue_updated_at"] = t.Format(time.RFC3339)
+	}
+	if t := issue.GetClosedAt(); !t.IsZero() {
+		values["issue_closed_at"] = t.Format(time.RFC3339)
+	}
+
+	return entityMessage{
+		Type:          "Entity",
+		SchemaVersion: "v1",
+		Metadata: collectorMetadata{
+			EntityType:          entityTypeGitHubIssue,
 			SourceSystem:        "github",
 			SourceCollectorType: collectorGitHubType,
 			SourceUniqueID:      issueUID,
