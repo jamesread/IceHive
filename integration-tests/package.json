@@ -7,7 +7,7 @@
     "test": "npx mocha --recursive tests/"
   },
   "devDependencies": {
-    "mocha": "^11.0.0",
-    "selenium-webdriver": "^4.0.0"
+    "mocha": "^11.7.6",
+    "selenium-webdriver": "^4.45.0"
   }
 }
