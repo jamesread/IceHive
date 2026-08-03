@@ -1,0 +1,86 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errcheck
+    - errorlint
+    - gocritic
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+#    - modernize
+    - nilerr
+    - noctx
+#    - promlinter
+    - staticcheck
+#    - testifylint
+    - thelper
+    - unconvert
+#    - unparam
+    - unused
+    - usestdlibvars
+  settings:
+    gocyclo:
+      min-complexity: 5
+    gosec:
+      # Full gosec rule set (G101–G6xx), including Slowloris checks G112/G114.
+      enable-all-rules: true
+    govet:
+      enable-all: true
+  exclusions:
+    paths:
+      - gen
+    rules:
+      # Noise / fixtures in tests and generated protobuf packages.
+      - path: _test\.go
+        linters:
+          - gosec
+      - path: _test\.go
+        text: "fieldalignment:"
+        linters:
+          - govet
+
+      # Operator-configured YAML sink paths and world-readable entity files on disk.
+      - path: store\.go
+        text: "G301:"
+        linters:
+          - gosec
+      - path: store\.go
+        text: "G306:"
+        linters:
+          - gosec
+
+      # Git commit helper intentionally shells out to git with operator-supplied repo paths.
+      - path: git_commit\.go
+        text: "G204:"
+        linters:
+          - gosec
+
+      # SQL identifiers are escaped via quoteIdent; values remain parameterized.
+      - path: main\.go
+        text: "G201:"
+        linters:
+          - gosec
+
+      # JMAP session/API URLs come from operator bootstrap config, not request input.
+      - path: jmap_client\.go
+        text: "G704:"
+        linters:
+          - gosec
+
+      # MySQL port is stored as int in meta and mapped into protobuf int32.
+      - path: main\.go
+        text: "G115:"
+        linters:
+          - gosec

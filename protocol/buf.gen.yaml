@@ -5,12 +5,14 @@ managed:
     - file_option: go_package_prefix
       value: github.com/icehive/icehive/services/common/pkg/gen
 plugins:
-  - remote: buf.build/protocolbuffers/go
+  # Pin remote plugin versions so `buf generate` is reproducible in CI (avoids
+  # GoReleaser dirty-tree failures when unpinned plugins bump and rewrite headers).
+  - remote: buf.build/protocolbuffers/go:v1.36.11
     out: ../services/common/pkg/gen
     opt: paths=source_relative
-  - remote: buf.build/connectrpc/go
+  - remote: buf.build/connectrpc/go:v1.20.0
     out: ../services/common/pkg/gen
     opt: paths=source_relative
-  - remote: buf.build/bufbuild/es
+  - remote: buf.build/bufbuild/es:v2.13.0
     out: ../frontend/src/gen
     opt: target=ts
