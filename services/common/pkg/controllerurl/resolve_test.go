@@ -2,6 +2,7 @@ package controllerurl
 
 import "testing"
 
+//gocyclo:ignore
 func TestResolve(t *testing.T) {
 	t.Run("flag wins over env", func(t *testing.T) {
 		t.Setenv(envVar, "http://env:8080")

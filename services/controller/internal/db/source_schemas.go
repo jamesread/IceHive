@@ -17,6 +17,8 @@ type CollectorSourceSchemaRow struct {
 }
 
 // UpsertCollectorSourceSchema stores or replaces the JSON document for a collector_type.
+//
+//gocyclo:ignore
 func UpsertCollectorSourceSchema(ctx context.Context, db *sql.DB, collectorType, schemaVersion string, bodyJSON []byte, updatedUnixMs int64) error {
 	if db == nil {
 		return fmt.Errorf("nil DB")
@@ -54,6 +56,8 @@ func UpsertCollectorSourceSchema(ctx context.Context, db *sql.DB, collectorType,
 }
 
 // ListCollectorSourceSchemas returns stored schemas, optionally filtered by collector_type.
+//
+//gocyclo:ignore
 func ListCollectorSourceSchemas(ctx context.Context, db *sql.DB, collectorType string) ([]CollectorSourceSchemaRow, error) {
 	if db == nil {
 		return nil, fmt.Errorf("nil DB")
@@ -76,7 +80,7 @@ func ListCollectorSourceSchemas(ctx context.Context, db *sql.DB, collectorType s
 	if err != nil {
 		return nil, fmt.Errorf("list collector source schemas: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []CollectorSourceSchemaRow
 	for rows.Next() {

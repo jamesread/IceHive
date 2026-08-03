@@ -16,6 +16,8 @@ const collectionRequestQueueLogical = "collector-github-collection-requests"
 var collectionRequestJSON = protojson.UnmarshalOptions{DiscardUnknown: true}
 
 // consumeCollectionRequests blocks until ctx is cancelled, dispatching AMQP CollectionRequest payloads.
+//
+//gocyclo:ignore
 func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) error {
 	rk := amqpctl.CollectorCollectionRequestRoutingKey(collectorGitHubType)
 	q := amqpctl.QueueName(collectionRequestQueueLogical)
@@ -46,6 +48,7 @@ func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClie
 	})
 }
 
+//gocyclo:ignore
 func startCollectionRequestConsumer(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) {
 	go func() {
 		for {

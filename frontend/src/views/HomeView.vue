@@ -5,6 +5,7 @@ import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
+import { FlashIcon } from '@hugeicons/core-free-icons'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Navigation from 'picocrank/vue/components/Navigation.vue'
 import NavigationGrid from 'picocrank/vue/components/NavigationGrid.vue'
@@ -191,6 +192,7 @@ onMounted(() => {
     },
     {
       name: 'one-off-collection',
+      icon: FlashIcon,
       description: 'Enqueue a collection run immediately without persisting a source',
     },
   )

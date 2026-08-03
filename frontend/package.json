@@ -14,7 +14,7 @@
     "@connectrpc/connect-web": "^2.1.2",
     "femtocrank": "^2.5.0",
     "mermaid": "^11.16.0",
-    "picocrank": "^1.17.0",
+    "picocrank": "^1.21.5",
     "vue": "^3.5.39",
     "vue-router": "^5.1.0"
   },

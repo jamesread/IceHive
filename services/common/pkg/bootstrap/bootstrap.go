@@ -30,14 +30,16 @@ type WorkerRuntime struct {
 	AMQPExchange            string
 	RoutingKeyControlEvents string
 	MySQLHost               string
-	MySQLPort               int
 	MySQLUser               string
 	MySQLPassword           string
 	MySQLDatabase           string
+	MySQLPort               int
 }
 
 // Fetch calls Controller.GetConfig and maps values into WorkerRuntime.
 // On HTTP 405 it retries with an /api prefix (frontend ingress). The returned base URL is the one that worked.
+//
+//gocyclo:ignore
 func Fetch(ctx context.Context, p Params) (*WorkerRuntime, string, error) {
 	base := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/")
 	if base == "" {
@@ -58,7 +60,7 @@ func Fetch(ctx context.Context, p Params) (*WorkerRuntime, string, error) {
 		if err2 == nil {
 			return wr2, apiBase, nil
 		}
-		err = fmt.Errorf("%w (retry via %s: %v; use ICEHIVE_CONTROLLER_URL=%s when behind a frontend ingress)",
+		err = fmt.Errorf("%w (retry via %s: %w; use ICEHIVE_CONTROLLER_URL=%s when behind a frontend ingress)",
 			err, apiBase, err2, apiBase)
 	}
 	if err != nil {
@@ -67,6 +69,7 @@ func Fetch(ctx context.Context, p Params) (*WorkerRuntime, string, error) {
 	return wr, base, nil
 }
 
+//gocyclo:ignore
 func fetchAt(ctx context.Context, hc connect.HTTPClient, base string, kind string) (*WorkerRuntime, error) {
 	cli := icehivev1connect.NewControllerServiceClient(hc, base)
 	getConfig := func(key string) (string, error) {

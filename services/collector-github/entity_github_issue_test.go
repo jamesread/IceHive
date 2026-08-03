@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/v71/github"
 )
 
+//gocyclo:ignore
 func TestBuildGitHubIssueEntity(t *testing.T) {
 	t.Parallel()
 	repoNode := "R_kgDOGH123"
@@ -28,19 +29,19 @@ func TestBuildGitHubIssueEntity(t *testing.T) {
 		HTMLURL:  &repoURL,
 	}
 	issue := &github.Issue{
-		NodeID:  &issueNode,
-		Number:  &num,
-		Title:   &title,
-		Body:    &body,
-		State:   &state,
-		User:    &github.User{Login: github.String(login)},
-		Labels:  []*github.Label{{Name: github.String(labelName)}},
+		NodeID: &issueNode,
+		Number: &num,
+		Title:  &title,
+		Body:   &body,
+		State:  &state,
+		User:   &github.User{Login: github.Ptr(login)},
+		Labels: []*github.Label{{Name: github.Ptr(labelName)}},
 		Assignees: []*github.User{
-			{Login: github.String("bob")},
+			{Login: github.Ptr("bob")},
 		},
 		Milestone: &github.Milestone{
-			Title:  github.String(milestoneTitle),
-			Number: github.Int(milestoneNum),
+			Title:  github.Ptr(milestoneTitle),
+			Number: github.Ptr(milestoneNum),
 		},
 	}
 
@@ -78,11 +79,11 @@ func TestBuildGitHubIssueEntity(t *testing.T) {
 
 func TestBuildGitHubIssueEntitySkipsPullRequest(t *testing.T) {
 	t.Parallel()
-	repo := &github.Repository{NodeID: github.String("R_x"), FullName: github.String("o/r")}
+	repo := &github.Repository{NodeID: github.Ptr("R_x"), FullName: github.Ptr("o/r")}
 	prURL := "https://github.com/o/r/pull/1"
 	issue := &github.Issue{
-		NodeID: github.String("I_x"),
-		Number: github.Int(1),
+		NodeID: github.Ptr("I_x"),
+		Number: github.Ptr(1),
 		PullRequestLinks: &github.PullRequestLinks{
 			HTMLURL: &prURL,
 		},

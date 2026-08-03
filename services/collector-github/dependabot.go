@@ -22,15 +22,16 @@ func repoOwnerLogin(repo *github.Repository) string {
 
 // dependabotSnapshot holds Dependabot alerts for a repo or an API error string if listing failed.
 type dependabotSnapshot struct {
-	Alerts []*github.DependabotAlert
 	Err    string
+	Alerts []*github.DependabotAlert
 }
 
+//gocyclo:ignore
 func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner, repo string) dependabotSnapshot {
 	// Dependabot alerts use cursor pagination (Link rel="next" with ?cursor=...), not ?page=.
 	// state=open: server-side filter so dismissed/fixed alerts are not fetched or emitted.
 	opts := &github.ListAlertsOptions{
-		State:             github.String("open"),
+		State:             github.Ptr("open"),
 		ListCursorOptions: github.ListCursorOptions{PerPage: 100},
 	}
 	var all []*github.DependabotAlert
@@ -43,7 +44,7 @@ func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner,
 		if resp == nil || resp.Cursor == "" {
 			break
 		}
-		opts.ListCursorOptions.Cursor = resp.Cursor
+		opts.Cursor = resp.Cursor
 	}
 	return dependabotSnapshot{Alerts: all}
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+//gocyclo:ignore
 func TestParseRSSSourceSpec(t *testing.T) {
 	t.Parallel()
 	got, err := parseRSSSourceSpec("feed:https://example.com/atom.xml")
@@ -33,6 +34,7 @@ func TestParseRSSSourceSpec(t *testing.T) {
 	}
 }
 
+//gocyclo:ignore
 func TestEffectiveArticlesMax(t *testing.T) {
 	t.Parallel()
 	plain := rssSourceSpec{FeedURL: "https://x"}

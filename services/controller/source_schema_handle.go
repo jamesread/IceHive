@@ -19,6 +19,7 @@ type sourceSchemaHeader struct {
 	CollectorType string `json:"collector_type"`
 }
 
+//gocyclo:ignore
 func handleCollectorSourceSchemaMessage(ctx context.Context, log *logrus.Logger, sqlDB *sql.DB, body []byte) error {
 	var hdr sourceSchemaHeader
 	if err := json.Unmarshal(body, &hdr); err != nil {

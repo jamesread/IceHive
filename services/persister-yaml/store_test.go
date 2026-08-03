@@ -28,6 +28,7 @@ func TestEntityFileNameFromHash(t *testing.T) {
 	}
 }
 
+//gocyclo:ignore
 func TestToPersistedEntityOmitsStructure(t *testing.T) {
 	msg := &entityMessage{
 		Type:          "Entity",

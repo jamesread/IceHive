@@ -1,4 +1,5 @@
-.PHONY: all build test lint clean proto frontend services docs integration-tests
+.PHONY: all build test lint clean proto frontend services docs integration-tests \
+	go-tools services-codestyle services-unittests frontend-codestyle frontend-unittests
 
 all: proto services frontend
 
@@ -21,7 +22,10 @@ services:
 frontend:
 	$(MAKE) -wC frontend
 
-test:
+test: services-unittests
+	$(MAKE) -wC frontend test
+
+services-unittests:
 	$(MAKE) -wC services/common test
 	$(MAKE) -wC services/controller test
 	$(MAKE) -wC services/collector-github test
@@ -31,9 +35,10 @@ test:
 	$(MAKE) -wC services/collector-testdata test
 	$(MAKE) -wC services/persister-yaml test
 	$(MAKE) -wC services/persister-mysql test
-	$(MAKE) -wC frontend test
 
-lint:
+lint: services-codestyle frontend-codestyle
+
+services-codestyle: go-tools
 	$(MAKE) -wC services/common lint
 	$(MAKE) -wC services/controller lint
 	$(MAKE) -wC services/collector-github lint
@@ -43,7 +48,15 @@ lint:
 	$(MAKE) -wC services/collector-testdata lint
 	$(MAKE) -wC services/persister-yaml lint
 	$(MAKE) -wC services/persister-mysql lint
+
+frontend-codestyle:
 	$(MAKE) -wC frontend lint
+
+frontend-unittests:
+	$(MAKE) -wC frontend test
+
+go-tools:
+	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2"
 
 integration-tests:
 	$(MAKE) -wC integration-tests

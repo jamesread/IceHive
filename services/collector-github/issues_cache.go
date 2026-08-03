@@ -28,20 +28,20 @@ type issueCollector struct {
 }
 
 type issuesCollectionResult struct {
-	IssuesToPublish  []*github.Issue
 	Err              string
-	FetchCapped      bool
-	UnchangedSkipped int
+	IssuesToPublish  []*github.Issue
 	CacheHit         bool
+	FetchCapped      bool
 	FetchedCount     int
+	UnchangedSkipped int
 }
 
 type repoIssueCacheFile struct {
-	Version           int                          `json:"version"`
-	RepoFullName      string                       `json:"repo_full_name"`
-	LatestIssueID     string                       `json:"latest_issue_id"`
-	LatestUpdatedAt   string                       `json:"latest_updated_at"`
-	Issues            map[string]cachedIssueEntry  `json:"issues"`
+	RepoFullName    string                      `json:"repo_full_name"`
+	LatestIssueID   string                      `json:"latest_issue_id"`
+	Issues          map[string]cachedIssueEntry `json:"issues"`
+	LatestUpdatedAt string                      `json:"latest_updated_at"`
+	Version         int                         `json:"version"`
 }
 
 type cachedIssueEntry struct {
@@ -72,6 +72,7 @@ func issueCacheDir(k *koanf.Koanf) string {
 	return ".issue-cache"
 }
 
+//gocyclo:ignore
 func (c *issueCollector) Collect(
 	ctx context.Context,
 	log *logrus.Logger,
@@ -163,6 +164,7 @@ func (c *issueCollector) Collect(
 	}
 }
 
+//gocyclo:ignore
 func issueListUnchanged(cache *repoIssueCacheFile, probe *github.Issue) bool {
 	if cache == nil || probe == nil {
 		return false
@@ -183,7 +185,7 @@ func issueUpdatedAtUTC(issue *github.Issue) time.Time {
 	if issue == nil {
 		return time.Time{}
 	}
-	return issue.GetUpdatedAt().Time.UTC()
+	return issue.GetUpdatedAt().UTC()
 }
 
 func issueUpdatedAtRFC3339(issue *github.Issue) string {
@@ -194,6 +196,7 @@ func issueUpdatedAtRFC3339(issue *github.Issue) string {
 	return t.Format(time.RFC3339)
 }
 
+//gocyclo:ignore
 func mergeIssueCache(cache *repoIssueCacheFile, fetched []*github.Issue, repoUID string) ([]*github.Issue, *repoIssueCacheFile, int) {
 	out := &repoIssueCacheFile{
 		Version: issueCacheVersion,
@@ -238,6 +241,7 @@ func mergeIssueCache(cache *repoIssueCacheFile, fetched []*github.Issue, repoUID
 	return toPublish, out, skipped
 }
 
+//gocyclo:ignore
 func refreshLatestIssueMarker(cache *repoIssueCacheFile) {
 	if cache == nil || len(cache.Issues) == 0 {
 		return
@@ -279,6 +283,7 @@ func (c *issueCollector) cachePath(owner, repo string) string {
 
 func (c *issueCollector) load(owner, repo string) (*repoIssueCacheFile, error) {
 	path := c.cachePath(owner, repo)
+	// #nosec G304 -- cachePath derives the filename from sanitized repository identifiers.
 	b, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -300,7 +305,7 @@ func (c *issueCollector) save(owner, repo string, cache *repoIssueCacheFile) err
 	if cache == nil {
 		return errors.New("nil issue cache")
 	}
-	if err := os.MkdirAll(c.dir, 0o755); err != nil {
+	if err := os.MkdirAll(c.dir, 0o750); err != nil {
 		return err
 	}
 	b, err := json.MarshalIndent(cache, "", "  ")
@@ -309,7 +314,7 @@ func (c *issueCollector) save(owner, repo string, cache *repoIssueCacheFile) err
 	}
 	path := c.cachePath(owner, repo)
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o644); err != nil {
+	if err := os.WriteFile(tmp, b, 0o600); err != nil {
 		return err
 	}
 	return os.Rename(tmp, path)

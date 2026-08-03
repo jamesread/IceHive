@@ -11,10 +11,10 @@ import (
 // Settings holds MySQL connection parameters from config (keys under mysql.*).
 type Settings struct {
 	Host     string
-	Port     int
 	User     string
 	Password string
 	Database string
+	Port     int
 }
 
 // SettingsFromKoanf returns mysql settings when mysql.host is set.

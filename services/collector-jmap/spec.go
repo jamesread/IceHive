@@ -12,6 +12,8 @@ const prefixMailboxLower = "mailbox:"
 
 // parseJmapMailboxSourceSpec returns a concrete mailbox id, or resolveRFCInbox=true to look up
 // the account mailbox with JMAP role "inbox" (RFC 8621) at runtime via read-only Mailbox/query.
+//
+//gocyclo:ignore
 func parseJmapMailboxSourceSpec(sourceSpec string) (mailboxID string, resolveRFCInbox bool, err error) {
 	s := strings.TrimSpace(sourceSpec)
 	if s == "" {

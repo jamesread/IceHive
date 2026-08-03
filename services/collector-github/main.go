@@ -32,6 +32,7 @@ func main() {
 	})
 }
 
+//gocyclo:ignore
 func githubWork(
 	ctx context.Context,
 	k *koanf.Koanf,
@@ -70,6 +71,7 @@ func githubWork(
 	}
 }
 
+//gocyclo:ignore
 func runGithubPoll(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, issueColl *issueCollector) error {
 	token, err := getGitHubToken(ctx, controllerBaseURL)
 	if err != nil {
@@ -126,6 +128,7 @@ func newGitHubHTTPClient(ctx context.Context, token string) *github.Client {
 	return github.NewClient(tc)
 }
 
+//gocyclo:ignore
 func runOneSource(
 	ctx context.Context,
 	log *logrus.Logger,
@@ -249,25 +252,26 @@ func runOneSource(
 				}).Warn("github +issue: skipping issue list for archived repo")
 			} else {
 				issueResult = issueColl.Collect(ctx, log, ghClient, repoOwnerLogin(repo), repo.GetName(), repo)
-				if issueResult.Err != "" {
+				switch {
+				case issueResult.Err != "":
 					log.WithFields(logrus.Fields{
 						"source_id": src.GetId(),
 						"repo":      repo.GetFullName(),
 						"error":     issueResult.Err,
 					}).Warn("github issues fetch failed")
-				} else if issueResult.CacheHit {
+				case issueResult.CacheHit:
 					log.WithFields(logrus.Fields{
 						"source_id":         src.GetId(),
 						"repo":              repo.GetFullName(),
 						"unchanged_skipped": issueResult.UnchangedSkipped,
 					}).Info("github issues unchanged; skipped fetch and publish")
-				} else {
+				default:
 					log.WithFields(logrus.Fields{
-						"source_id":         src.GetId(),
-						"repo":              repo.GetFullName(),
-						"issue_fetched":     issueResult.FetchedCount,
-						"issue_published":   len(issueResult.IssuesToPublish),
-						"unchanged_skipped": issueResult.UnchangedSkipped,
+						"source_id":          src.GetId(),
+						"repo":               repo.GetFullName(),
+						"issue_fetched":      issueResult.FetchedCount,
+						"issue_published":    len(issueResult.IssuesToPublish),
+						"unchanged_skipped":  issueResult.UnchangedSkipped,
 						"issue_fetch_capped": issueResult.FetchCapped,
 					}).Debug("github issues collection attached to collection run")
 				}

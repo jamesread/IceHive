@@ -12,6 +12,8 @@ const prefixFeedLower = "feed:"
 
 // parseFeedSourceSpec returns the feed URL from a collection source source_spec.
 // Accepts feed:https://host/path (recommended) or a bare http(s) URL.
+//
+//gocyclo:ignore
 func parseFeedSourceSpec(sourceSpec string) (feedURL string, err error) {
 	s := strings.TrimSpace(sourceSpec)
 	if s == "" {

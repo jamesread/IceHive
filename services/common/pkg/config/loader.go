@@ -25,7 +25,7 @@ func LoadOptionalYAML(log *logrus.Logger, cfgDir, searchLabel, fileName string) 
 			"config_dir": absCfgDir,
 			"yaml_file":  fileName,
 		}).Info("optional YAML not found; using defaults")
-		return k, nil
+		return k, nil //nolint:nilerr // missing optional configuration uses defaults.
 	}
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("load %s: %w", fileName, err)

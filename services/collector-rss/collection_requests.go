@@ -43,6 +43,7 @@ func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClie
 	})
 }
 
+//gocyclo:ignore
 func startCollectionRequestConsumer(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, fetchTimeout time.Duration, userAgent string, itemsMax int) {
 	go func() {
 		for {

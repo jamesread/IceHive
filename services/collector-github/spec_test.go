@@ -2,6 +2,7 @@ package main
 
 import "testing"
 
+//gocyclo:ignore
 func TestParseGitHubSourceSpecIssueModifier(t *testing.T) {
 	t.Parallel()
 	owner, repo, all, opts, err := parseGitHubSourceSpec("repo:icehive/icehive +issue")

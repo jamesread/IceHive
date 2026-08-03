@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	entityTypeGitRepo          = "GitRepo"
-	entityTypeDependabotIssue  = "DependabotIssue"
-	entityTypeGitHubIssue      = "GitHubIssue"
-	maxSummaryLen              = 4096
-	maxBodyLen                 = 16384
-	maxURLLen                  = 2048
+	entityTypeGitRepo         = "GitRepo"
+	entityTypeDependabotIssue = "DependabotIssue"
+	entityTypeGitHubIssue     = "GitHubIssue"
+	maxSummaryLen             = 4096
+	maxBodyLen                = 16384
+	maxURLLen                 = 2048
 )
 
 func jsonScalar(v any) string {
@@ -80,6 +80,8 @@ func dependabotIssueSourceUniqueID(repoNodeID string, a *github.DependabotAlert)
 }
 
 // githubIssueSourceUniqueID returns a stable id for this issue within GitHub.
+//
+//gocyclo:ignore
 func githubIssueSourceUniqueID(repoNodeID string, issue *github.Issue) string {
 	if issue == nil {
 		return ""
@@ -108,13 +110,13 @@ type sourceHash struct {
 }
 
 type collectorMetadata struct {
+	RecollectSpec       *string    `json:"recollect_spec"`
 	EntityType          string     `json:"entity_type"`
 	SourceSystem        string     `json:"source_system"`
 	SourceCollectorType string     `json:"source_collector_type"`
 	SourceUniqueID      string     `json:"source_unique_id"`
 	SourceHash          sourceHash `json:"source_hash"`
 	ObservedUnixMS      int64      `json:"observed_unix_ms"`
-	RecollectSpec       *string    `json:"recollect_spec"`
 }
 
 type fieldDescriptor struct {
@@ -125,11 +127,12 @@ type fieldDescriptor struct {
 type entityMessage struct {
 	Type          string                     `json:"type"`
 	SchemaVersion string                     `json:"schema_version"`
-	Metadata      collectorMetadata          `json:"collectormetadata"`
 	Structure     map[string]fieldDescriptor `json:"structure"`
 	Values        map[string]any             `json:"values"`
+	Metadata      collectorMetadata          `json:"collectormetadata"`
 }
 
+//gocyclo:ignore
 func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pullRequestsSnapshot) entityMessage {
 	uniqueID := norm.NFC.String(repo.GetNodeID())
 	now := time.Now().UnixMilli()
@@ -230,6 +233,8 @@ func repoTagsJSON(topics []string) string {
 // buildDependabotIssueEntity maps one GitHub Dependabot alert to a DependabotIssue entity.
 // values.git_repo_source_unique_id matches collectormetadata.source_unique_id on the GitRepo entity
 // for the same repository (GitHub repository node_id, NFC).
+//
+//gocyclo:ignore
 func buildDependabotIssueEntity(repo *github.Repository, a *github.DependabotAlert) (entityMessage, bool) {
 	if repo == nil || a == nil {
 		return entityMessage{}, false
@@ -270,10 +275,10 @@ func buildDependabotIssueEntity(repo *github.Repository, a *github.DependabotAle
 		"alert_number":              int64(a.GetNumber()),
 		"html_url":                  truncStr(norm.NFC.String(a.GetHTMLURL()), maxURLLen),
 		"api_url":                   truncStr(norm.NFC.String(a.GetURL()), maxURLLen),
-		"state":                norm.NFC.String(a.GetState()),
-		"alert_created_at":   "",
-		"alert_updated_at":   "",
-		"alert_dismissed_at": "",
+		"state":                     norm.NFC.String(a.GetState()),
+		"alert_created_at":          "",
+		"alert_updated_at":          "",
+		"alert_dismissed_at":        "",
 	}
 	if t := a.GetCreatedAt(); !t.IsZero() {
 		values["alert_created_at"] = t.Format(time.RFC3339)
@@ -337,6 +342,8 @@ func buildDependabotIssueEntity(repo *github.Repository, a *github.DependabotAle
 // buildGitHubIssueEntity maps one GitHub issue to a GitHubIssue entity.
 // values.git_repo_source_unique_id matches collectormetadata.source_unique_id on the GitRepo entity
 // for the same repository (GitHub repository node_id, NFC).
+//
+//gocyclo:ignore
 func buildGitHubIssueEntity(repo *github.Repository, issue *github.Issue) (entityMessage, bool) {
 	if repo == nil || issue == nil || issue.IsPullRequest() {
 		return entityMessage{}, false

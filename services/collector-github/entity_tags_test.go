@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/v71/github"
 )
 
+//gocyclo:ignore
 func TestBuildGitRepoEntityDescriptionAndTags(t *testing.T) {
 	t.Parallel()
 	desc := "A test repository"

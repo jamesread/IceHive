@@ -32,6 +32,7 @@ func readMigrationVersion(m *migrate.Migrate) (uint, bool, error) {
 	return v, dirty, nil
 }
 
+//gocyclo:ignore
 func availableUpVersions(migrationsDir string) ([]uint, error) {
 	entries, err := os.ReadDir(migrationsDir)
 	if err != nil {
@@ -61,6 +62,8 @@ func availableUpVersions(migrationsDir string) ([]uint, error) {
 }
 
 // RunMigrations applies SQL migrations from migrationsDir using the given MySQL migrate URL.
+//
+//gocyclo:ignore
 func RunMigrations(migrationsDir, mysqlMigrateURL string, r MigrationReporter) error {
 	abs, err := filepath.Abs(migrationsDir)
 	if err != nil {
@@ -89,8 +92,8 @@ func RunMigrations(migrationsDir, mysqlMigrateURL string, r MigrationReporter) e
 		if target <= current {
 			continue
 		}
-		if err := m.Migrate(target); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			return fmt.Errorf("migrate to version %d: %w", target, err)
+		if migrateErr := m.Migrate(target); migrateErr != nil && !errors.Is(migrateErr, migrate.ErrNoChange) {
+			return fmt.Errorf("migrate to version %d: %w", target, migrateErr)
 		}
 		if r != nil {
 			r.Applied(target)

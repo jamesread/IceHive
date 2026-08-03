@@ -20,6 +20,7 @@ func fetchReposForSource(ctx context.Context, gh *github.Client, owner, repo str
 	return listAllReposUnderOwner(ctx, gh, owner)
 }
 
+//gocyclo:ignore
 func listAllReposUnderOwner(ctx context.Context, gh *github.Client, owner string) ([]*github.Repository, error) {
 	orgOpts := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100, Page: 1},
@@ -44,12 +45,12 @@ func listAllReposUnderOwner(ctx context.Context, gh *github.Client, owner string
 }
 
 func paginateUserRepos(ctx context.Context, gh *github.Client, owner string) ([]*github.Repository, error) {
-	opts := &github.RepositoryListOptions{
+	opts := &github.RepositoryListByUserOptions{
 		ListOptions: github.ListOptions{PerPage: 100, Page: 1},
 	}
 	var out []*github.Repository
 	for {
-		repos, resp, err := gh.Repositories.List(ctx, owner, opts)
+		repos, resp, err := gh.Repositories.ListByUser(ctx, owner, opts)
 		if err != nil {
 			return nil, err
 		}

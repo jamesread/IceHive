@@ -19,13 +19,13 @@ type sourceHash struct {
 }
 
 type collectorMetadata struct {
+	RecollectSpec       *string    `json:"recollect_spec"`
 	EntityType          string     `json:"entity_type"`
 	SourceSystem        string     `json:"source_system"`
 	SourceCollectorType string     `json:"source_collector_type"`
 	SourceUniqueID      string     `json:"source_unique_id"`
 	SourceHash          sourceHash `json:"source_hash"`
 	ObservedUnixMS      int64      `json:"observed_unix_ms"`
-	RecollectSpec       *string    `json:"recollect_spec"`
 }
 
 type fieldDescriptor struct {
@@ -36,9 +36,9 @@ type fieldDescriptor struct {
 type entityMessage struct {
 	Type          string                     `json:"type"`
 	SchemaVersion string                     `json:"schema_version"`
-	Metadata      collectorMetadata          `json:"collectormetadata"`
 	Structure     map[string]fieldDescriptor `json:"structure"`
 	Values        map[string]any             `json:"values"`
+	Metadata      collectorMetadata          `json:"collectormetadata"`
 }
 
 func sourceHashFor(uniqueID string) sourceHash {
@@ -77,22 +77,23 @@ func entryAuthors(item *gofeed.Item) string {
 	}
 	var parts []string
 	for _, a := range item.Authors {
-		if a == nil {
-			continue
-		}
-		if n := strings.TrimSpace(a.Name); n != "" {
-			parts = append(parts, norm.NFC.String(n))
-		}
+		parts = appendAuthorName(parts, a)
 	}
-	if item.Author != nil {
-		if n := strings.TrimSpace(item.Author.Name); n != "" {
-			parts = append(parts, norm.NFC.String(n))
-		}
-	}
+	parts = appendAuthorName(parts, item.Author)
 	if len(parts) == 0 {
 		return ""
 	}
 	return truncStr(strings.Join(parts, ", "), 1024)
+}
+
+func appendAuthorName(parts []string, author *gofeed.Person) []string {
+	if author == nil {
+		return parts
+	}
+	if name := strings.TrimSpace(author.Name); name != "" {
+		return append(parts, norm.NFC.String(name))
+	}
+	return parts
 }
 
 func entryPublishedUnixMs(item *gofeed.Item) int64 {
@@ -193,7 +194,11 @@ func feedSiteLink(feed *gofeed.Feed) string {
 	if u := strings.TrimSpace(feed.FeedLink); u != "" {
 		return norm.NFC.String(u)
 	}
-	for _, u := range feed.Links {
+	return firstNonEmptyNormalizedLink(feed.Links)
+}
+
+func firstNonEmptyNormalizedLink(links []string) string {
+	for _, u := range links {
 		if t := strings.TrimSpace(u); t != "" {
 			return norm.NFC.String(t)
 		}
@@ -218,27 +223,27 @@ func buildRssFeedEntity(collectionSourceID, feedURL string, feed *gofeed.Feed, f
 	}
 
 	structure := map[string]fieldDescriptor{
-		"collection_source_id":   {Type: "string", Length: 255},
-		"feed_url":               {Type: "string", Length: 2048},
-		"feed_title":             {Type: "string", Length: 2048},
-		"feed_format":            {Type: "string", Length: 32},
-		"feed_site_link":         {Type: "string", Length: 2048},
-		"feed_description":       {Type: "string", Length: 8192},
-		"feed_language":          {Type: "string", Length: 64},
+		"collection_source_id":    {Type: "string", Length: 255},
+		"feed_url":                {Type: "string", Length: 2048},
+		"feed_title":              {Type: "string", Length: 2048},
+		"feed_format":             {Type: "string", Length: 32},
+		"feed_site_link":          {Type: "string", Length: 2048},
+		"feed_description":        {Type: "string", Length: 8192},
+		"feed_language":           {Type: "string", Length: 64},
 		"articles_selected_count": {Type: "int64"},
-		"feed_updated_unix_ms":   {Type: "int64"},
+		"feed_updated_unix_ms":    {Type: "int64"},
 	}
 
 	values := map[string]any{
-		"collection_source_id":   norm.NFC.String(collectionSourceID),
-		"feed_url":               feedURL,
-		"feed_title":             truncStr(norm.NFC.String(feedTitle), 2048),
-		"feed_format":            truncStr(norm.NFC.String(ft), 32),
-		"feed_site_link":         truncStr(feedSiteLink(feed), 2048),
-		"feed_description":       truncStr(norm.NFC.String(strings.TrimSpace(feed.Description)), 8192),
-		"feed_language":          truncStr(norm.NFC.String(strings.TrimSpace(feed.Language)), 64),
+		"collection_source_id":    norm.NFC.String(collectionSourceID),
+		"feed_url":                feedURL,
+		"feed_title":              truncStr(norm.NFC.String(feedTitle), 2048),
+		"feed_format":             truncStr(norm.NFC.String(ft), 32),
+		"feed_site_link":          truncStr(feedSiteLink(feed), 2048),
+		"feed_description":        truncStr(norm.NFC.String(strings.TrimSpace(feed.Description)), 8192),
+		"feed_language":           truncStr(norm.NFC.String(strings.TrimSpace(feed.Language)), 64),
 		"articles_selected_count": int64(articlesSelected),
-		"feed_updated_unix_ms":   feedUpdatedUnixMs(feed),
+		"feed_updated_unix_ms":    feedUpdatedUnixMs(feed),
 	}
 
 	return entityMessage{

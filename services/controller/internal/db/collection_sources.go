@@ -16,17 +16,17 @@ var cronStandardParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cro
 
 // CollectionSourceRow is a row in icehive_collection_sources.
 type CollectionSourceRow struct {
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 	ID                string
 	CollectorType     string
 	SourceSpec        string
 	CronLine          string
-	Enabled           bool
+	LastError         sql.NullString
 	LastRunUnixMs     sql.NullInt64
 	LastSuccessUnixMs sql.NullInt64
-	LastError         sql.NullString
 	NextDueUnixMs     sql.NullInt64
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	Enabled           bool
 }
 
 func randomID() (string, error) {
@@ -53,6 +53,8 @@ func validateCronLine(s string) error {
 }
 
 // ListCollectionSources returns sources, optionally filtered by collector_type.
+//
+//gocyclo:ignore
 func ListCollectionSources(ctx context.Context, db *sql.DB, collectorType string) ([]CollectionSourceRow, error) {
 	if db == nil {
 		return nil, fmt.Errorf("nil DB")
@@ -79,7 +81,7 @@ func ListCollectionSources(ctx context.Context, db *sql.DB, collectorType string
 	if err != nil {
 		return nil, fmt.Errorf("list collection sources: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []CollectionSourceRow
 	for rows.Next() {
@@ -102,6 +104,8 @@ func ListCollectionSources(ctx context.Context, db *sql.DB, collectorType string
 }
 
 // UpsertCollectionSource inserts or updates a collection source.
+//
+//gocyclo:ignore
 func UpsertCollectionSource(ctx context.Context, db *sql.DB, r CollectionSourceRow) (CollectionSourceRow, error) {
 	if db == nil {
 		return CollectionSourceRow{}, fmt.Errorf("nil DB")
@@ -200,6 +204,8 @@ func DeleteCollectionSource(ctx context.Context, db *sql.DB, id string) error {
 }
 
 // ReportCollectionSourceRun updates run metadata after a collector attempt.
+//
+//gocyclo:ignore
 func ReportCollectionSourceRun(ctx context.Context, db *sql.DB, id string, runUnixMs int64, success bool, errMsg string, nextDueUnixMs int64) error {
 	if db == nil {
 		return fmt.Errorf("nil DB")

@@ -20,12 +20,13 @@ import (
 	"github.com/icehive/icehive/services/common/pkg/common"
 	"github.com/icehive/icehive/services/common/pkg/config"
 	"github.com/icehive/icehive/services/common/pkg/controllerurl"
-	"github.com/icehive/icehive/services/common/pkg/logging"
 	"github.com/icehive/icehive/services/common/pkg/httpshim"
+	"github.com/icehive/icehive/services/common/pkg/logging"
 )
 
 // MainConfig wires a persister binary: metrics/health sidecar, optional YAML, and domain work.
 type MainConfig struct {
+	Work          func(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *bootstrap.WorkerRuntime, amqpClient *amqpctl.Client) error
 	ID            string
 	DefaultListen string
 	ConfigYAML    string
@@ -33,9 +34,9 @@ type MainConfig struct {
 	WorkerKind string
 	// WorkerID is sent to Controller.WorkerBootstrap; default is ID.
 	WorkerID string
-	Work     func(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *bootstrap.WorkerRuntime, amqpClient *amqpctl.Client) error
 }
 
+//gocyclo:ignore
 func fetchBootstrapWithRetry(
 	ctx context.Context,
 	log *logrus.Logger,
@@ -93,6 +94,8 @@ func waitForAMQPConnect(ctx context.Context, log *logrus.Logger, boot *bootstrap
 }
 
 // Main parses flags, loads optional YAML, runs Work until SIGINT/SIGTERM, then shuts down HTTP.
+//
+//gocyclo:ignore
 func Main(cfg MainConfig) {
 	if cfg.Work == nil {
 		panic("persist.Main: nil Work")

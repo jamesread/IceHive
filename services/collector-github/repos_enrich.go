@@ -8,6 +8,8 @@ import (
 )
 
 // enrichRepo loads full repository metadata when list responses omit description or topics.
+//
+//gocyclo:ignore
 func enrichRepo(ctx context.Context, gh *github.Client, repo *github.Repository) (*github.Repository, error) {
 	if repo == nil {
 		return nil, nil

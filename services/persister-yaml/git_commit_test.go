@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +20,7 @@ func initGitRepo(t *testing.T, dir string) {
 		{"config", "user.email", "test@icehive.local"},
 		{"config", "user.name", "icehive-test"},
 	} {
-		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+		if out, err := exec.CommandContext(context.Background(), "git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v (%s)", args, err, out)
 		}
 	}
@@ -36,6 +37,7 @@ func writeFile(t *testing.T, dir, rel, content string) {
 	}
 }
 
+//gocyclo:ignore
 func TestGitPushArgs(t *testing.T) {
 	t.Setenv("GIT_PUSH", "origin main")
 	args := gitPushArgs()
@@ -74,6 +76,7 @@ func TestGitCommitEnabled(t *testing.T) {
 	}
 }
 
+//gocyclo:ignore
 func TestListUntrackedYAMLFiltersExtension(t *testing.T) {
 	dir := t.TempDir()
 	initGitRepo(t, dir)
@@ -111,7 +114,7 @@ func TestSyncGitYAMLCommitsUntrackedOnStartup(t *testing.T) {
 	if res.committedFiles != 1 {
 		t.Fatalf("committed %d files, want 1", res.committedFiles)
 	}
-	out, err := exec.Command("git", "-C", dir, "log", "-1", "--oneline").CombinedOutput()
+	out, err := exec.CommandContext(t.Context(), "git", "-C", dir, "log", "-1", "--oneline").CombinedOutput()
 	if err != nil {
 		t.Fatalf("git log: %v (%s)", err, out)
 	}

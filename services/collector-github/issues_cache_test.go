@@ -19,13 +19,13 @@ func TestIssueListUnchanged(t *testing.T) {
 	}
 	ts, _ := time.Parse(time.RFC3339, updated)
 	probe := &github.Issue{
-		NodeID:    github.String(issueID),
+		NodeID:    github.Ptr(issueID),
 		UpdatedAt: &github.Timestamp{Time: ts},
 	}
 	if !issueListUnchanged(cache, probe) {
 		t.Fatal("expected unchanged")
 	}
-	probe.NodeID = github.String("I_other")
+	probe.NodeID = github.Ptr("I_other")
 	if issueListUnchanged(cache, probe) {
 		t.Fatal("expected changed when issue id differs")
 	}
@@ -37,8 +37,8 @@ func TestMergeIssueCachePublishesNewAndUpdated(t *testing.T) {
 	oldUpdated := "2026-06-01T10:00:00Z"
 	newUpdated := "2026-06-18T08:16:14Z"
 	oldIssue := &github.Issue{
-		NodeID:    github.String("I_old"),
-		Number:    github.Int(1),
+		NodeID:    github.Ptr("I_old"),
+		Number:    github.Ptr(1),
 		UpdatedAt: mustGitHubTime(oldUpdated),
 	}
 	oldRaw, _ := json.Marshal(oldIssue)
@@ -48,13 +48,13 @@ func TestMergeIssueCachePublishesNewAndUpdated(t *testing.T) {
 		},
 	}
 	updatedIssue := &github.Issue{
-		NodeID:    github.String("I_old"),
-		Number:    github.Int(1),
+		NodeID:    github.Ptr("I_old"),
+		Number:    github.Ptr(1),
 		UpdatedAt: mustGitHubTime(newUpdated),
 	}
 	newIssue := &github.Issue{
-		NodeID:    github.String("I_new"),
-		Number:    github.Int(2),
+		NodeID:    github.Ptr("I_new"),
+		Number:    github.Ptr(2),
 		UpdatedAt: mustGitHubTime(newUpdated),
 	}
 	toPublish, merged, skipped := mergeIssueCache(cache, []*github.Issue{updatedIssue, newIssue}, repoUID)
@@ -74,8 +74,8 @@ func TestMergeIssueCacheSkipsUnchanged(t *testing.T) {
 	repoUID := "R_repo"
 	updated := "2026-06-18T08:16:14Z"
 	issue := &github.Issue{
-		NodeID:    github.String("I_same"),
-		Number:    github.Int(3),
+		NodeID:    github.Ptr("I_same"),
+		Number:    github.Ptr(3),
 		UpdatedAt: mustGitHubTime(updated),
 	}
 	raw, _ := json.Marshal(issue)

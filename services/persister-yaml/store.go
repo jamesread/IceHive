@@ -75,6 +75,7 @@ func (s *yamlStore) writeEntity(_ context.Context, msg *entityMessage) (string, 
 	return s.writeEntityLocked(msg)
 }
 
+//gocyclo:ignore
 func (s *yamlStore) writeEntityLocked(msg *entityMessage) (string, error) {
 	if msg.Type != "Entity" || msg.SchemaVersion != "v1" {
 		return "", fmt.Errorf("unsupported entity envelope type=%q schema_version=%q", msg.Type, msg.SchemaVersion)

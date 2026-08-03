@@ -27,9 +27,9 @@ type animalSeed struct {
 	Name         string
 	Species      string
 	Family       string
+	Conservation string
 	LegCount     int64
 	IsDomestic   bool
-	Conservation string
 }
 
 type sourceHash struct {
@@ -38,13 +38,13 @@ type sourceHash struct {
 }
 
 type collectorMetadata struct {
+	RecollectSpec       *string    `json:"recollect_spec"`
 	EntityType          string     `json:"entity_type"`
 	SourceSystem        string     `json:"source_system"`
 	SourceCollectorType string     `json:"source_collector_type"`
 	SourceUniqueID      string     `json:"source_unique_id"`
 	SourceHash          sourceHash `json:"source_hash"`
 	ObservedUnixMS      int64      `json:"observed_unix_ms"`
-	RecollectSpec       *string    `json:"recollect_spec"`
 }
 
 type fieldDescriptor struct {
@@ -55,9 +55,9 @@ type fieldDescriptor struct {
 type entityMessage struct {
 	Type          string                     `json:"type"`
 	SchemaVersion string                     `json:"schema_version"`
-	Metadata      collectorMetadata          `json:"collectormetadata"`
 	Structure     map[string]fieldDescriptor `json:"structure"`
 	Values        map[string]any             `json:"values"`
+	Metadata      collectorMetadata          `json:"collectormetadata"`
 }
 
 var animals = []animalSeed{
@@ -75,6 +75,7 @@ func main() {
 	})
 }
 
+//gocyclo:ignore
 func testDataWork(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *bootstrap.WorkerRuntime, amqpClient *amqpctl.Client, _ string) error {
 	if boot != nil {
 		log.WithFields(logrus.Fields{

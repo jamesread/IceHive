@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-github/v71/github"
 )
 
+//gocyclo:ignore
 func TestRepoToScalarValuesExtended(t *testing.T) {
 	t.Parallel()
 	vis := "internal"
@@ -17,16 +18,16 @@ func TestRepoToScalarValuesExtended(t *testing.T) {
 	created := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
 	adv := "enabled"
 	repo := &github.Repository{
-		NodeID:      github.Ptr("R_kg"),
-		Name:        github.Ptr("forked"),
-		FullName:    github.Ptr("org/forked"),
-		Fork:        github.Ptr(true),
-		Visibility:  &vis,
-		Homepage:    &homepage,
-		Size:        github.Ptr(42),
-		CreatedAt:   &github.Timestamp{Time: created},
-		Parent:      &github.Repository{FullName: &parentFN},
-		Source:      &github.Repository{FullName: &sourceFN},
+		NodeID:     github.Ptr("R_kg"),
+		Name:       github.Ptr("forked"),
+		FullName:   github.Ptr("org/forked"),
+		Fork:       github.Ptr(true),
+		Visibility: &vis,
+		Homepage:   &homepage,
+		Size:       github.Ptr(42),
+		CreatedAt:  &github.Timestamp{Time: created},
+		Parent:     &github.Repository{FullName: &parentFN},
+		Source:     &github.Repository{FullName: &sourceFN},
 		SecurityAndAnalysis: &github.SecurityAndAnalysis{
 			AdvancedSecurity: &github.AdvancedSecurity{Status: &adv},
 		},

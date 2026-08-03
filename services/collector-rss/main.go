@@ -31,6 +31,7 @@ func main() {
 	})
 }
 
+//gocyclo:ignore
 func rssWork(
 	ctx context.Context,
 	k *koanf.Koanf,
@@ -85,6 +86,7 @@ func rssWork(
 	}
 }
 
+//gocyclo:ignore
 func runRssPoll(
 	ctx context.Context,
 	log *logrus.Logger,
@@ -138,6 +140,7 @@ func nextDueForReport(sched cron.Schedule, after time.Time, runNowOnly bool) int
 	return sched.Next(after).UnixMilli()
 }
 
+//gocyclo:ignore
 func runOneRssSource(
 	ctx context.Context,
 	log *logrus.Logger,

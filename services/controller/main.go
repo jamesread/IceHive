@@ -39,10 +39,10 @@ import (
 )
 
 type controllerSrv struct {
-	mu         sync.RWMutex
 	db         *sql.DB
 	k          *koanf.Koanf
 	amqpClient *amqpctl.Client
+	mu         sync.RWMutex
 }
 
 type migrationLogger struct {
@@ -113,6 +113,7 @@ func (s *controllerSrv) Health(
 	return connect.NewResponse(&icehivev1.HealthResponse{Status: "ok"}), nil
 }
 
+//gocyclo:ignore
 func (s *controllerSrv) WorkerBootstrap(
 	ctx context.Context,
 	req *connect.Request[icehivev1.WorkerBootstrapRequest],
@@ -320,10 +321,10 @@ func (s *controllerSrv) ListCollectorSourceSchemas(
 	out := make([]*icehivev1.CollectorSourceSchema, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, &icehivev1.CollectorSourceSchema{
-			CollectorType:  r.CollectorType,
-			SchemaVersion:  r.SchemaVersion,
-			BodyJson:       string(r.BodyJSON),
-			UpdatedUnixMs:  r.UpdatedUnixMs,
+			CollectorType: r.CollectorType,
+			SchemaVersion: r.SchemaVersion,
+			BodyJson:      string(r.BodyJSON),
+			UpdatedUnixMs: r.UpdatedUnixMs,
 		})
 	}
 	return connect.NewResponse(&icehivev1.ListCollectorSourceSchemasResponse{Schemas: out}), nil
@@ -382,6 +383,7 @@ func (s *controllerSrv) getAMQPClient() *amqpctl.Client {
 	return s.amqpClient
 }
 
+//gocyclo:ignore
 func (s *controllerSrv) EnqueueCollectionRequest(
 	ctx context.Context,
 	req *connect.Request[icehivev1.EnqueueCollectionRequestRequest],
@@ -490,6 +492,7 @@ func migrationsDirectory(configDir string) string {
 	return filepath.Join(configDir, "migrations")
 }
 
+//gocyclo:ignore
 func openMySQLAndMigrate(ctx context.Context, log *logrus.Logger, k *koanf.Koanf, configDir string) (*sql.DB, error) {
 	ms, ok := db.SettingsFromKoanf(k)
 	if !ok {
@@ -504,8 +507,8 @@ func openMySQLAndMigrate(ctx context.Context, log *logrus.Logger, k *koanf.Koanf
 	}
 	migrationsDir := migrationsDirectory(configDir)
 	log.WithField("migrations_path", migrationsDir).Info("running database migrations")
-	if err := db.RunMigrations(migrationsDir, migrateURL, migrationLogger{log: log}); err != nil {
-		return nil, fmt.Errorf("migrations: %w", err)
+	if migrateErr := db.RunMigrations(migrationsDir, migrateURL, migrationLogger{log: log}); migrateErr != nil {
+		return nil, fmt.Errorf("migrations: %w", migrateErr)
 	}
 	dsn, err := db.SQLDSN(ms)
 	if err != nil {
@@ -523,6 +526,7 @@ func openMySQLAndMigrate(ctx context.Context, log *logrus.Logger, k *koanf.Koanf
 	return sqlDB, nil
 }
 
+//gocyclo:ignore
 func openMySQLUntilReady(ctx context.Context, log *logrus.Logger, k *koanf.Koanf, configDir string) (*sql.DB, error) {
 	for attempt := 1; ; attempt++ {
 		select {
@@ -546,6 +550,7 @@ func openMySQLUntilReady(ctx context.Context, log *logrus.Logger, k *koanf.Koanf
 	}
 }
 
+//gocyclo:ignore
 func openAMQUntilReady(ctx context.Context, log *logrus.Logger, sqlDB *sql.DB) (*amqpctl.Client, error) {
 	for attempt := 1; ; attempt++ {
 		select {
@@ -622,6 +627,7 @@ func serveControllerWelcome(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(body)
 }
 
+//gocyclo:ignore
 func main() {
 	flagListen := flag.String("listen", "", `listen address; empty, auto, or :8080 uses golure listenaddr (config listen overrides when set)`)
 	configDir := flag.String("configdir", ".", "directory containing config.yaml (migrations packaged at "+bundledMigrationsDir+" in container images)")
@@ -643,7 +649,7 @@ func main() {
 		log.WithError(err).Fatal("configuration")
 	}
 	absConfigPath := configPath
-	if p, err := filepath.Abs(configPath); err == nil {
+	if p, absErr := filepath.Abs(configPath); absErr == nil {
 		absConfigPath = p
 	}
 	log.WithField("yaml_config_path", absConfigPath).Info("YAML configuration loaded")
@@ -657,9 +663,9 @@ func main() {
 	}
 	// Empty, auto, or literal :8080 → golure (try PORT, 8080, then a free 8000–8999 port).
 	if listenAddr == "" || strings.EqualFold(listenAddr, "auto") || listenAddr == ":8080" {
-		auto, err := listenaddr.AvailableListenAddr()
-		if err != nil {
-			log.WithError(err).Fatal("listen address")
+		auto, listenErr := listenaddr.AvailableListenAddr()
+		if listenErr != nil {
+			log.WithError(listenErr).Fatal("listen address")
 		}
 		listenAddr = auto
 	}

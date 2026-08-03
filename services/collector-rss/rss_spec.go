@@ -19,6 +19,8 @@ type rssSourceSpec struct {
 // parseRSSSourceSpec parses source_spec as either:
 //   - JSON: {"feed":"https://…"} or {"feed_url":"https://…","articles_max":50} (articles_max optional).
 //   - Legacy URL: feed:https://… or bare https://… (article count from YAML items_max_per_feed, else 25).
+//
+//gocyclo:ignore
 func parseRSSSourceSpec(sourceSpec string) (rssSourceSpec, error) {
 	s := strings.TrimSpace(sourceSpec)
 	if s == "" {
@@ -26,9 +28,9 @@ func parseRSSSourceSpec(sourceSpec string) (rssSourceSpec, error) {
 	}
 	if strings.HasPrefix(s, "{") {
 		var j struct {
+			ArticlesMax *int   `json:"articles_max"`
 			Feed        string `json:"feed"`
 			FeedURL     string `json:"feed_url"`
-			ArticlesMax *int   `json:"articles_max"`
 		}
 		if err := json.Unmarshal([]byte(s), &j); err != nil {
 			return rssSourceSpec{}, fmt.Errorf("parse rss source_spec json: %w", err)
@@ -63,6 +65,8 @@ func parseRSSSourceSpec(sourceSpec string) (rssSourceSpec, error) {
 // effectiveArticlesMax decides how many articles to emit after sorting by recency.
 // - Plain feed: or JSON without articles_max — use yamlCap when set (>0), else defaultArticlesMax (25).
 // - JSON with explicit articles_max — use that value, positive, capped by yamlCap when yamlCap > 0.
+//
+//gocyclo:ignore
 func effectiveArticlesMax(spec rssSourceSpec, yamlCap int) int {
 	if spec.ExplicitArticlesMax {
 		n := spec.ArticlesMax

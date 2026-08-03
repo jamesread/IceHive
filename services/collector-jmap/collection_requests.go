@@ -15,6 +15,7 @@ const collectionRequestQueueLogical = "collector-jmap-collection-requests"
 
 var collectionRequestJSON = protojson.UnmarshalOptions{DiscardUnknown: true}
 
+//gocyclo:ignore
 func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) error {
 	rk := amqpctl.CollectorCollectionRequestRoutingKey(collectorJmapType)
 	q := amqpctl.QueueName(collectionRequestQueueLogical)
@@ -49,6 +50,7 @@ func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClie
 	})
 }
 
+//gocyclo:ignore
 func startCollectionRequestConsumer(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) {
 	go func() {
 		for {

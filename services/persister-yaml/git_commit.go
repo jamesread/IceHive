@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -113,6 +114,7 @@ func gitPushLocked(ctx context.Context, dir string) error {
 	return nil
 }
 
+//gocyclo:ignore
 func commitUntrackedYAMLLocked(ctx context.Context, dir, message string) (int, error) {
 	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
 		return 0, fmt.Errorf("data_dir is not a git repository: %w", err)
@@ -125,8 +127,8 @@ func commitUntrackedYAMLLocked(ctx context.Context, dir, message string) (int, e
 		return 0, nil
 	}
 	addArgs := append([]string{"-C", dir, "add", "--"}, files...)
-	if out, err := exec.CommandContext(ctx, "git", addArgs...).CombinedOutput(); err != nil {
-		return 0, fmt.Errorf("git add: %w (%s)", err, strings.TrimSpace(string(out)))
+	if out, addErr := exec.CommandContext(ctx, "git", addArgs...).CombinedOutput(); addErr != nil {
+		return 0, fmt.Errorf("git add: %w (%s)", addErr, strings.TrimSpace(string(out)))
 	}
 	commitCmd := exec.CommandContext(ctx, "git", "-C", dir, "commit", "-m", message)
 	out, err := commitCmd.CombinedOutput()
@@ -140,12 +142,14 @@ func commitUntrackedYAMLLocked(ctx context.Context, dir, message string) (int, e
 	return len(files), nil
 }
 
+//gocyclo:ignore
 func listUntrackedYAML(ctx context.Context, dir string) ([]string, error) {
 	cmd := exec.CommandContext(ctx, "git", "-C", dir, "ls-files", "--others", "--exclude-standard")
 	out, err := cmd.Output()
 	if err != nil {
-		if ee, ok := err.(*exec.ExitError); ok && len(ee.Stderr) > 0 {
-			return nil, fmt.Errorf("git ls-files: %w (%s)", err, strings.TrimSpace(string(ee.Stderr)))
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			return nil, fmt.Errorf("git ls-files: %w (%s)", err, strings.TrimSpace(string(exitErr.Stderr)))
 		}
 		return nil, fmt.Errorf("git ls-files: %w", err)
 	}

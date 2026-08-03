@@ -9,7 +9,8 @@ repos:
         exclude: ^frontend/src/gen/
       - id: end-of-file-fixer
         exclude: ^frontend/src/gen/
-#      - id: check-yaml
+      - id: check-yaml
+        exclude: ^frontend/src/gen/
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: detect-private-key
@@ -17,12 +18,7 @@ repos:
         args: ['--fix', 'lf']
         exclude: ^frontend/src/gen/
       - id: check-json
-        exclude: |
-          (?x)^(
-            service/internal/entities/testdata/.*\.json|
-            integration-tests/tests/.*/entities/.*\.json|
-            var/entities/.*\.json
-          )$
+        exclude: ^frontend/src/gen/
       - id: check-case-conflict
       - id: detect-aws-credentials
 
@@ -33,3 +29,48 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: [] # optional: list of Conventional Commits types to allow e.g. [feat, fix, ci, chore, test]
+
+  - repo: local
+    hooks:
+      - id: services-codestyle
+        name: services-codestyle
+        entry: make services-codestyle
+        language: system
+        pass_filenames: false
+        files: ^(services/|protocol/|Makefile|go\.work|\.golangci\.yml)
+
+      - id: frontend-codestyle
+        name: frontend-codestyle
+        entry: make frontend-codestyle
+        language: system
+        pass_filenames: false
+        files: ^(frontend/|Makefile)
+
+      - id: frontend-unittests
+        name: frontend-unittests
+        entry: make frontend-unittests
+        language: system
+        pass_filenames: false
+        files: ^(frontend/|Makefile)
+
+      - id: services-unittests
+        name: services-unittests
+        entry: make services-unittests
+        language: system
+        pass_filenames: false
+        files: ^(services/|protocol/|Makefile|go\.work)
+
+      - id: services-build
+        name: services-build
+        entry: make services
+        language: system
+        pass_filenames: false
+        files: ^(services/|protocol/|Makefile|go\.work)
+
+      - id: it
+        name: integration-tests
+        entry: make integration-tests
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        files: ^(services/|frontend/|integration-tests/|protocol/|Makefile)

@@ -21,7 +21,6 @@ import { controllerVersion } from '../api/controllerClient'
   border-top: 1px solid #e2e8f0;
   font-size: 0.8125rem;
   color: #64748b;
-  background: #f8fafc;
 }
 .app-footer-version {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

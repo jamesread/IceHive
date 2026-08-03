@@ -19,6 +19,7 @@ func TestFeedRecollectSpec(t *testing.T) {
 	}
 }
 
+//gocyclo:ignore
 func TestParseFeedSourceSpec(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -36,7 +37,6 @@ func TestParseFeedSourceSpec(t *testing.T) {
 		{in: "https://", wantErr: true},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(strings.ReplaceAll(tc.in, "/", "_"), func(t *testing.T) {
 			t.Parallel()
 			got, err := parseFeedSourceSpec(tc.in)

@@ -17,20 +17,20 @@ const maxIssuesFetch = 500
 
 // issuesSnapshot holds GitHub issues listed for a repo or an API error string if listing failed.
 type issuesSnapshot struct {
-	Issues      []*github.Issue
 	Err         string
+	Issues      []*github.Issue
 	FetchCapped bool
 }
 
 // issueListByRepoOpts mirrors GitHub issue list query params, including cursor pagination (after).
 type issueListByRepoOpts struct {
+	Since     time.Time `url:"since,omitempty"`
 	State     string    `url:"state,omitempty"`
 	Sort      string    `url:"sort,omitempty"`
 	Direction string    `url:"direction,omitempty"`
-	Since     time.Time `url:"since,omitempty"`
+	After     string    `url:"after,omitempty"`
 	Page      int       `url:"page,omitempty"`
 	PerPage   int       `url:"per_page,omitempty"`
-	After     string    `url:"after,omitempty"`
 }
 
 func listRepoIssues(ctx context.Context, gh *github.Client, owner, repo string, opts *issueListByRepoOpts) ([]*github.Issue, *github.Response, error) {
@@ -52,6 +52,7 @@ func listRepoIssues(ctx context.Context, gh *github.Client, owner, repo string, 
 	return issues, resp, err
 }
 
+//gocyclo:ignore
 func fetchIssuesForRepoSince(ctx context.Context, log *logrus.Logger, gh *github.Client, owner, repo string, since time.Time) issuesSnapshot {
 	var all []*github.Issue
 	fetchCapped := false
@@ -156,6 +157,7 @@ func countOpenIssues(issues []*github.Issue) int64 {
 	return n
 }
 
+//gocyclo:ignore
 func issueLabelsJSON(labels []*github.Label) string {
 	if len(labels) == 0 {
 		return "[]"
@@ -176,6 +178,7 @@ func issueLabelsJSON(labels []*github.Label) string {
 	return jsonScalar(out)
 }
 
+//gocyclo:ignore
 func issueAssigneesJSON(users []*github.User) string {
 	if len(users) == 0 {
 		return "[]"

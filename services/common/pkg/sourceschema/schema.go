@@ -23,9 +23,9 @@ type PrimaryPattern struct {
 	ID            string `json:"id"`
 	SyntaxPrefix  string `json:"syntax_prefix"`
 	Label         string `json:"label"`
-	Args          []Arg  `json:"args"`
 	ValueTemplate string `json:"value_template"`
 	Example       string `json:"example,omitempty"`
+	Args          []Arg  `json:"args"`
 }
 
 // Modifier is an optional +token (e.g. +dependabot).
@@ -38,18 +38,18 @@ type Modifier struct {
 
 // CronHint documents optional cron_line behaviour for this collector.
 type CronHint struct {
-	Optional    bool   `json:"optional"`
 	Description string `json:"description,omitempty"`
+	Optional    bool   `json:"optional"`
 }
 
 // Document is the wire JSON for AMQP and API body_json.
 type Document struct {
+	Cron            *CronHint        `json:"cron,omitempty"`
 	Kind            string           `json:"kind"`
 	SchemaVersion   string           `json:"schema_version"`
 	CollectorType   string           `json:"collector_type"`
 	PrimaryPatterns []PrimaryPattern `json:"primary_patterns"`
 	Modifiers       []Modifier       `json:"modifiers"`
-	Cron            *CronHint        `json:"cron,omitempty"`
 }
 
 // Marshal returns canonical JSON bytes for publishing.

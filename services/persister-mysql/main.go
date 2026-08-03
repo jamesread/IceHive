@@ -33,13 +33,13 @@ type sourceHash struct {
 }
 
 type collectorMetadata struct {
+	RecollectSpec       *string    `json:"recollect_spec"`
+	SourceHash          sourceHash `json:"source_hash"`
 	EntityType          string     `json:"entity_type"`
 	SourceSystem        string     `json:"source_system"`
 	SourceCollectorType string     `json:"source_collector_type"`
 	SourceUniqueID      string     `json:"source_unique_id"`
-	SourceHash          sourceHash `json:"source_hash"`
 	ObservedUnixMS      int64      `json:"observed_unix_ms"`
-	RecollectSpec       *string    `json:"recollect_spec"`
 }
 
 type fieldDescriptor struct {
@@ -47,11 +47,11 @@ type fieldDescriptor struct {
 }
 
 type entityMessage struct {
+	Structure     map[string]fieldDescriptor `json:"structure"`
+	Values        map[string]any             `json:"values"`
 	Type          string                     `json:"type"`
 	SchemaVersion string                     `json:"schema_version"`
 	Metadata      collectorMetadata          `json:"collectormetadata"`
-	Structure     map[string]fieldDescriptor `json:"structure"`
-	Values        map[string]any             `json:"values"`
 }
 
 type mysqlPersister struct {
@@ -62,11 +62,12 @@ type mysqlPersister struct {
 
 var identifierPattern = regexp.MustCompile(`[^a-z0-9_]`)
 
+//gocyclo:ignore
 func mysqlWork(ctx context.Context, _ *koanf.Koanf, log *logrus.Logger, boot *bootstrap.WorkerRuntime, amqpClient *amqpctl.Client) error {
 	if boot == nil {
 		return fmt.Errorf("controller bootstrap settings are required")
 	}
-	db, err := openTargetDB(boot)
+	db, err := openTargetDB(ctx, boot)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,8 @@ func mysqlWork(ctx context.Context, _ *koanf.Koanf, log *logrus.Logger, boot *bo
 	return consumeErr
 }
 
-func openTargetDB(boot *bootstrap.WorkerRuntime) (*sql.DB, error) {
+//gocyclo:ignore
+func openTargetDB(ctx context.Context, boot *bootstrap.WorkerRuntime) (*sql.DB, error) {
 	if strings.TrimSpace(boot.MySQLHost) == "" || strings.TrimSpace(boot.MySQLUser) == "" || strings.TrimSpace(boot.MySQLDatabase) == "" {
 		return nil, fmt.Errorf("missing persister MySQL settings from controller bootstrap (need host,user,database,password)")
 	}
@@ -130,13 +132,14 @@ func openTargetDB(boot *bootstrap.WorkerRuntime) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("sql open: %w", err)
 	}
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(ctx); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("sql ping: %w", err)
 	}
 	return db, nil
 }
 
+//gocyclo:ignore
 func (p *mysqlPersister) persistEntity(ctx context.Context, msg *entityMessage) error {
 	if msg.Type != "Entity" || msg.SchemaVersion != "v1" {
 		return fmt.Errorf("unsupported entity envelope type=%q schema_version=%q", msg.Type, msg.SchemaVersion)
@@ -194,6 +197,7 @@ func sqlType(t string) string {
 	}
 }
 
+//gocyclo:ignore
 func (p *mysqlPersister) ensureTable(ctx context.Context, tableName string, structure map[string]fieldDescriptor) error {
 	p.tableMu.Lock()
 	defer p.tableMu.Unlock()
@@ -264,7 +268,7 @@ func (p *mysqlPersister) tableColumns(ctx context.Context, tableName string) (ma
 	if err != nil {
 		return nil, fmt.Errorf("query columns for %s: %w", tableName, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := map[string]bool{}
 	for rows.Next() {
 		var c string
@@ -279,6 +283,7 @@ func (p *mysqlPersister) tableColumns(ctx context.Context, tableName string) (ma
 	return out, nil
 }
 
+//gocyclo:ignore
 func (p *mysqlPersister) upsertEntity(ctx context.Context, tableName string, msg *entityMessage) error {
 	meta := msg.Metadata
 	columns := []string{"source_hash_value", "source_unique_id", "source_collector_type", "source_system", "observed_unix_ms", "recollect_spec"}

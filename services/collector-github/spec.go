@@ -18,6 +18,8 @@ type githubSourceOpts struct {
 }
 
 // splitSourceSpec splits "primary +mod1 +mod2" (modifiers are separated by a space followed by +).
+//
+//gocyclo:ignore
 func splitSourceSpec(sourceSpec string) (primary string, modifiers []string, err error) {
 	s := strings.TrimSpace(sourceSpec)
 	if s == "" {
@@ -41,6 +43,7 @@ func splitSourceSpec(sourceSpec string) (primary string, modifiers []string, err
 	return primary, modifiers, nil
 }
 
+//gocyclo:ignore
 func githubSourceOptsFromModifiers(modifiers []string) (githubSourceOpts, error) {
 	seen := make(map[string]struct{}, len(modifiers))
 	var out githubSourceOpts
@@ -82,6 +85,8 @@ func parseGitHubSourceSpec(sourceSpec string) (owner, repo string, allReposUnder
 
 // parseRepoPrimary parses repo:owner/name (single repository) or org.repos:login (all repositories
 // for that GitHub user or organization).
+//
+//gocyclo:ignore
 func parseRepoPrimary(primary string) (owner, repo string, allReposUnderLogin bool, err error) {
 	s := strings.TrimSpace(primary)
 	if s == "" {

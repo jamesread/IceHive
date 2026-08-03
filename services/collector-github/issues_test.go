@@ -26,8 +26,8 @@ func TestIssueLabelsJSON(t *testing.T) {
 		t.Fatal("expected empty array")
 	}
 	got := issueLabelsJSON([]*github.Label{
-		{Name: github.String("bug")},
-		{Name: github.String("enhancement")},
+		{Name: github.Ptr("bug")},
+		{Name: github.Ptr("enhancement")},
 	})
 	if got != `["bug","enhancement"]` {
 		t.Fatalf("got %q", got)

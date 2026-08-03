@@ -24,6 +24,7 @@ func main() {
 	})
 }
 
+//gocyclo:ignore
 func yamlWork(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *bootstrap.WorkerRuntime, amqpClient *amqpctl.Client) error {
 	if boot == nil {
 		return fmt.Errorf("controller bootstrap settings are required")
@@ -55,10 +56,10 @@ func yamlWork(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *boo
 		store.runGitSync(ctx, log, msg, "startup")
 		go store.runPeriodicGitCommit(ctx, log, msg)
 		log.WithFields(logrus.Fields{
-			"interval":    gitCommitInterval.String(),
-			"data_dir":    store.root,
-			"git_commit":  gitCommitEnabled(),
-			"git_push":    gitPushEnabled(),
+			"interval":   gitCommitInterval.String(),
+			"data_dir":   store.root,
+			"git_commit": gitCommitEnabled(),
+			"git_push":   gitPushEnabled(),
 		}).Info("periodic git sync enabled (writes paused during commit/push)")
 	}
 
@@ -84,7 +85,7 @@ func yamlWork(ctx context.Context, k *koanf.Koanf, log *logrus.Logger, boot *boo
 		return nil
 	})
 	if consumeErr != nil && ctx.Err() != nil {
-		return nil
+		return nil //nolint:nilerr // context cancellation ends the consumer normally.
 	}
 	return consumeErr
 }

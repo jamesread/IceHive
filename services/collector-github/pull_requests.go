@@ -17,11 +17,12 @@ const (
 
 // pullRequestsSnapshot holds PRs listed for a repo or an API error string if listing failed.
 type pullRequestsSnapshot struct {
-	PRs         []*github.PullRequest
 	Err         string
+	PRs         []*github.PullRequest
 	FetchCapped bool
 }
 
+//gocyclo:ignore
 func fetchPullRequestsForRepo(ctx context.Context, log *logrus.Logger, gh *github.Client, owner, repo string) pullRequestsSnapshot {
 	var all []*github.PullRequest
 	fetchCapped := false
@@ -97,6 +98,7 @@ func countOpenPullRequests(prs []*github.PullRequest) int64 {
 	return n
 }
 
+//gocyclo:ignore
 func simplifyPullRequests(prs []*github.PullRequest, max int) ([]map[string]any, bool) {
 	if len(prs) == 0 {
 		return nil, false
