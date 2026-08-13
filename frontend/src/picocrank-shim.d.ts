@@ -39,3 +39,10 @@ declare module 'picocrank/vue/components/Tabs.vue' {
   const component: DefineComponent<object, object, unknown>
   export default component
 }
+
+declare module 'picocrank/vue/components/Table.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}

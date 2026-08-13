@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import Table from 'picocrank/vue/components/Table.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
 import {
@@ -21,7 +22,6 @@ import {
 import type { CollectionSource, CollectorSourceSchema } from '../gen/icehive/v1/controller_pb'
 import {
   CollectionSourceSchema,
-  DeleteCollectionSourceRequestSchema,
   EnqueueCollectionRequestRequestSchema,
   ListCollectionSourcesRequestSchema,
   ListCollectorSourceSchemasRequestSchema,
@@ -41,10 +41,6 @@ const err = ref<string | null>(null)
 const saving = ref(false)
 /** Collection source id currently sending EnqueueCollectionRequest, or empty when idle. */
 const runNowPendingId = ref('')
-
-const errorDialogRef = ref<HTMLDialogElement | null>(null)
-/** When set, the last-error dialog shows this source id and message. */
-const lastErrorDialog = ref<{ id: string; text: string } | null>(null)
 
 const formDialogRef = ref<HTMLDialogElement | null>(null)
 /** When true, the dialog only enqueues an ephemeral CollectionSource (nothing persisted). */
@@ -71,6 +67,16 @@ const formSourceSpecAdvanced = ref(false)
 const formSchemaBuilder = ref<BuilderState | null>(null)
 
 const formCronSummary = computed(() => describeCronLine(formCronLine.value))
+
+const sourceTableHeaders = [
+  { key: 'collectorType', label: 'Collector', sortable: true },
+  { key: 'sourceSpec', label: 'Spec', sortable: true },
+  { key: 'cronLine', label: 'Schedule', sortable: true },
+  { key: 'enabled', label: 'On', sortable: true },
+  { key: 'lastSuccessUnixMs', label: 'Last success', sortable: true },
+  { key: 'nextDueUnixMs', label: 'Next due', sortable: true },
+  { key: 'run', label: 'Run' },
+]
 
 const activeParsedSchema = computed((): SourceSchemaDoc | null => {
   const ct = formCollectorType.value.trim()
@@ -258,29 +264,6 @@ function hasLastError(s: CollectionSource): boolean {
   return (s.lastError ?? '').trim().length > 0
 }
 
-function openLastErrorDialog(s: CollectionSource) {
-  const text = (s.lastError ?? '').trim()
-  if (!text) return
-  lastErrorDialog.value = { id: s.id, text: s.lastError ?? '' }
-  void nextTick(() => {
-    errorDialogRef.value?.showModal()
-  })
-}
-
-function closeLastErrorDialog() {
-  errorDialogRef.value?.close()
-}
-
-function onLastErrorDialogClose() {
-  lastErrorDialog.value = null
-}
-
-function onErrorDialogBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    closeLastErrorDialog()
-  }
-}
-
 async function loadCollectorSourceSchemas() {
   const res = await getControllerClient().listCollectorSourceSchemas(
     create(ListCollectorSourceSchemasRequestSchema, { collectorType: '' }),
@@ -465,31 +448,29 @@ async function runCollectionNow(s: CollectionSource) {
   }
 }
 
-async function removeSource(id: string) {
-  if (!confirm(`Delete collection source ${id}?`)) return
-  err.value = null
-  try {
-    await getControllerClient().deleteCollectionSource(
-      create(DeleteCollectionSourceRequestSchema, { id }),
-    )
-    if (editId.value === id) {
-      formDialogRef.value?.close()
-    }
-    await loadSources()
-  } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
-  }
-}
-
 async function openOneOffFromQueryIfNeeded() {
   if (route.query.oneOff !== '1') return
   openOneOffCollect()
   await router.replace({ name: 'sources' })
 }
 
+async function openEditFromQueryIfNeeded() {
+  const raw = route.query.edit
+  const id = typeof raw === 'string' ? raw.trim() : ''
+  if (!id) return
+  const s = sources.value.find((row) => row.id === id)
+  await router.replace({ name: 'sources' })
+  if (!s) {
+    err.value = `Collection source "${id}" was not found for editing.`
+    return
+  }
+  startEdit(s)
+}
+
 onMounted(async () => {
   await reloadAll()
   await openOneOffFromQueryIfNeeded()
+  await openEditFromQueryIfNeeded()
 })
 
 watch(
@@ -497,6 +478,15 @@ watch(
   (v) => {
     if (v === '1') {
       void openOneOffFromQueryIfNeeded()
+    }
+  },
+)
+
+watch(
+  () => route.query.edit,
+  (v) => {
+    if (typeof v === 'string' && v.trim()) {
+      void openEditFromQueryIfNeeded()
     }
   },
 )
@@ -510,12 +500,6 @@ watch(
       </template>
     </AppHeader>
     <main class="main">
-      <nav class="crumb">
-        <RouterLink to="/">Home</RouterLink>
-        <span class="sep">/</span>
-        <span>Collection sources</span>
-      </nav>
-
       <Section title="Collection sources">
         <p class="lede">
           Define opaque <code>source_spec</code> strings per <code>collector_type</code> and an optional
@@ -555,71 +539,52 @@ watch(
           No <code>collector-*</code> service heartbeats yet. Start a collector to populate the dropdowns.
         </p>
 
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Collector</th>
-                <th>Spec</th>
-                <th>Schedule</th>
-                <th>On</th>
-                <th>Last success</th>
-                <th>Next due</th>
-                <th>Last error</th>
-                <th class="narrow">Run</th>
-                <th class="narrow">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in sources" :key="s.id" class="source-row">
-                <td class="mono small">{{ s.id }}</td>
-                <td class="mono">{{ s.collectorType }}</td>
-                <td class="mono">{{ s.sourceSpec }}</td>
-                <td class="schedule-cell">
-                  <div class="mono cron-line">{{ s.cronLine }}</div>
-                  <div class="cron-desc">{{ describeCronLine(s.cronLine) }}</div>
-                </td>
-                <td>{{ s.enabled ? 'yes' : 'no' }}</td>
-                <td class="mono">{{ fmtMs(s.lastSuccessUnixMs) }}</td>
-                <td class="mono">{{ fmtMs(s.nextDueUnixMs) }}</td>
-                <td class="err-cell">
-                  <button
-                    v-if="hasLastError(s)"
-                    type="button"
-                    class="err-cell-btn"
-                    :title="'View full error'"
-                    @click="openLastErrorDialog(s)"
-                  >
-                    {{ s.lastError }}
-                  </button>
-                  <span v-else>—</span>
-                </td>
-                <td class="narrow">
-                  <button
-                    type="button"
-                    class="small good"
-                    :disabled="runNowPendingId !== ''"
-                    :title="'Publish a CollectionRequest for this source (runs immediately, ignoring schedule)'"
-                    @click="runCollectionNow(s)"
-                  >
-                    {{ runNowPendingId === s.id ? '…' : 'Run now' }}
-                  </button>
-                </td>
-                <td class="narrow">
-                  <button type="button" class="small neutral" @click="startEdit(s)">Edit</button>
-                  <button type="button" class="small bad" @click="removeSource(s.id)">Delete</button>
-                </td>
-              </tr>
-              <tr v-if="sources.length === 0">
-                <td colspan="10">No collection sources yet.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <Table :headers="sourceTableHeaders" :data="sources">
+          <template #cell-collectorType="{ row, value }">
+            <span class="collector-cell">
+              <span class="mono">{{ value }}</span>
+              <span v-if="hasLastError(row)" class="annotation bad">
+                <span class="annotation-key">error</span>
+                <span class="annotation-val">see details</span>
+              </span>
+            </span>
+          </template>
+          <template #cell-sourceSpec="{ row, value }">
+            <router-link class="mono spec-link" :to="{ name: 'collector-details', params: { id: row.id } }">
+              {{ value }}
+            </router-link>
+          </template>
+          <template #cell-cronLine="{ row, value }">
+            <div class="schedule-cell">
+              <div class="mono cron-line">{{ value }}</div>
+              <div class="cron-desc">{{ describeCronLine(row.cronLine) }}</div>
+            </div>
+          </template>
+          <template #cell-enabled="{ value }">
+            {{ value ? 'yes' : 'no' }}
+          </template>
+          <template #cell-lastSuccessUnixMs="{ value }">
+            <span class="mono">{{ fmtMs(value) }}</span>
+          </template>
+          <template #cell-nextDueUnixMs="{ value }">
+            <span class="mono">{{ fmtMs(value) }}</span>
+          </template>
+          <template #cell-run="{ row }">
+            <button
+              type="button"
+              class="small good"
+              :disabled="runNowPendingId !== ''"
+              title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
+              @click="runCollectionNow(row)"
+            >
+              {{ runNowPendingId === row.id ? '…' : 'Run now' }}
+            </button>
+          </template>
+        </Table>
         <p class="hint table-hint">
-          Use <strong>Add source</strong> or <strong>Edit</strong> on a row. Empty cron means run-now only — use
-          <strong>Run now</strong> to collect.
+          Open a source via its spec link for full details (including id and last error). Use
+          <strong>Add source</strong> here, or <strong>Edit</strong> from the details page. Empty cron means run-now
+          only — use <strong>Run now</strong> to collect.
         </p>
       </Section>
     </main>
@@ -768,23 +733,6 @@ watch(
       </div>
     </dialog>
 
-    <dialog
-      ref="errorDialogRef"
-      class="err-dialog"
-      aria-labelledby="err-dialog-title"
-      @close="onLastErrorDialogClose"
-      @click="onErrorDialogBackdropClick"
-    >
-      <div v-if="lastErrorDialog" class="err-dialog-inner" @click.stop>
-        <h2 id="err-dialog-title" class="err-dialog-title">Last error</h2>
-        <p class="err-dialog-id mono">{{ lastErrorDialog.id }}</p>
-        <pre class="err-dialog-body mono">{{ lastErrorDialog.text }}</pre>
-        <div class="err-dialog-actions">
-          <button type="button" class="good" @click="closeLastErrorDialog">Close</button>
-        </div>
-      </div>
-    </dialog>
-
     <AppFooter />
   </div>
 </template>
@@ -798,21 +746,6 @@ watch(
 .main {
   flex: 1;
   padding: 1rem 1.5rem 2rem;
-}
-.crumb {
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
-}
-.crumb a {
-  color: #2563eb;
-  text-decoration: none;
-}
-.crumb a:hover {
-  text-decoration: underline;
-}
-.sep {
-  margin: 0 0.35rem;
-  color: #64748b;
 }
 .lede {
   color: #475569;
@@ -833,79 +766,11 @@ watch(
   border-radius: 6px;
   margin: 0 0 1rem;
 }
-.err-cell {
-  max-width: 12rem;
-  font-size: 0.85rem;
-  color: #b45309;
-  vertical-align: middle;
-}
-.err-cell-btn {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.err-cell-btn:hover {
-  text-decoration: underline;
-  color: #92400e;
-}
-.err-cell-btn:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-.err-dialog {
-  padding: 0;
-  border: none;
-  border-radius: 10px;
-  max-width: min(42rem, calc(100vw - 2rem));
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-}
-.err-dialog::backdrop {
-  background: rgb(15 23 42 / 0.45);
-}
-.err-dialog-inner {
-  padding: 1.25rem 1.35rem;
-}
-.err-dialog-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.err-dialog-id {
-  margin: 0 0 1rem;
-  font-size: 0.82rem;
-  color: #64748b;
-  word-break: break-all;
-}
-.err-dialog-body {
-  margin: 0 0 1.25rem;
-  padding: 0.85rem 1rem;
-  max-height: min(50vh, 24rem);
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: #fef2f2;
-  color: #991b1b;
-  border-radius: 6px;
-  border: 1px solid #fecaca;
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-.err-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
+.collector-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 .toolbar {
   display: flex;
@@ -1031,32 +896,6 @@ watch(
   font-size: 0.8rem;
   margin-right: 0.25rem;
 }
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-}
-.data-table th,
-.data-table td {
-  padding: 0.45rem 0.55rem;
-  text-align: left;
-  border-bottom: 1px solid #e2e8f0;
-}
-.data-table th {
-  background: #f8fafc;
-  font-weight: 600;
-}
-.data-table tbody tr.source-row {
-  transition: background-color 0.12s ease;
-}
-.data-table tbody tr.source-row:hover {
-  background-color: #f1f5f9;
-}
 .table-hint {
   margin-top: 0.75rem;
 }
@@ -1090,14 +929,18 @@ watch(
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
+.spec-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+.spec-link:hover {
+  text-decoration: underline;
+}
 .small {
   font-size: 0.75rem;
   max-width: 8rem;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.narrow {
-  white-space: nowrap;
 }
 .schema-builder {
   grid-column: 1 / -1;

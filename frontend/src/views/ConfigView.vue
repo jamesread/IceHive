@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import AppHeader from '../components/AppHeader.vue'
@@ -102,11 +101,6 @@ onMounted(() => {
       </template>
     </AppHeader>
     <main class="config-main">
-      <nav class="crumb">
-        <RouterLink to="/">Home</RouterLink>
-        <span class="sep">/</span>
-        <span>Controller configuration</span>
-      </nav>
       <Section title="Controller configuration">
         <p class="lede">
           Values come from the controller process via Connect RPC (<code>ListConfig</code> /
@@ -197,21 +191,6 @@ onMounted(() => {
 .config-main {
   flex: 1;
   padding: 1rem 1.5rem 2rem;
-}
-.crumb {
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
-}
-.crumb a {
-  color: #2563eb;
-  text-decoration: none;
-}
-.crumb a:hover {
-  text-decoration: underline;
-}
-.sep {
-  margin: 0 0.35rem;
-  color: #64748b;
 }
 .lede {
   color: #475569;

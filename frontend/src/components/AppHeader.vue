@@ -15,6 +15,7 @@ function onLogoClick() {
     username="Guest"
     :sidebar-enabled="false"
     :show-branding="true"
+    :breadcrumbs="true"
     logo-url="/favicon.svg"
     @logo-click="onLogoClick"
   >
