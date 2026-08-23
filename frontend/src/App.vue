@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ConnectError } from '@connectrpc/connect'
+import NotificationPopups from 'picocrank/vue/components/NotificationPopups.vue'
 import {
   connectToFirstAvailableController,
   connectWithUserSuppliedBaseUrl,
@@ -86,6 +87,7 @@ function forgetStoredAndRetry() {
       </form>
     </div>
     <router-view v-else />
+    <NotificationPopups />
   </div>
 </template>
 

@@ -23,7 +23,7 @@ type pullRequestsSnapshot struct {
 }
 
 //gocyclo:ignore
-func fetchPullRequestsForRepo(ctx context.Context, log *logrus.Logger, gh *github.Client, owner, repo string) pullRequestsSnapshot {
+func fetchPullRequestsForRepo(ctx context.Context, log *logrus.Logger, gh *github.Client, owner, repo, sourceID string) pullRequestsSnapshot {
 	var all []*github.PullRequest
 	fetchCapped := false
 	pagesFetched := 0
@@ -42,7 +42,16 @@ func fetchPullRequestsForRepo(ctx context.Context, log *logrus.Logger, gh *githu
 			State:       "all",
 			ListOptions: github.ListOptions{Page: page, PerPage: 100},
 		}
-		pulls, resp, err := gh.PullRequests.List(ctx, owner, repo, opts)
+		pulls, resp, err := func() ([]*github.PullRequest, *github.Response, error) {
+			var pulls []*github.PullRequest
+			var resp *github.Response
+			err := observeFetchCtx(ctx, sourceID, "pull_requests.list", func(c context.Context) error {
+				var innerErr error
+				pulls, resp, innerErr = gh.PullRequests.List(c, owner, repo, opts)
+				return innerErr
+			})
+			return pulls, resp, err
+		}()
 		if err != nil {
 			if log != nil {
 				fields := logrus.Fields{

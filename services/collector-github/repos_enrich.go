@@ -10,7 +10,7 @@ import (
 // enrichRepo loads full repository metadata when list responses omit description or topics.
 //
 //gocyclo:ignore
-func enrichRepo(ctx context.Context, gh *github.Client, repo *github.Repository) (*github.Repository, error) {
+func enrichRepo(ctx context.Context, gh *github.Client, repo *github.Repository, sourceID string) (*github.Repository, error) {
 	if repo == nil {
 		return nil, nil
 	}
@@ -22,14 +22,23 @@ func enrichRepo(ctx context.Context, gh *github.Client, repo *github.Repository)
 	if owner == "" || name == "" {
 		return repo, nil
 	}
-	full, _, err := gh.Repositories.Get(ctx, owner, name)
+	var full *github.Repository
+	err := observeFetchCtx(ctx, sourceID, "repos.get_enrich", func(c context.Context) error {
+		var innerErr error
+		full, _, innerErr = gh.Repositories.Get(c, owner, name)
+		return innerErr
+	})
 	if err != nil {
 		return repo, err
 	}
 	if len(full.Topics) == 0 {
-		if topics, _, topicsErr := gh.Repositories.ListAllTopics(ctx, owner, name); topicsErr == nil {
-			full.Topics = topics
-		}
+		_ = observeFetchCtx(ctx, sourceID, "repos.list_topics", func(c context.Context) error {
+			topics, _, topicsErr := gh.Repositories.ListAllTopics(c, owner, name)
+			if topicsErr == nil {
+				full.Topics = topics
+			}
+			return topicsErr
+		})
 	}
 	return full, nil
 }

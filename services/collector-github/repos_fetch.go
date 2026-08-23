@@ -9,33 +9,48 @@ import (
 )
 
 // fetchReposForSource resolves a single repo (repo:owner/name) or all repos under a login (org.repos:login).
-func fetchReposForSource(ctx context.Context, gh *github.Client, owner, repo string, allUnderLogin bool) ([]*github.Repository, error) {
+func fetchReposForSource(ctx context.Context, gh *github.Client, owner, repo string, allUnderLogin bool, sourceID string) ([]*github.Repository, error) {
 	if !allUnderLogin {
-		r, _, err := gh.Repositories.Get(ctx, owner, repo)
+		var r *github.Repository
+		err := observeFetchCtx(ctx, sourceID, "repos.get", func(c context.Context) error {
+			var innerErr error
+			r, _, innerErr = gh.Repositories.Get(c, owner, repo)
+			return innerErr
+		})
 		if err != nil {
 			return nil, err
 		}
 		return []*github.Repository{r}, nil
 	}
-	return listAllReposUnderOwner(ctx, gh, owner)
+	return listAllReposUnderOwner(ctx, gh, owner, sourceID)
 }
 
 //gocyclo:ignore
-func listAllReposUnderOwner(ctx context.Context, gh *github.Client, owner string) ([]*github.Repository, error) {
+func listAllReposUnderOwner(ctx context.Context, gh *github.Client, owner, sourceID string) ([]*github.Repository, error) {
 	orgOpts := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100, Page: 1},
 	}
-	repos, resp, err := gh.Repositories.ListByOrg(ctx, owner, orgOpts)
+	var repos []*github.Repository
+	var resp *github.Response
+	err := observeFetchCtx(ctx, sourceID, "repos.list_by_org", func(c context.Context) error {
+		var innerErr error
+		repos, resp, innerErr = gh.Repositories.ListByOrg(c, owner, orgOpts)
+		return innerErr
+	})
 	if err != nil {
 		if isGitHub404(err) {
-			return paginateUserRepos(ctx, gh, owner)
+			return paginateUserRepos(ctx, gh, owner, sourceID)
 		}
 		return nil, err
 	}
 	out := append([]*github.Repository(nil), repos...)
 	for resp != nil && resp.NextPage != 0 {
 		orgOpts.Page = resp.NextPage
-		repos, resp, err = gh.Repositories.ListByOrg(ctx, owner, orgOpts)
+		err := observeFetchCtx(ctx, sourceID, "repos.list_by_org", func(c context.Context) error {
+			var innerErr error
+			repos, resp, innerErr = gh.Repositories.ListByOrg(c, owner, orgOpts)
+			return innerErr
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -44,13 +59,19 @@ func listAllReposUnderOwner(ctx context.Context, gh *github.Client, owner string
 	return out, nil
 }
 
-func paginateUserRepos(ctx context.Context, gh *github.Client, owner string) ([]*github.Repository, error) {
+func paginateUserRepos(ctx context.Context, gh *github.Client, owner, sourceID string) ([]*github.Repository, error) {
 	opts := &github.RepositoryListByUserOptions{
 		ListOptions: github.ListOptions{PerPage: 100, Page: 1},
 	}
 	var out []*github.Repository
 	for {
-		repos, resp, err := gh.Repositories.ListByUser(ctx, owner, opts)
+		var repos []*github.Repository
+		var resp *github.Response
+		err := observeFetchCtx(ctx, sourceID, "repos.list_by_user", func(c context.Context) error {
+			var innerErr error
+			repos, resp, innerErr = gh.Repositories.ListByUser(c, owner, opts)
+			return innerErr
+		})
 		if err != nil {
 			return nil, err
 		}

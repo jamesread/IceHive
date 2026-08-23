@@ -77,12 +77,14 @@ spec:
               containerPort: 8080
               protocol: TCP
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthz
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthz
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 20
@@ -119,3 +121,41 @@ spec:
       port: 8080
       targetPort: http
       protocol: TCP
+# Example Prometheus alert rules for IceHive pipeline health.
+# Apply separately when Prometheus Operator is available (adjust namespace/labels as needed).
+#
+# apiVersion: monitoring.coreos.com/v1
+# kind: PrometheusRule
+# metadata:
+#   name: icehive-alerts
+#   namespace: icehive
+# spec:
+#   groups:
+#     - name: icehive.pipeline
+#       rules:
+#         - alert: IcehiveGitRepoPersistStalled
+#           expr: |
+#             increase(icehive_collector_entities_published_total{entity_type="GitRepo"}[1h]) > 0
+#             and increase(icehive_persister_entities_total{entity_type="GitRepo",outcome="success"}[1h]) == 0
+#           for: 15m
+#           labels:
+#             severity: warning
+#           annotations:
+#             summary: GitHub repos published but not persisted
+#             description: collector-github published GitRepo entities in the last hour but persister-mysql recorded no successful upserts.
+#         - alert: IcehiveCollectionSourceStale
+#           expr: icehive_controller_collection_source_stale == 1
+#           for: 30m
+#           labels:
+#             severity: warning
+#           annotations:
+#             summary: IceHive collection source is stale
+#             description: A scheduled collection source has not succeeded within twice its cron interval.
+#         - alert: IcehiveEntityFreshnessStale
+#           expr: icehive_controller_entity_freshness_age_seconds{entity_type="GitRepo"} > 86400
+#           for: 30m
+#           labels:
+#             severity: warning
+#           annotations:
+#             summary: GitRepo entity data is stale in the sink database
+#             description: No GitRepo row has been updated in the persister MySQL sink for over 24 hours.

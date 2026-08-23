@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
@@ -21,6 +21,7 @@ const services = ref<ServiceStatus[]>([])
 const loadErr = ref<string | null>(null)
 const archHost = ref<HTMLElement | null>(null)
 const archErr = ref<string | null>(null)
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
 const statusTabs = [
   { id: 'heartbeats', label: 'Service heartbeats' },
@@ -197,6 +198,16 @@ onMounted(() => {
     },
   )
   void loadServices()
+  heartbeatTimer = setInterval(() => {
+    void loadServices()
+  }, 30_000)
+})
+
+onUnmounted(() => {
+  if (heartbeatTimer !== null) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = null
+  }
 })
 </script>
 

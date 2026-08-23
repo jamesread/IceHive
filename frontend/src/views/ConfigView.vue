@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import AppHeader from '../components/AppHeader.vue'
@@ -12,6 +12,9 @@ import {
   SetConfigRequestSchema,
 } from '../gen/icehive/v1/controller_pb'
 import { getControllerClient } from '../api/controllerClient'
+import { notifySuccess } from '../utils/notify'
+
+const GITHUB_TOKEN_KEY = 'github.token'
 
 const rows = ref<ConfigVar[]>([])
 const edits = ref<Record<string, string>>({})
@@ -21,6 +24,13 @@ const savingKey = ref<string | null>(null)
 const creating = ref(false)
 const newKey = ref('')
 const newValue = ref('')
+
+const hasGitHubToken = computed(() => rows.value.some((r) => r.key === GITHUB_TOKEN_KEY))
+
+function addGitHubTokenPreset() {
+  newKey.value = GITHUB_TOKEN_KEY
+  newValue.value = ''
+}
 
 async function loadConfig() {
   err.value = null
@@ -54,6 +64,7 @@ async function saveRow(key: string) {
     await getControllerClient().setConfig(
       create(SetConfigRequestSchema, { key, value: nextVal }),
     )
+    notifySuccess(`Saved "${key}".`)
     await loadConfig()
   } catch (e) {
     err.value = e instanceof ConnectError ? e.message : String(e)
@@ -80,6 +91,7 @@ async function createKeyRow() {
     )
     newKey.value = ''
     newValue.value = ''
+    notifySuccess(`Created "${key}".`)
     await loadConfig()
   } catch (e) {
     err.value = e instanceof ConnectError ? e.message : String(e)
@@ -109,6 +121,9 @@ onMounted(() => {
         <p v-if="err" class="err" role="alert">{{ err }}</p>
         <section class="create-panel">
           <h2>Create configuration key</h2>
+          <p v-if="!hasGitHubToken" class="hint">
+            GitHub collection requires a <code class="mono">{{ GITHUB_TOKEN_KEY }}</code> entry.
+          </p>
           <form class="create-form" @submit.prevent="createKeyRow">
             <label class="field">
               <span>Key</span>
@@ -132,6 +147,14 @@ onMounted(() => {
             </label>
             <button type="submit" class="good" :disabled="creating">
               {{ creating ? 'Creating…' : 'Create key' }}
+            </button>
+            <button
+              v-if="!hasGitHubToken"
+              type="button"
+              class="neutral"
+              @click="addGitHubTokenPreset"
+            >
+              Use {{ GITHUB_TOKEN_KEY }}
             </button>
           </form>
         </section>

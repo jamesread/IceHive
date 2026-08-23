@@ -10,6 +10,8 @@ import Section from 'picocrank/vue/components/Section.vue'
 import Table from 'picocrank/vue/components/Table.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
+import { notifySuccess } from '../utils/notify'
+import { pollAfterCollectionRun } from '../utils/pollAfterRun'
 import {
   builderStateForPattern,
   composeSpec,
@@ -36,6 +38,8 @@ const sources = ref<CollectionSource[]>([])
 /** Latest SourceSchema rows from the controller (populated from collector AMQP at startup). */
 const collectorSourceSchemas = ref<CollectorSourceSchema[]>([])
 const filterCollectorType = ref('')
+/** Problem filter: all sources, stale pipeline only, or sources with last_error. */
+const filterProblems = ref<'all' | 'stale' | 'error'>('all')
 const loading = ref(false)
 const err = ref<string | null>(null)
 const saving = ref(false)
@@ -74,9 +78,20 @@ const sourceTableHeaders = [
   { key: 'cronLine', label: 'Schedule', sortable: true },
   { key: 'enabled', label: 'On', sortable: true },
   { key: 'lastSuccessUnixMs', label: 'Last success', sortable: true },
+  { key: 'pipelineHealth', label: 'Pipeline', sortable: false },
   { key: 'nextDueUnixMs', label: 'Next due', sortable: true },
-  { key: 'run', label: 'Run' },
+  { key: 'run', label: 'Actions' },
 ]
+
+const displayedSources = computed(() => {
+  let rows = sources.value
+  if (filterProblems.value === 'stale') {
+    rows = rows.filter((s) => s.enabled && s.isStale)
+  } else if (filterProblems.value === 'error') {
+    rows = rows.filter((s) => hasLastError(s))
+  }
+  return rows
+})
 
 const activeParsedSchema = computed((): SourceSchemaDoc | null => {
   const ct = formCollectorType.value.trim()
@@ -264,6 +279,45 @@ function hasLastError(s: CollectionSource): boolean {
   return (s.lastError ?? '').trim().length > 0
 }
 
+function truncateError(msg: string, max = 72): string {
+  const t = msg.trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max - 1)}…`
+}
+
+function duplicateSource(s: CollectionSource) {
+  err.value = null
+  oneOffMode.value = false
+  editId.value = ''
+  formCollectorType.value = s.collectorType
+  formSourceSpec.value = s.sourceSpec
+  formCronLine.value = s.cronLine ?? ''
+  formEnabled.value = s.enabled
+  void nextTick(() => {
+    syncSchemaBuilderFromForm()
+    formDialogRef.value?.showModal()
+  })
+}
+
+function fmtAgeSeconds(sec: bigint | undefined): string {
+  if (sec === undefined || sec === 0n) return '—'
+  const n = Number(sec)
+  if (!Number.isFinite(n) || n < 0) return '—'
+  if (n < 60) return `${n}s ago`
+  const min = Math.floor(n / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 48) return `${hr}h ago`
+  const day = Math.floor(hr / 24)
+  return `${day}d ago`
+}
+
+function pipelineHealthLabel(s: CollectionSource): string {
+  if (!s.enabled) return 'disabled'
+  if (s.isStale) return 'stale'
+  return 'healthy'
+}
+
 async function loadCollectorSourceSchemas() {
   const res = await getControllerClient().listCollectorSourceSchemas(
     create(ListCollectorSourceSchemasRequestSchema, { collectorType: '' }),
@@ -364,6 +418,7 @@ async function runOneOffFromDialog() {
       }),
     )
     formDialogRef.value?.close()
+    notifySuccess('One-off collection enqueued.')
   } catch (e) {
     err.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
@@ -405,14 +460,25 @@ async function persistSource(runAfterSave: boolean) {
     if (runAfterSave) {
       runNowPendingId.value = sourceIdForRun
       try {
+        const beforeRun = BigInt(
+          sources.value.find((row) => row.id === sourceIdForRun)?.lastRunUnixMs ?? 0,
+        )
         await getControllerClient().enqueueCollectionRequest(
           create(EnqueueCollectionRequestRequestSchema, {
             target: { case: 'collectionSourceId', value: sourceIdForRun },
           }),
         )
+        notifySuccess('Source saved and collection run enqueued.')
+        void pollAfterCollectionRun(
+          beforeRun,
+          () => loadSources(false),
+          () => sources.value.find((row) => row.id === sourceIdForRun)?.lastRunUnixMs,
+        )
       } finally {
         runNowPendingId.value = ''
       }
+    } else {
+      notifySuccess(editId.value ? 'Collection source updated.' : 'Collection source created.')
     }
     await loadSources()
     formDialogRef.value?.close()
@@ -434,13 +500,19 @@ async function saveSourceAndRunNow() {
 async function runCollectionNow(s: CollectionSource) {
   err.value = null
   runNowPendingId.value = s.id
+  const beforeRun = s.lastRunUnixMs ?? 0n
   try {
     await getControllerClient().enqueueCollectionRequest(
       create(EnqueueCollectionRequestRequestSchema, {
         target: { case: 'collectionSourceId', value: s.id },
       }),
     )
-    await loadSources(false)
+    notifySuccess('Collection run enqueued.')
+    void pollAfterCollectionRun(
+      beforeRun,
+      () => loadSources(false),
+      () => sources.value.find((row) => row.id === s.id)?.lastRunUnixMs,
+    )
   } catch (e) {
     err.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
@@ -467,10 +539,24 @@ async function openEditFromQueryIfNeeded() {
   startEdit(s)
 }
 
+async function openDuplicateFromQueryIfNeeded() {
+  const raw = route.query.duplicate
+  const id = typeof raw === 'string' ? raw.trim() : ''
+  if (!id) return
+  const s = sources.value.find((row) => row.id === id)
+  await router.replace({ name: 'sources' })
+  if (!s) {
+    err.value = `Collection source "${id}" was not found for duplication.`
+    return
+  }
+  duplicateSource(s)
+}
+
 onMounted(async () => {
   await reloadAll()
   await openOneOffFromQueryIfNeeded()
   await openEditFromQueryIfNeeded()
+  await openDuplicateFromQueryIfNeeded()
 })
 
 watch(
@@ -487,6 +573,15 @@ watch(
   (v) => {
     if (typeof v === 'string' && v.trim()) {
       void openEditFromQueryIfNeeded()
+    }
+  },
+)
+
+watch(
+  () => route.query.duplicate,
+  (v) => {
+    if (typeof v === 'string' && v.trim()) {
+      void openDuplicateFromQueryIfNeeded()
     }
   },
 )
@@ -509,7 +604,8 @@ watch(
           database. Each collector interprets its own specs (for example GitHub:
           <code>repo:jamesread/faridoon</code> for one repo, <code>org.repos:olivetin</code> for every repo under a user
           or org. Optional modifiers after the primary spec: <code>+dependabot</code> (alerts; skipped for archived
-          repos), <code>+pr</code> (pull requests; skipped for archived repos).
+          repos), <code>+pr</code> (pull requests; skipped for archived repos), <code>+issue</code> (issues; skipped
+          for archived repos).
         </p>
         <p v-if="err" class="err" role="alert">{{ err }}</p>
 
@@ -527,6 +623,14 @@ watch(
               </option>
             </select>
           </label>
+          <label class="filter">
+            <span>Show</span>
+            <select v-model="filterProblems" class="mono">
+              <option value="all">All sources</option>
+              <option value="stale">Stale pipeline only</option>
+              <option value="error">Last error only</option>
+            </select>
+          </label>
           <button type="button" class="neutral" :disabled="loading" @click="reloadAll">
             {{ loading ? 'Loading…' : 'Reload' }}
           </button>
@@ -539,14 +643,10 @@ watch(
           No <code>collector-*</code> service heartbeats yet. Start a collector to populate the dropdowns.
         </p>
 
-        <Table :headers="sourceTableHeaders" :data="sources">
-          <template #cell-collectorType="{ row, value }">
+        <Table :headers="sourceTableHeaders" :data="displayedSources">
+          <template #cell-collectorType="{ value }">
             <span class="collector-cell">
               <span class="mono">{{ value }}</span>
-              <span v-if="hasLastError(row)" class="annotation bad">
-                <span class="annotation-key">error</span>
-                <span class="annotation-val">see details</span>
-              </span>
             </span>
           </template>
           <template #cell-sourceSpec="{ row, value }">
@@ -566,21 +666,49 @@ watch(
           <template #cell-lastSuccessUnixMs="{ value }">
             <span class="mono">{{ fmtMs(value) }}</span>
           </template>
+          <template #cell-pipelineHealth="{ row }">
+            <span class="annotation" :class="pipelineHealthLabel(row) === 'stale' ? 'bad' : pipelineHealthLabel(row) === 'healthy' ? 'good' : 'neutral'">
+              <span class="annotation-key">status</span>
+              <span class="annotation-val">{{ pipelineHealthLabel(row) }}</span>
+            </span>
+            <div v-if="row.entityFreshnessAgeSeconds > 0n" class="freshness-hint mono">
+              entities {{ fmtAgeSeconds(row.entityFreshnessAgeSeconds) }}
+            </div>
+            <div v-if="hasLastError(row)" class="last-error-hint">
+              <span class="annotation bad">
+                <span class="annotation-key">error</span>
+                <span class="annotation-val" :title="row.lastError">{{ truncateError(row.lastError ?? '') }}</span>
+              </span>
+            </div>
+          </template>
           <template #cell-nextDueUnixMs="{ value }">
             <span class="mono">{{ fmtMs(value) }}</span>
           </template>
           <template #cell-run="{ row }">
-            <button
-              type="button"
-              class="small good"
-              :disabled="runNowPendingId !== ''"
-              title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
-              @click="runCollectionNow(row)"
-            >
-              {{ runNowPendingId === row.id ? '…' : 'Run now' }}
-            </button>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="small good"
+                :disabled="runNowPendingId !== ''"
+                title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
+                @click="runCollectionNow(row)"
+              >
+                {{ runNowPendingId === row.id ? '…' : 'Run now' }}
+              </button>
+              <button
+                type="button"
+                class="small neutral"
+                title="Copy this source into the add form"
+                @click="duplicateSource(row)"
+              >
+                Duplicate
+              </button>
+            </div>
           </template>
         </Table>
+        <p v-if="displayedSources.length === 0 && sources.length > 0" class="hint">
+          No sources match the current filters.
+        </p>
         <p class="hint table-hint">
           Open a source via its spec link for full details (including id and last error). Use
           <strong>Add source</strong> here, or <strong>Edit</strong> from the details page. Empty cron means run-now
@@ -878,6 +1006,23 @@ watch(
   color: #64748b;
   margin-top: 0.2rem;
   line-height: 1.35;
+}
+.freshness-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.last-error-hint {
+  margin-top: 0.35rem;
+  max-width: 18rem;
+}
+.last-error-hint .annotation-val {
+  word-break: break-word;
+}
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 .form-actions {
   grid-column: 1 / -1;

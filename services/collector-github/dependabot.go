@@ -27,7 +27,7 @@ type dependabotSnapshot struct {
 }
 
 //gocyclo:ignore
-func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner, repo string) dependabotSnapshot {
+func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner, repo, sourceID string) dependabotSnapshot {
 	// Dependabot alerts use cursor pagination (Link rel="next" with ?cursor=...), not ?page=.
 	// state=open: server-side filter so dismissed/fixed alerts are not fetched or emitted.
 	opts := &github.ListAlertsOptions{
@@ -36,7 +36,13 @@ func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner,
 	}
 	var all []*github.DependabotAlert
 	for {
-		alerts, resp, err := gh.Dependabot.ListRepoAlerts(ctx, owner, repo, opts)
+		var alerts []*github.DependabotAlert
+		var resp *github.Response
+		err := observeFetchCtx(ctx, sourceID, "dependabot.list_alerts", func(c context.Context) error {
+			var innerErr error
+			alerts, resp, innerErr = gh.Dependabot.ListRepoAlerts(c, owner, repo, opts)
+			return innerErr
+		})
 		if err != nil {
 			return dependabotSnapshot{Err: err.Error()}
 		}

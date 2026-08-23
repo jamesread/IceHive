@@ -147,6 +147,7 @@ func runOneSource(
 		sched, err = cronStandardParser.Parse(cronLine)
 		if err != nil {
 			_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), 0)
+			incCollectionRun(src.GetId(), "failure")
 			log.WithError(err).WithField("source_id", src.GetId()).Error("invalid cron_line on collection source")
 			return
 		}
@@ -156,6 +157,7 @@ func runOneSource(
 	owner, repoName, allUnderLogin, srcOpts, err := parseGitHubSourceSpec(src.GetSourceSpec())
 	if err != nil {
 		_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
+		incCollectionRun(src.GetId(), "failure")
 		log.WithError(err).WithField("source_id", src.GetId()).Warn("source_spec parse failed")
 		return
 	}
@@ -170,9 +172,10 @@ func runOneSource(
 		"resolved_repo":   repoName,
 	}).Debug("github source_spec parsed for collection run")
 
-	repos, err := fetchReposForSource(ctx, ghClient, owner, repoName, allUnderLogin)
+	repos, err := fetchReposForSource(ctx, ghClient, owner, repoName, allUnderLogin, src.GetId())
 	if err != nil {
 		_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
+		incCollectionRun(src.GetId(), "failure")
 		logFields := logrus.Fields{"source_id": src.GetId()}
 		if allUnderLogin {
 			logFields["login"] = owner
@@ -185,7 +188,7 @@ func runOneSource(
 	}
 
 	for _, repo := range repos {
-		if enriched, err := enrichRepo(ctx, ghClient, repo); err != nil {
+		if enriched, err := enrichRepo(ctx, ghClient, repo, src.GetId()); err != nil {
 			log.WithError(err).WithFields(logrus.Fields{
 				"source_id": src.GetId(),
 				"repo":      repo.GetFullName(),
@@ -201,7 +204,7 @@ func runOneSource(
 					"repo":      repo.GetFullName(),
 				}).Info("skipping dependabot fetch for archived repository")
 			} else {
-				snap := fetchDependabotAlertsForRepo(ctx, ghClient, repoOwnerLogin(repo), repo.GetName())
+				snap := fetchDependabotAlertsForRepo(ctx, ghClient, repoOwnerLogin(repo), repo.GetName(), src.GetId())
 				depSnap = &snap
 				if snap.Err != "" {
 					log.WithFields(logrus.Fields{
@@ -221,7 +224,7 @@ func runOneSource(
 					"reason":    "archived_repo_pr_snap_nil",
 				}).Warn("github +pr: skipping PR list for archived repo; entity omits pull_request_* / pull_requests (often shown as null downstream)")
 			} else {
-				snap := fetchPullRequestsForRepo(ctx, log, ghClient, repoOwnerLogin(repo), repo.GetName())
+				snap := fetchPullRequestsForRepo(ctx, log, ghClient, repoOwnerLogin(repo), repo.GetName(), src.GetId())
 				prSnap = &snap
 				if snap.Err != "" {
 					log.WithFields(logrus.Fields{
@@ -251,7 +254,7 @@ func runOneSource(
 					"reason":    "archived_repo_issue_snap_nil",
 				}).Warn("github +issue: skipping issue list for archived repo")
 			} else {
-				issueResult = issueColl.Collect(ctx, log, ghClient, repoOwnerLogin(repo), repo.GetName(), repo)
+				issueResult = issueColl.Collect(ctx, log, ghClient, src.GetId(), repoOwnerLogin(repo), repo.GetName(), repo)
 				switch {
 				case issueResult.Err != "":
 					log.WithFields(logrus.Fields{
@@ -280,6 +283,7 @@ func runOneSource(
 		entity := buildGitRepoEntity(repo, depSnap, prSnap)
 		if err := publishCollectorEntity(ctx, amqpClient, entity); err != nil {
 			_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
+			incCollectionRun(src.GetId(), "failure")
 			log.WithError(err).WithField("source_id", src.GetId()).Warn("publish GitRepo entity failed")
 			return
 		}
@@ -287,6 +291,7 @@ func runOneSource(
 			for _, alert := range depSnap.Alerts {
 				issueEntity, ok := buildDependabotIssueEntity(repo, alert)
 				if !ok {
+					incNormalizeError(entityTypeDependabotIssue, "invalid_alert")
 					continue
 				}
 				if err := publishCollectorEntity(ctx, amqpClient, issueEntity); err != nil {
@@ -304,6 +309,7 @@ func runOneSource(
 			for _, issue := range issueResult.IssuesToPublish {
 				ghIssueEntity, ok := buildGitHubIssueEntity(repo, issue)
 				if !ok {
+					incNormalizeError(entityTypeGitHubIssue, "invalid_issue")
 					continue
 				}
 				if err := publishCollectorEntity(ctx, amqpClient, ghIssueEntity); err != nil {
@@ -325,6 +331,7 @@ func runOneSource(
 		log.WithError(err).WithField("source_id", src.GetId()).Warn("report collection source run failed")
 		return
 	}
+	incCollectionRun(src.GetId(), "success")
 	logFields := logrus.Fields{
 		"source_id":  src.GetId(),
 		"repo_count": len(repos),
@@ -339,9 +346,15 @@ func runOneSource(
 func publishCollectorEntity(ctx context.Context, amqpClient *amqpctl.Client, entity entityMessage) error {
 	body, err := json.Marshal(entity)
 	if err != nil {
+		incPublishError(entity.Metadata.EntityType)
 		return err
 	}
-	return amqpClient.PublishJSON(ctx, amqpctl.RoutingKeyCollectorEntities, body)
+	if err := amqpClient.PublishJSON(ctx, amqpctl.RoutingKeyCollectorEntities, body); err != nil {
+		incPublishError(entity.Metadata.EntityType)
+		return err
+	}
+	incEntityPublished(entity.Metadata.EntityType)
+	return nil
 }
 
 func truncateErr(err error) string {

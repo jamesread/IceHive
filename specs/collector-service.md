@@ -68,6 +68,7 @@ Each emitted entity MUST include these root-level attributes:
 - missing source fields SHOULD be omitted rather than emitted as empty strings
 - nested structures from source systems MUST NOT be emitted in `values`
 - nested source data MUST be emitted as additional entities with their own `collectormetadata`, `structure`, and `values`
+- entity field names MUST NOT use `created_at` or `updated_at`; persistors reserve those names for row metadata timestamps (use prefixed names such as `repo_created_at`)
 
 ### Validation Contract
 

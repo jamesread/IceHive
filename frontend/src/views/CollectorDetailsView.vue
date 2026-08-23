@@ -9,6 +9,8 @@ import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
+import { notifySuccess } from '../utils/notify'
+import { pollAfterCollectionRun } from '../utils/pollAfterRun'
 import type { CollectionSource } from '../gen/icehive/v1/controller_pb'
 import {
   DeleteCollectionSourceRequestSchema,
@@ -40,6 +42,27 @@ function fmtMs(ms: bigint | undefined): string {
   const n = Number(ms)
   if (!Number.isFinite(n) || n <= 0) return '—'
   return new Date(n).toLocaleString()
+}
+
+function fmtAgeSeconds(sec: bigint | undefined): string {
+  if (sec === undefined || sec === 0n) return '—'
+  const n = Number(sec)
+  if (!Number.isFinite(n) || n < 0) return '—'
+  if (n < 60) return `${n}s ago`
+  const min = Math.floor(n / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 48) return `${hr}h ago`
+  const day = Math.floor(hr / 24)
+  return `${day}d ago`
+}
+
+function pipelineStatusLabel(): string {
+  const s = source.value
+  if (!s) return '—'
+  if (!s.enabled) return 'disabled'
+  if (s.isStale) return 'stale'
+  return 'healthy'
 }
 
 function syncDocumentTitle() {
@@ -78,13 +101,19 @@ async function runCollectionNow() {
   if (!s) return
   err.value = null
   runNowPending.value = true
+  const beforeRun = s.lastRunUnixMs ?? 0n
   try {
     await getControllerClient().enqueueCollectionRequest(
       create(EnqueueCollectionRequestRequestSchema, {
         target: { case: 'collectionSourceId', value: s.id },
       }),
     )
-    await loadSource()
+    notifySuccess('Collection run enqueued.')
+    void pollAfterCollectionRun(
+      beforeRun,
+      () => loadSource(),
+      () => source.value?.lastRunUnixMs,
+    )
   } catch (e) {
     err.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
@@ -111,6 +140,15 @@ function goEdit() {
   const s = source.value
   if (!s) return
   void router.push({ name: 'sources', query: { edit: s.id } })
+}
+
+function duplicateSource() {
+  const s = source.value
+  if (!s) return
+  void router.push({
+    name: 'sources',
+    query: { duplicate: s.id },
+  })
 }
 
 onMounted(() => {
@@ -155,6 +193,7 @@ watch(pageTitle, syncDocumentTitle)
               {{ runNowPending ? '…' : 'Run now' }}
             </button>
             <button type="button" class="neutral" @click="goEdit">Edit</button>
+            <button type="button" class="neutral" @click="duplicateSource">Duplicate</button>
             <button type="button" class="bad" @click="removeSource">Delete</button>
             <button type="button" class="neutral" @click="router.push({ name: 'sources' })">Back to list</button>
           </div>
@@ -190,6 +229,24 @@ watch(pageTitle, syncDocumentTitle)
             <div class="detail">
               <dt>Last success</dt>
               <dd class="mono">{{ fmtMs(source.lastSuccessUnixMs) }}</dd>
+            </div>
+            <div class="detail">
+              <dt>Pipeline status</dt>
+              <dd>
+                <span
+                  class="annotation"
+                  :class="pipelineStatusLabel() === 'stale' ? 'bad' : pipelineStatusLabel() === 'healthy' ? 'good' : 'neutral'"
+                >
+                  <span class="annotation-key">status</span>
+                  <span class="annotation-val">{{ pipelineStatusLabel() }}</span>
+                </span>
+                <div v-if="source.secondsSinceLastSuccess > 0n" class="cron-desc mono">
+                  last success {{ fmtAgeSeconds(source.secondsSinceLastSuccess) }}
+                </div>
+                <div v-if="source.entityFreshnessAgeSeconds > 0n" class="cron-desc mono">
+                  entity rows {{ fmtAgeSeconds(source.entityFreshnessAgeSeconds) }}
+                </div>
+              </dd>
             </div>
             <div class="detail">
               <dt>Next due</dt>

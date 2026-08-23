@@ -6,9 +6,9 @@ require (
 	connectrpc.com/connect v1.20.0
 	github.com/icehive/icehive/services/common v0.0.0
 	github.com/knadh/koanf/v2 v2.3.6
-	github.com/mmcdole/gofeed v1.4.1
+	github.com/mmcdole/gofeed v1.4.2
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	golang.org/x/text v0.41.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -32,7 +32,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.13.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.14.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect

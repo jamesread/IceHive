@@ -35,13 +35,16 @@ import (
 	"github.com/icehive/icehive/services/common/pkg/gen/icehive/v1/icehivev1connect"
 	"github.com/icehive/icehive/services/common/pkg/httpshim"
 	"github.com/icehive/icehive/services/common/pkg/logging"
+	"github.com/icehive/icehive/services/common/pkg/obsmetrics"
 	"github.com/icehive/icehive/services/controller/internal/db"
+	"github.com/icehive/icehive/services/controller/internal/healthmetrics"
 )
 
 type controllerSrv struct {
 	db         *sql.DB
 	k          *koanf.Koanf
 	amqpClient *amqpctl.Client
+	health     *healthmetrics.Refresher
 	mu         sync.RWMutex
 }
 
@@ -270,15 +273,18 @@ func (s *controllerSrv) ListServices(
 	return connect.NewResponse(&icehivev1.ListServicesResponse{Services: out}), nil
 }
 
-func collectionSourceToProto(r db.CollectionSourceRow) *icehivev1.CollectionSource {
+func collectionSourceToProto(r db.CollectionSourceRow, health healthmetrics.PipelineHealth) *icehivev1.CollectionSource {
 	p := &icehivev1.CollectionSource{
-		Id:            r.ID,
-		CollectorType: r.CollectorType,
-		SourceSpec:    r.SourceSpec,
-		CronLine:      r.CronLine,
-		Enabled:       r.Enabled,
-		CreatedUnixMs: r.CreatedAt.UnixMilli(),
-		UpdatedUnixMs: r.UpdatedAt.UnixMilli(),
+		Id:                        r.ID,
+		CollectorType:             r.CollectorType,
+		SourceSpec:                r.SourceSpec,
+		CronLine:                  r.CronLine,
+		Enabled:                   r.Enabled,
+		CreatedUnixMs:             r.CreatedAt.UnixMilli(),
+		UpdatedUnixMs:             r.UpdatedAt.UnixMilli(),
+		SecondsSinceLastSuccess:   health.SecondsSinceLastSuccess,
+		IsStale:                   health.IsStale,
+		EntityFreshnessAgeSeconds: health.EntityFreshnessAgeSeconds,
 	}
 	if r.LastRunUnixMs.Valid {
 		p.LastRunUnixMs = r.LastRunUnixMs.Int64
@@ -304,8 +310,14 @@ func (s *controllerSrv) ListCollectionSources(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	out := make([]*icehivev1.CollectionSource, 0, len(rows))
+	now := time.Now()
+	var freshness map[string]int64
+	if s.health != nil {
+		freshness = s.health.EntityFreshnessByCollector(ctx)
+	}
 	for _, r := range rows {
-		out = append(out, collectionSourceToProto(r))
+		health := healthmetrics.ComputePipelineHealth(r, freshness, now)
+		out = append(out, collectionSourceToProto(r, health))
 	}
 	return connect.NewResponse(&icehivev1.ListCollectionSourcesResponse{Sources: out}), nil
 }
@@ -349,8 +361,13 @@ func (s *controllerSrv) UpsertCollectionSource(
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	var freshness map[string]int64
+	if s.health != nil {
+		freshness = s.health.EntityFreshnessByCollector(ctx)
+	}
+	health := healthmetrics.ComputePipelineHealth(saved, freshness, time.Now())
 	return connect.NewResponse(&icehivev1.UpsertCollectionSourceResponse{
-		Source: collectionSourceToProto(saved),
+		Source: collectionSourceToProto(saved, health),
 	}), nil
 }
 
@@ -405,7 +422,12 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 			}
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
-		msg := &icehivev1.CollectionRequest{Source: collectionSourceToProto(row)}
+		var freshness map[string]int64
+		if s.health != nil {
+			freshness = s.health.EntityFreshnessByCollector(ctx)
+		}
+		health := healthmetrics.ComputePipelineHealth(row, freshness, time.Now())
+		msg := &icehivev1.CollectionRequest{Source: collectionSourceToProto(row, health)}
 		body, err := protojson.Marshal(msg)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, err)
@@ -610,7 +632,7 @@ const controllerWelcomeHTML = `<!DOCTYPE html>
 </head>
 <body>
 <h1>` + common.ProjectName + ` Controller</h1>
-<p>This server exposes the Connect RPC API at <code>/api/icehive.v1.ControllerService/</code> (and at <code>/icehive.v1.ControllerService/</code> for direct clients) and Prometheus metrics at <code>/metrics</code>.</p>
+<p>This server exposes the Connect RPC API at <code>/api/icehive.v1.ControllerService/</code> (and at <code>/icehive.v1.ControllerService/</code> for direct clients), Prometheus metrics at <code>/metrics</code>, and <code>GET /healthz</code> for probes.</p>
 </body>
 </html>
 `
@@ -676,12 +698,25 @@ func main() {
 	}
 	defer func() { _ = sqlDB.Close() }()
 
+	obsmetrics.Register()
+
+	entitiesDB, err := healthmetrics.OpenEntitiesDB(ctx, k, sqlDB)
+	if err != nil {
+		log.WithError(err).Warn("entity sink DB unavailable; entity freshness metrics disabled")
+	} else {
+		defer func() { _ = entitiesDB.Close() }()
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", serveControllerWelcome)
 	mux.HandleFunc("HEAD /{$}", serveControllerWelcome)
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
 	mux.Handle("/metrics", promhttp.Handler())
 
-	ctrlSrv := &controllerSrv{db: sqlDB, k: k}
+	ctrlSrv := &controllerSrv{db: sqlDB, k: k, health: healthmetrics.NewRefresher(log, sqlDB, k, entitiesDB)}
 	path, h := icehivev1connect.NewControllerServiceHandler(ctrlSrv)
 	mux.Handle(path, h)
 	apiInner := http.NewServeMux()
@@ -699,6 +734,7 @@ func main() {
 			log.WithError(err).Fatal("http server failed")
 		}
 	}()
+	go ctrlSrv.health.Start(ctx, 60*time.Second)
 	if paste := controllerHTTPPasteBaseURL(listenAddr); paste != "" {
 		log.Infof("listening on %s (frontend controller base URL: %s)", listenAddr, paste)
 	} else {

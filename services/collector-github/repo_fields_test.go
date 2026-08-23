@@ -52,8 +52,8 @@ func TestRepoToScalarValuesExtended(t *testing.T) {
 	if vals["owner_login"] != "org" {
 		t.Fatalf("owner_login: %v", vals["owner_login"])
 	}
-	if vals["created_at"] != created.Format(time.RFC3339) {
-		t.Fatalf("created_at: %v", vals["created_at"])
+	if vals["repo_created_at"] != created.Format(time.RFC3339) {
+		t.Fatalf("repo_created_at: %v", vals["repo_created_at"])
 	}
 	var sec map[string]string
 	if err := json.Unmarshal([]byte(vals["security_and_analysis"].(string)), &sec); err != nil {

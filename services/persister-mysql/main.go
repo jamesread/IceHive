@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/icehive/icehive/services/common/pkg/amqpctl"
 	"github.com/icehive/icehive/services/common/pkg/bootstrap"
+	"github.com/icehive/icehive/services/common/pkg/obsmetrics"
 	"github.com/icehive/icehive/services/common/pkg/persist"
 	"github.com/knadh/koanf/v2"
 	"github.com/sirupsen/logrus"
@@ -91,9 +93,15 @@ func mysqlWork(ctx context.Context, _ *koanf.Koanf, log *logrus.Logger, boot *bo
 		var msg entityMessage
 		if err := json.Unmarshal(body, &msg); err != nil {
 			log.WithError(err).WithField("body_len", len(body)).Warn("entity message: JSON decode failed")
+			obsmetrics.IncPersisterEntityOutcome("mysql", entityTypeOrUnknown(msg.Metadata.EntityType), "failure")
+			obsmetrics.IncPersisterEntityError("mysql", entityTypeOrUnknown(msg.Metadata.EntityType), "decode")
 			return fmt.Errorf("decode entity json: %w", err)
 		}
 		if err := p.persistEntity(hctx, &msg); err != nil {
+			entityType := entityTypeOrUnknown(msg.Metadata.EntityType)
+			errClass := obsmetrics.ClassifyPersistError(err)
+			obsmetrics.IncPersisterEntityOutcome("mysql", entityType, "failure")
+			obsmetrics.IncPersisterEntityError("mysql", entityType, errClass)
 			log.WithError(err).WithFields(logrus.Fields{
 				"entity_type":           msg.Metadata.EntityType,
 				"source_unique_id":      msg.Metadata.SourceUniqueID,
@@ -101,6 +109,7 @@ func mysqlWork(ctx context.Context, _ *koanf.Koanf, log *logrus.Logger, boot *bo
 				"source_system":         msg.Metadata.SourceSystem,
 				"schema_version":        msg.SchemaVersion,
 				"envelope_type":         msg.Type,
+				"error_class":           errClass,
 			}).Error("entity persist failed")
 			return err
 		}
@@ -154,6 +163,9 @@ func (p *mysqlPersister) persistEntity(ctx context.Context, msg *entityMessage) 
 	if err := p.upsertEntity(ctx, tableName, msg); err != nil {
 		return err
 	}
+	entityType := entityTypeOrUnknown(msg.Metadata.EntityType)
+	obsmetrics.IncPersisterEntityOutcome("mysql", entityType, "success")
+	obsmetrics.SetPersisterLastSuccess("mysql", entityType, time.Now())
 	p.log.WithFields(logrus.Fields{
 		"entity_type":           msg.Metadata.EntityType,
 		"source_unique_id":      msg.Metadata.SourceUniqueID,
@@ -178,6 +190,21 @@ func safeColumnName(name string) string {
 	n = strings.ReplaceAll(n, "-", "_")
 	n = identifierPattern.ReplaceAllString(n, "")
 	return n
+}
+
+// reservedColumns are owned by persister-mysql row metadata and must not be
+// mapped from entity structure/values (collectors must use distinct names).
+var reservedColumns = map[string]bool{
+	"created_at": true,
+	"updated_at": true,
+}
+
+func entityColumnName(field string) string {
+	col := safeColumnName(field)
+	if col == "" || reservedColumns[col] {
+		return ""
+	}
+	return col
 }
 
 func quoteIdent(id string) string {
@@ -220,7 +247,7 @@ func (p *mysqlPersister) ensureTable(ctx context.Context, tableName string, stru
 		existing["recollect_spec"] = true
 	}
 	for field, desc := range structure {
-		col := safeColumnName(field)
+		col := entityColumnName(field)
 		if col == "" || existing[col] {
 			continue
 		}
@@ -242,7 +269,7 @@ func (p *mysqlPersister) createTable(ctx context.Context, tableName string, stru
 		"`recollect_spec` TEXT NULL",
 	}
 	for field, desc := range structure {
-		col := safeColumnName(field)
+		col := entityColumnName(field)
 		if col == "" {
 			continue
 		}
@@ -302,7 +329,7 @@ func (p *mysqlPersister) upsertEntity(ctx context.Context, tableName string, msg
 		recollectVal,
 	}
 	for field := range msg.Structure {
-		col := safeColumnName(field)
+		col := entityColumnName(field)
 		if col == "" {
 			continue
 		}
@@ -331,4 +358,12 @@ func (p *mysqlPersister) upsertEntity(ctx context.Context, tableName string, msg
 		return fmt.Errorf("upsert %s entity %s: %w", tableName, meta.SourceUniqueID, err)
 	}
 	return nil
+}
+
+func entityTypeOrUnknown(entityType string) string {
+	entityType = strings.TrimSpace(entityType)
+	if entityType == "" {
+		return "unknown"
+	}
+	return entityType
 }

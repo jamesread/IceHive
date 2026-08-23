@@ -22,6 +22,7 @@ import (
 	"github.com/icehive/icehive/services/common/pkg/controllerurl"
 	"github.com/icehive/icehive/services/common/pkg/httpshim"
 	"github.com/icehive/icehive/services/common/pkg/logging"
+	"github.com/icehive/icehive/services/common/pkg/obsmetrics"
 )
 
 // MainConfig wires a persister binary: metrics/health sidecar, optional YAML, and domain work.
@@ -188,6 +189,8 @@ func Main(cfg MainConfig) {
 		}
 	}()
 	log.Infof("persister-%s listening on %s", cfg.ID, listenAddr)
+
+	obsmetrics.Register()
 
 	workErr := cfg.Work(ctx, k, log, boot, amqpClient)
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

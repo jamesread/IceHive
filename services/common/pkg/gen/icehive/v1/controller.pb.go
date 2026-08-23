@@ -900,8 +900,13 @@ type CollectionSource struct {
 	NextDueUnixMs     int64  `protobuf:"varint,9,opt,name=next_due_unix_ms,json=nextDueUnixMs,proto3" json:"next_due_unix_ms,omitempty"`
 	CreatedUnixMs     int64  `protobuf:"varint,10,opt,name=created_unix_ms,json=createdUnixMs,proto3" json:"created_unix_ms,omitempty"`
 	UpdatedUnixMs     int64  `protobuf:"varint,11,opt,name=updated_unix_ms,json=updatedUnixMs,proto3" json:"updated_unix_ms,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// Pipeline health (computed by controller when listing sources).
+	SecondsSinceLastSuccess int64 `protobuf:"varint,12,opt,name=seconds_since_last_success,json=secondsSinceLastSuccess,proto3" json:"seconds_since_last_success,omitempty"`
+	IsStale                 bool  `protobuf:"varint,13,opt,name=is_stale,json=isStale,proto3" json:"is_stale,omitempty"`
+	// Seconds since the newest entity row update for this collector type; 0 when unknown.
+	EntityFreshnessAgeSeconds int64 `protobuf:"varint,14,opt,name=entity_freshness_age_seconds,json=entityFreshnessAgeSeconds,proto3" json:"entity_freshness_age_seconds,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *CollectionSource) Reset() {
@@ -1007,6 +1012,27 @@ func (x *CollectionSource) GetCreatedUnixMs() int64 {
 func (x *CollectionSource) GetUpdatedUnixMs() int64 {
 	if x != nil {
 		return x.UpdatedUnixMs
+	}
+	return 0
+}
+
+func (x *CollectionSource) GetSecondsSinceLastSuccess() int64 {
+	if x != nil {
+		return x.SecondsSinceLastSuccess
+	}
+	return 0
+}
+
+func (x *CollectionSource) GetIsStale() bool {
+	if x != nil {
+		return x.IsStale
+	}
+	return false
+}
+
+func (x *CollectionSource) GetEntityFreshnessAgeSeconds() int64 {
+	if x != nil {
+		return x.EntityFreshnessAgeSeconds
 	}
 	return 0
 }
@@ -1756,7 +1782,7 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x18latest_heartbeat_unix_ms\x18\x02 \x01(\x03R\x15latestHeartbeatUnixMs\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\"M\n" +
 	"\x14ListServicesResponse\x125\n" +
-	"\bservices\x18\x01 \x03(\v2\x19.icehive.v1.ServiceStatusR\bservices\"\x93\x03\n" +
+	"\bservices\x18\x01 \x03(\v2\x19.icehive.v1.ServiceStatusR\bservices\"\xac\x04\n" +
 	"\x10CollectionSource\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0ecollector_type\x18\x02 \x01(\tR\rcollectorType\x12\x1f\n" +
@@ -1771,7 +1797,10 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x10next_due_unix_ms\x18\t \x01(\x03R\rnextDueUnixMs\x12&\n" +
 	"\x0fcreated_unix_ms\x18\n" +
 	" \x01(\x03R\rcreatedUnixMs\x12&\n" +
-	"\x0fupdated_unix_ms\x18\v \x01(\x03R\rupdatedUnixMs\"E\n" +
+	"\x0fupdated_unix_ms\x18\v \x01(\x03R\rupdatedUnixMs\x12;\n" +
+	"\x1aseconds_since_last_success\x18\f \x01(\x03R\x17secondsSinceLastSuccess\x12\x19\n" +
+	"\bis_stale\x18\r \x01(\bR\aisStale\x12?\n" +
+	"\x1centity_freshness_age_seconds\x18\x0e \x01(\x03R\x19entityFreshnessAgeSeconds\"E\n" +
 	"\x1cListCollectionSourcesRequest\x12%\n" +
 	"\x0ecollector_type\x18\x01 \x01(\tR\rcollectorType\"W\n" +
 	"\x1dListCollectionSourcesResponse\x126\n" +

@@ -53,7 +53,7 @@ func listRepoIssues(ctx context.Context, gh *github.Client, owner, repo string, 
 }
 
 //gocyclo:ignore
-func fetchIssuesForRepoSince(ctx context.Context, log *logrus.Logger, gh *github.Client, owner, repo string, since time.Time) issuesSnapshot {
+func fetchIssuesForRepoSince(ctx context.Context, log *logrus.Logger, gh *github.Client, sourceID, owner, repo string, since time.Time) issuesSnapshot {
 	var all []*github.Issue
 	fetchCapped := false
 	pagesFetched := 0
@@ -79,8 +79,15 @@ func fetchIssuesForRepoSince(ctx context.Context, log *logrus.Logger, gh *github
 		} else {
 			opts.Page = page
 		}
-		issues, resp, err := listRepoIssues(ctx, gh, owner, repo, opts)
-		if err != nil {
+		var issues []*github.Issue
+		var resp *github.Response
+		fetchErr := observeFetchCtx(ctx, sourceID, "issues.list_by_repo", func(c context.Context) error {
+			var err error
+			issues, resp, err = listRepoIssues(c, gh, owner, repo, opts)
+			return err
+		})
+		if fetchErr != nil {
+			err := fetchErr
 			if log != nil {
 				fields := logrus.Fields{
 					"owner": owner, "repo": repo, "page": page, "after": after,

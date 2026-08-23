@@ -77,11 +77,11 @@ func (c *issueCollector) Collect(
 	ctx context.Context,
 	log *logrus.Logger,
 	gh *github.Client,
-	owner, repo string,
+	sourceID, owner, repo string,
 	repoObj *github.Repository,
 ) issuesCollectionResult {
 	if !c.enabled {
-		snap := fetchIssuesForRepoSince(ctx, log, gh, owner, repo, time.Time{})
+		snap := fetchIssuesForRepoSince(ctx, log, gh, sourceID, owner, repo, time.Time{})
 		return issuesCollectionResult{
 			IssuesToPublish: snap.Issues,
 			Err:             snap.Err,
@@ -104,7 +104,7 @@ func (c *issueCollector) Collect(
 	}
 
 	if cache != nil && len(cache.Issues) > 0 {
-		probe, probeErr := probeLatestRepoIssue(ctx, gh, owner, repo)
+		probe, probeErr := probeLatestRepoIssue(ctx, sourceID, gh, owner, repo)
 		if probeErr != nil {
 			if log != nil {
 				log.WithError(probeErr).WithFields(logrus.Fields{
@@ -132,7 +132,7 @@ func (c *issueCollector) Collect(
 		}
 	}
 
-	snap := fetchIssuesForRepoSince(ctx, log, gh, owner, repo, since)
+	snap := fetchIssuesForRepoSince(ctx, log, gh, sourceID, owner, repo, since)
 	if snap.Err != "" {
 		return issuesCollectionResult{Err: snap.Err, FetchCapped: snap.FetchCapped}
 	}
@@ -320,7 +320,7 @@ func (c *issueCollector) save(owner, repo string, cache *repoIssueCacheFile) err
 	return os.Rename(tmp, path)
 }
 
-func probeLatestRepoIssue(ctx context.Context, gh *github.Client, owner, repo string) (*github.Issue, error) {
+func probeLatestRepoIssue(ctx context.Context, sourceID string, gh *github.Client, owner, repo string) (*github.Issue, error) {
 	opts := &issueListByRepoOpts{
 		State:     "all",
 		Sort:      "updated",
@@ -328,7 +328,12 @@ func probeLatestRepoIssue(ctx context.Context, gh *github.Client, owner, repo st
 		PerPage:   issueCacheProbePageSize,
 		Page:      1,
 	}
-	issues, _, err := listRepoIssues(ctx, gh, owner, repo, opts)
+	var issues []*github.Issue
+	err := observeFetchCtx(ctx, sourceID, "issues.probe_latest", func(c context.Context) error {
+		var fetchErr error
+		issues, _, fetchErr = listRepoIssues(c, gh, owner, repo, opts)
+		return fetchErr
+	})
 	if err != nil {
 		return nil, err
 	}

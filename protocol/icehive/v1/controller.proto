@@ -127,6 +127,11 @@ message CollectionSource {
   int64 next_due_unix_ms = 9;
   int64 created_unix_ms = 10;
   int64 updated_unix_ms = 11;
+  // Pipeline health (computed by controller when listing sources).
+  int64 seconds_since_last_success = 12;
+  bool is_stale = 13;
+  // Seconds since the newest entity row update for this collector type; 0 when unknown.
+  int64 entity_freshness_age_seconds = 14;
 }
 
 message ListCollectionSourcesRequest {
