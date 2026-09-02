@@ -21,6 +21,8 @@ message ControlEvent {
 // Ping is a liveness or connectivity check on the control channel.
 message Ping {
   string source_service = 1;
+  // Application version (semver or dev snapshot) from the publishing service binary.
+  string version = 2;
 }
 
 // RequestDrain asks consumers to finish in-flight work and stop accepting new tasks.

@@ -239,6 +239,7 @@ onUnmounted(() => {
                 <thead>
                   <tr>
                     <th>Service</th>
+                    <th>Version</th>
                     <th>Status</th>
                     <th>Latest heartbeat</th>
                   </tr>
@@ -246,13 +247,14 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="svc in services" :key="svc.serviceName" :class="heartbeatRowClass(svc.status)">
                     <td class="svc-name">{{ svc.serviceName }}</td>
+                    <td>{{ svc.version || '—' }}</td>
                     <td>
                       <span class="pill" :class="`pill-${normalizeHeartbeatStatus(svc.status)}`">{{ svc.status }}</span>
                     </td>
                     <td class="mono">{{ heartbeatRelativeTime(svc.latestHeartbeatUnixMs) }}</td>
                   </tr>
                   <tr v-if="services.length === 0">
-                    <td colspan="3">No service heartbeats yet.</td>
+                    <td colspan="4">No service heartbeats yet.</td>
                   </tr>
                 </tbody>
               </table>

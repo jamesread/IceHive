@@ -222,12 +222,15 @@ func (c *Client) PublishJSON(ctx context.Context, routingKey string, body []byte
 }
 
 // PublishHeartbeat sends a Ping control event on the heartbeats routing key.
-func (c *Client) PublishHeartbeat(ctx context.Context, serviceName string) error {
+func (c *Client) PublishHeartbeat(ctx context.Context, serviceName, version string) error {
 	evt := &controlv1.ControlEvent{
 		CorrelationId: fmt.Sprintf("hb-%s-%d", serviceName, time.Now().UnixNano()),
 		CreatedUnixMs: time.Now().UnixMilli(),
 		Payload: &controlv1.ControlEvent_Ping{
-			Ping: &controlv1.Ping{SourceService: serviceName},
+			Ping: &controlv1.Ping{
+				SourceService: serviceName,
+				Version:       strings.TrimSpace(version),
+			},
 		},
 	}
 	return c.PublishControl(ctx, RoutingKeyHeartbeats, evt)
@@ -236,12 +239,12 @@ func (c *Client) PublishHeartbeat(ctx context.Context, serviceName string) error
 // StartHeartbeatPublisher publishes service heartbeat pings on a fixed interval until ctx ends.
 //
 //gocyclo:ignore
-func (c *Client) StartHeartbeatPublisher(ctx context.Context, serviceName string, interval time.Duration) {
+func (c *Client) StartHeartbeatPublisher(ctx context.Context, serviceName, version string, interval time.Duration) {
 	if interval <= 0 {
 		interval = 10 * time.Second
 	}
 	go func() {
-		if err := c.PublishHeartbeat(ctx, serviceName); err != nil {
+		if err := c.PublishHeartbeat(ctx, serviceName, version); err != nil {
 			logrus.WithError(err).WithField("service", serviceName).Warn("AMQP heartbeat send failed")
 		} else {
 			logrus.WithField("service", serviceName).Info("AMQP heartbeat sent")
@@ -253,7 +256,7 @@ func (c *Client) StartHeartbeatPublisher(ctx context.Context, serviceName string
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				if err := c.PublishHeartbeat(ctx, serviceName); err != nil {
+				if err := c.PublishHeartbeat(ctx, serviceName, version); err != nil {
 					logrus.WithError(err).WithField("service", serviceName).Warn("AMQP heartbeat send failed")
 				} else {
 					logrus.WithField("service", serviceName).Info("AMQP heartbeat sent")

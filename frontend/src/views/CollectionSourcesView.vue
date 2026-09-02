@@ -3,6 +3,13 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import {
+  Add01Icon,
+  ArrowReloadHorizontalIcon,
+  DatabaseIcon,
+  FlashIcon,
+} from '@hugeicons/core-free-icons'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
@@ -37,11 +44,11 @@ const router = useRouter()
 const sources = ref<CollectionSource[]>([])
 /** Latest SourceSchema rows from the controller (populated from collector AMQP at startup). */
 const collectorSourceSchemas = ref<CollectorSourceSchema[]>([])
-const filterCollectorType = ref('')
 /** Problem filter: all sources, stale pipeline only, or sources with last_error. */
 const filterProblems = ref<'all' | 'stale' | 'error'>('all')
 const loading = ref(false)
-const err = ref<string | null>(null)
+const listErr = ref<string | null>(null)
+const formErr = ref<string | null>(null)
 const saving = ref(false)
 /** Collection source id currently sending EnqueueCollectionRequest, or empty when idle. */
 const runNowPendingId = ref('')
@@ -72,16 +79,16 @@ const formSchemaBuilder = ref<BuilderState | null>(null)
 
 const formCronSummary = computed(() => describeCronLine(formCronLine.value))
 
-const sourceTableHeaders = [
-  { key: 'collectorType', label: 'Collector', sortable: true },
+const tableHeaders = computed(() => [
+  { key: 'collectorType', label: 'Collector', sortable: true, width: '10rem' },
   { key: 'sourceSpec', label: 'Spec', sortable: true },
-  { key: 'cronLine', label: 'Schedule', sortable: true },
-  { key: 'enabled', label: 'On', sortable: true },
-  { key: 'lastSuccessUnixMs', label: 'Last success', sortable: true },
-  { key: 'pipelineHealth', label: 'Pipeline', sortable: false },
-  { key: 'nextDueUnixMs', label: 'Next due', sortable: true },
-  { key: 'run', label: 'Actions' },
-]
+  { key: 'cronLine', label: 'Schedule', sortable: true, width: '12rem' },
+  { key: 'enabled', label: 'On', sortable: true, width: '5rem' },
+  { key: 'lastSuccessUnixMs', label: 'Last success', sortable: true, width: '11rem' },
+  { key: 'pipelineHealth', label: 'Pipeline', sortable: false, width: '12rem' },
+  { key: 'nextDueUnixMs', label: 'Next due', sortable: true, width: '11rem' },
+  { key: 'actions', label: 'Actions', sortable: false, width: '11rem' },
+])
 
 const displayedSources = computed(() => {
   let rows = sources.value
@@ -92,6 +99,13 @@ const displayedSources = computed(() => {
   }
   return rows
 })
+
+const tableRows = computed(() =>
+  displayedSources.value.map((row) => ({
+    ...row,
+    pipelineHealth: pipelineHealthLabel(row),
+  })),
+)
 
 const activeParsedSchema = computed((): SourceSchemaDoc | null => {
   const ct = formCollectorType.value.trim()
@@ -132,9 +146,6 @@ const formCollectorTypeOptions = computed(() => {
   }
   return Array.from(set).sort()
 })
-
-/** Options for the filter dropdown (heartbeats only). */
-const filterCollectorTypeOptions = computed(() => [...collectorHeartbeatTypes.value])
 
 function defaultCollectorType(): string {
   const opts = collectorHeartbeatTypes.value
@@ -214,7 +225,8 @@ watch(
 )
 
 function openAddSource() {
-  err.value = null
+  listErr.value = null
+  formErr.value = null
   oneOffMode.value = false
   resetForm()
   void nextTick(() => {
@@ -224,7 +236,8 @@ function openAddSource() {
 }
 
 function openOneOffCollect() {
-  err.value = null
+  listErr.value = null
+  formErr.value = null
   oneOffMode.value = true
   resetForm()
   formSourceSpecAdvanced.value = true
@@ -236,7 +249,8 @@ function openOneOffCollect() {
 }
 
 function startEdit(s: CollectionSource) {
-  err.value = null
+  listErr.value = null
+  formErr.value = null
   oneOffMode.value = false
   editId.value = s.id
   formCollectorType.value = s.collectorType
@@ -286,7 +300,8 @@ function truncateError(msg: string, max = 72): string {
 }
 
 function duplicateSource(s: CollectionSource) {
-  err.value = null
+  listErr.value = null
+  formErr.value = null
   oneOffMode.value = false
   editId.value = ''
   formCollectorType.value = s.collectorType
@@ -347,18 +362,18 @@ async function loadCollectorTypesFromHeartbeats() {
 
 async function loadSources(withLoading = true) {
   if (withLoading) {
-    err.value = null
+    listErr.value = null
     loading.value = true
   }
   try {
     const res = await getControllerClient().listCollectionSources(
       create(ListCollectionSourcesRequestSchema, {
-        collectorType: filterCollectorType.value.trim(),
+        collectorType: '',
       }),
     )
     sources.value = [...res.sources]
   } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
+    listErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     if (withLoading) {
       loading.value = false
@@ -367,14 +382,14 @@ async function loadSources(withLoading = true) {
 }
 
 async function reloadAll() {
-  err.value = null
+  listErr.value = null
   loading.value = true
   try {
     await loadCollectorTypesFromHeartbeats()
     await loadCollectorSourceSchemas()
     await loadSources(false)
   } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
+    listErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     loading.value = false
   }
@@ -390,15 +405,15 @@ function onFormSubmit() {
 }
 
 async function runOneOffFromDialog() {
-  err.value = null
+  formErr.value = null
   const spec = formSourceSpec.value.trim()
   const ct = formCollectorType.value.trim()
   if (!ct) {
-    err.value = 'Collector type is required.'
+    formErr.value = 'Collector type is required.'
     return
   }
   if (!spec) {
-    err.value = 'Source spec is required.'
+    formErr.value = 'Source spec is required.'
     return
   }
   const cron = formCronLine.value.trim()
@@ -420,7 +435,7 @@ async function runOneOffFromDialog() {
     formDialogRef.value?.close()
     notifySuccess('One-off collection enqueued.')
   } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
+    formErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     saving.value = false
     runNowPendingId.value = ''
@@ -428,20 +443,20 @@ async function runOneOffFromDialog() {
 }
 
 async function persistSource(runAfterSave: boolean) {
-  err.value = null
+  formErr.value = null
   const spec = formSourceSpec.value.trim()
   const ct = formCollectorType.value.trim()
   if (!ct) {
-    err.value = 'Collector type is required.'
+    formErr.value = 'Collector type is required.'
     return
   }
   if (!spec) {
-    err.value = 'Source spec is required.'
+    formErr.value = 'Source spec is required.'
     return
   }
   const sourceIdForRun = editId.value.trim()
   if (runAfterSave && !sourceIdForRun) {
-    err.value = 'Run now is only available when editing an existing source.'
+    formErr.value = 'Run now is only available when editing an existing source.'
     return
   }
   const cron = formCronLine.value.trim()
@@ -483,7 +498,7 @@ async function persistSource(runAfterSave: boolean) {
     await loadSources()
     formDialogRef.value?.close()
   } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
+    formErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     saving.value = false
   }
@@ -498,7 +513,7 @@ async function saveSourceAndRunNow() {
 }
 
 async function runCollectionNow(s: CollectionSource) {
-  err.value = null
+  listErr.value = null
   runNowPendingId.value = s.id
   const beforeRun = s.lastRunUnixMs ?? 0n
   try {
@@ -514,10 +529,14 @@ async function runCollectionNow(s: CollectionSource) {
       () => sources.value.find((row) => row.id === s.id)?.lastRunUnixMs,
     )
   } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
+    listErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     runNowPendingId.value = ''
   }
+}
+
+function openSourceDetail({ row }: { row: CollectionSource }) {
+  void router.push({ name: 'collector-details', params: { id: row.id } })
 }
 
 async function openOneOffFromQueryIfNeeded() {
@@ -533,7 +552,7 @@ async function openEditFromQueryIfNeeded() {
   const s = sources.value.find((row) => row.id === id)
   await router.replace({ name: 'sources' })
   if (!s) {
-    err.value = `Collection source "${id}" was not found for editing.`
+    listErr.value = `Collection source "${id}" was not found for editing.`
     return
   }
   startEdit(s)
@@ -546,7 +565,7 @@ async function openDuplicateFromQueryIfNeeded() {
   const s = sources.value.find((row) => row.id === id)
   await router.replace({ name: 'sources' })
   if (!s) {
-    err.value = `Collection source "${id}" was not found for duplication.`
+    listErr.value = `Collection source "${id}" was not found for duplication.`
     return
   }
   duplicateSource(s)
@@ -595,271 +614,264 @@ watch(
       </template>
     </AppHeader>
     <main class="main">
-      <Section title="Collection sources">
-        <p class="lede">
-          Define opaque <code>source_spec</code> strings per <code>collector_type</code> and an optional
-          <strong>cron schedule</strong> (five fields: minute, hour, day of month, month, weekday). Leave cron empty for
-          <strong>run-now only</strong> sources (no polling; use <strong>Run now</strong>).
-          <strong>One-off run</strong> sends the same collection message without creating a row in the controller
-          database. Each collector interprets its own specs (for example GitHub:
-          <code>repo:jamesread/faridoon</code> for one repo, <code>org.repos:olivetin</code> for every repo under a user
-          or org. Optional modifiers after the primary spec: <code>+dependabot</code> (alerts; skipped for archived
-          repos), <code>+pr</code> (pull requests; skipped for archived repos), <code>+issue</code> (issues; skipped
-          for archived repos).
-        </p>
-        <p v-if="err" class="err" role="alert">{{ err }}</p>
-
-        <div class="toolbar">
-          <label class="filter">
-            <span>Filter by collector type</span>
-            <select
-              v-model="filterCollectorType"
-              class="mono"
-              @change="() => void loadSources()"
+      <dialog
+        ref="formDialogRef"
+        class="dialog form-dialog"
+        aria-labelledby="form-dialog-title"
+        @close="onFormDialogClose"
+        @click="onFormDialogBackdropClick"
+      >
+        <div class="form-dialog-inner" @click.stop>
+          <h2 id="form-dialog-title" class="form-dialog-title">{{ formDialogTitle }}</h2>
+          <form class="form-grid" @submit.prevent="onFormSubmit">
+            <label class="field">
+              <span>Collector type</span>
+              <select v-model="formCollectorType" class="mono" required @change="onFormCollectorTypeChange">
+                <option v-if="formCollectorTypeOptions.length === 0" disabled value="">
+                  No collector-* heartbeats
+                </option>
+                <option v-for="t in formCollectorTypeOptions" :key="t" :value="t">
+                  {{ t }}
+                </option>
+              </select>
+            </label>
+            <fieldset
+              v-if="!oneOffMode && showStructuredSourceSpec && activeParsedSchema && formSchemaBuilder"
+              class="schema-builder wide"
             >
-              <option value="">All</option>
-              <option v-for="t in filterCollectorTypeOptions" :key="t" :value="t">
-                {{ t }}
-              </option>
-            </select>
-          </label>
-          <label class="filter">
-            <span>Show</span>
-            <select v-model="filterProblems" class="mono">
+              <legend class="schema-legend">Source (from collector schema)</legend>
+              <div class="schema-patterns">
+                <label v-for="p in activeParsedSchema.primary_patterns" :key="p.id" class="schema-radio">
+                  <input
+                    type="radio"
+                    name="source-pattern"
+                    :value="p.id"
+                    :checked="formSchemaBuilder?.patternId === p.id"
+                    @change="onBuilderPatternChange(p.id)"
+                  />
+                  <span>{{ p.label }}</span>
+                  <span v-if="p.example" class="schema-example mono">{{ p.example }}</span>
+                </label>
+              </div>
+              <div class="schema-args">
+                <label v-for="a in activePatternArgs" :key="a.id" class="field">
+                  <span>{{ a.label }}</span>
+                  <input v-model="formSchemaBuilder.args[a.id]" class="mono" type="text" autocomplete="off" />
+                </label>
+              </div>
+              <div v-if="activeParsedSchema.modifiers?.length" class="schema-mods">
+                <span class="mods-label">Include</span>
+                <label v-for="m in activeParsedSchema.modifiers" :key="m.id" class="field check mod-check">
+                  <input v-model="formSchemaBuilder!.modifiers[m.id]" type="checkbox" />
+                  <span>{{ m.label }} <code class="mod-code">+{{ m.syntax_suffix }}</code></span>
+                </label>
+              </div>
+              <button type="button" class="tiny neutral schema-raw-btn" @click="toggleSourceSpecRaw">Edit raw source spec</button>
+            </fieldset>
+            <p v-else-if="!oneOffMode && canUseStructuredForm && formSourceSpecAdvanced" class="wide schema-raw-banner">
+              <button type="button" class="tiny neutral" @click="toggleSourceSpecRaw">Use structured form</button>
+            </p>
+            <label class="field wide">
+              <span>Source spec</span>
+              <input
+                v-model="formSourceSpec"
+                class="mono"
+                type="text"
+                required
+                :readonly="showStructuredSourceSpec"
+                :placeholder="
+                  showStructuredSourceSpec ? '' : 'e.g. org.repos:jamesread +dependabot +pr'
+                "
+                :title="
+                  showStructuredSourceSpec
+                    ? 'Composed from pattern, arguments, and modifiers above'
+                    : ''
+                "
+              />
+            </label>
+            <template v-if="!oneOffMode">
+              <p v-if="activeSchemaCronHint?.description" class="field wide schema-cron-hint">
+                {{ activeSchemaCronHint.description }}
+              </p>
+              <label class="field wide">
+                <span>Cron schedule (optional)</span>
+                <input
+                  v-model="formCronLine"
+                  class="mono cron-input"
+                  type="text"
+                  placeholder="empty = run now only, or e.g. 0 0 * * *"
+                  spellcheck="false"
+                  aria-describedby="cron-summary"
+                />
+              </label>
+              <div class="cron-block wide">
+                <p id="cron-summary" class="cron-summary" role="status">
+                  <strong>Summary:</strong> {{ formCronSummary }}
+                </p>
+                <div class="presets">
+                  <span class="presets-label">Presets:</span>
+                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * *')">Daily midnight</button>
+                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 * * * *')">Hourly</button>
+                  <button type="button" class="tiny neutral" @click="applyCronPreset('*/15 * * * *')">Every 15 min</button>
+                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * 0')">Weekly (Sun 00:00)</button>
+                </div>
+              </div>
+            </template>
+            <label v-if="!oneOffMode" class="field check">
+              <input v-model="formEnabled" type="checkbox" />
+              <span>Enabled</span>
+            </label>
+            <p v-if="oneOffMode" class="form-dialog-hint wide">
+              This publishes a <code>CollectionRequest</code> with an inline source (same shape as a saved source). Nothing
+              is written to the controller database; run history is not updated for a source id. Cron is omitted (empty
+              schedule: immediate run).
+            </p>
+            <p v-else class="form-dialog-hint">
+              Use standard 5-field cron when set. Empty cron is allowed: collectors only run the source when you use
+              <strong>Run now</strong>.
+            </p>
+            <p v-if="formErr" class="inline-notification error wide">{{ formErr }}</p>
+            <div class="dialog-actions">
+              <template v-if="oneOffMode">
+                <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
+                <button type="submit" class="good" :disabled="saving || runNowPendingId !== ''">
+                  {{ saving ? 'Working…' : 'Run once without saving' }}
+                </button>
+              </template>
+              <template v-else>
+                <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
+                <button type="submit" class="good" :disabled="saving">
+                  {{ saving ? 'Working…' : editId ? 'Update' : 'Create' }}
+                </button>
+                <button
+                  v-if="editId"
+                  type="button"
+                  class="good"
+                  :disabled="saving"
+                  title="Save changes and publish a collection request immediately"
+                  @click="saveSourceAndRunNow"
+                >
+                  {{ saving ? 'Working…' : 'Update and run now' }}
+                </button>
+              </template>
+            </div>
+          </form>
+        </div>
+      </dialog>
+
+      <Section
+        title="Collection sources"
+        :icon="DatabaseIcon"
+        subtitle="Define collector targets, opaque source specs, and cron schedules. Click a row for details; use Run now for immediate collection."
+        classes="collection-sources-list"
+        :padding="false"
+      >
+        <template #toolbar>
+          <button type="button" class="neutral" title="Refresh" :disabled="loading" @click="reloadAll">
+            <HugeiconsIcon :icon="ArrowReloadHorizontalIcon" width="1em" height="1em" aria-hidden="true" />
+          </button>
+          <label class="toolbar-filter">
+            <span class="sr-only">Show</span>
+            <select v-model="filterProblems" class="mono" title="Filter by pipeline status">
               <option value="all">All sources</option>
               <option value="stale">Stale pipeline only</option>
               <option value="error">Last error only</option>
             </select>
           </label>
-          <button type="button" class="neutral" :disabled="loading" @click="reloadAll">
-            {{ loading ? 'Loading…' : 'Reload' }}
+          <button type="button" class="neutral" title="One-off run" :disabled="loading" @click="openOneOffCollect">
+            <HugeiconsIcon :icon="FlashIcon" width="1em" height="1em" aria-hidden="true" />
           </button>
-          <button type="button" class="good" :disabled="loading" @click="openAddSource">Add source</button>
-          <button type="button" class="good" :disabled="loading" @click="openOneOffCollect">
-            One-off run…
+          <button type="button" class="good" title="Add source" :disabled="loading" @click="openAddSource">
+            <HugeiconsIcon :icon="Add01Icon" width="1em" height="1em" aria-hidden="true" />
           </button>
-        </div>
-        <p v-if="collectorHeartbeatTypes.length === 0" class="hint warn">
-          No <code>collector-*</code> service heartbeats yet. Start a collector to populate the dropdowns.
-        </p>
+        </template>
 
-        <Table :headers="sourceTableHeaders" :data="displayedSources">
-          <template #cell-collectorType="{ value }">
-            <span class="collector-cell">
+        <div v-if="listErr" class="inline-notification error list-banner-pad">{{ listErr }}</div>
+        <div v-if="loading && !sources.length" class="list-banner-pad muted">Loading…</div>
+
+        <template v-else>
+          <p v-if="collectorHeartbeatTypes.length === 0" class="inline-notification note list-banner-pad">
+            No <code>collector-*</code> service heartbeats yet. Start a collector to populate the form dropdowns.
+          </p>
+          <p v-if="!displayedSources.length && !sources.length" class="inline-notification note list-banner-pad">
+            No collection sources yet.
+          </p>
+          <p v-else-if="!displayedSources.length" class="inline-notification note list-banner-pad">
+            No sources match the current filters.
+          </p>
+
+          <Table
+            v-else
+            class="list-table-wrap"
+            row-clickable
+            :headers="tableHeaders"
+            :data="tableRows"
+            @row-click="openSourceDetail"
+          >
+            <template #cell-collectorType="{ value }">
               <span class="mono">{{ value }}</span>
-            </span>
-          </template>
-          <template #cell-sourceSpec="{ row, value }">
-            <router-link class="mono spec-link" :to="{ name: 'collector-details', params: { id: row.id } }">
-              {{ value }}
-            </router-link>
-          </template>
-          <template #cell-cronLine="{ row, value }">
-            <div class="schedule-cell">
-              <div class="mono cron-line">{{ value }}</div>
-              <div class="cron-desc">{{ describeCronLine(row.cronLine) }}</div>
-            </div>
-          </template>
-          <template #cell-enabled="{ value }">
-            {{ value ? 'yes' : 'no' }}
-          </template>
-          <template #cell-lastSuccessUnixMs="{ value }">
-            <span class="mono">{{ fmtMs(value) }}</span>
-          </template>
-          <template #cell-pipelineHealth="{ row }">
-            <span class="annotation" :class="pipelineHealthLabel(row) === 'stale' ? 'bad' : pipelineHealthLabel(row) === 'healthy' ? 'good' : 'neutral'">
-              <span class="annotation-key">status</span>
-              <span class="annotation-val">{{ pipelineHealthLabel(row) }}</span>
-            </span>
-            <div v-if="row.entityFreshnessAgeSeconds > 0n" class="freshness-hint mono">
-              entities {{ fmtAgeSeconds(row.entityFreshnessAgeSeconds) }}
-            </div>
-            <div v-if="hasLastError(row)" class="last-error-hint">
-              <span class="annotation bad">
-                <span class="annotation-key">error</span>
-                <span class="annotation-val" :title="row.lastError">{{ truncateError(row.lastError ?? '') }}</span>
+            </template>
+            <template #cell-sourceSpec="{ value }">
+              <strong>{{ value }}</strong>
+            </template>
+            <template #cell-cronLine="{ row, value }">
+              <div class="schedule-cell">
+                <div class="mono cron-line">{{ value || '—' }}</div>
+                <div v-if="value" class="cron-desc">{{ describeCronLine(row.cronLine) }}</div>
+              </div>
+            </template>
+            <template #cell-enabled="{ value }">
+              {{ value ? 'yes' : 'no' }}
+            </template>
+            <template #cell-lastSuccessUnixMs="{ value }">
+              <span class="mono">{{ fmtMs(value) }}</span>
+            </template>
+            <template #cell-pipelineHealth="{ row }">
+              <span
+                class="annotation"
+                :class="pipelineHealthLabel(row) === 'stale' ? 'bad' : pipelineHealthLabel(row) === 'healthy' ? 'good' : 'neutral'"
+              >
+                <span class="annotation-key">status</span>
+                <span class="annotation-val">{{ pipelineHealthLabel(row) }}</span>
               </span>
-            </div>
-          </template>
-          <template #cell-nextDueUnixMs="{ value }">
-            <span class="mono">{{ fmtMs(value) }}</span>
-          </template>
-          <template #cell-run="{ row }">
-            <div class="row-actions">
-              <button
-                type="button"
-                class="small good"
-                :disabled="runNowPendingId !== ''"
-                title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
-                @click="runCollectionNow(row)"
-              >
-                {{ runNowPendingId === row.id ? '…' : 'Run now' }}
-              </button>
-              <button
-                type="button"
-                class="small neutral"
-                title="Copy this source into the add form"
-                @click="duplicateSource(row)"
-              >
-                Duplicate
-              </button>
-            </div>
-          </template>
-        </Table>
-        <p v-if="displayedSources.length === 0 && sources.length > 0" class="hint">
-          No sources match the current filters.
-        </p>
-        <p class="hint table-hint">
-          Open a source via its spec link for full details (including id and last error). Use
-          <strong>Add source</strong> here, or <strong>Edit</strong> from the details page. Empty cron means run-now
-          only — use <strong>Run now</strong> to collect.
-        </p>
+              <div v-if="row.entityFreshnessAgeSeconds > 0n" class="freshness-hint mono">
+                entities {{ fmtAgeSeconds(row.entityFreshnessAgeSeconds) }}
+              </div>
+              <div v-if="hasLastError(row)" class="last-error-hint">
+                <span class="annotation bad">
+                  <span class="annotation-key">error</span>
+                  <span class="annotation-val" :title="row.lastError">{{ truncateError(row.lastError ?? '') }}</span>
+                </span>
+              </div>
+            </template>
+            <template #cell-nextDueUnixMs="{ value }">
+              <span class="mono">{{ fmtMs(value) }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+              <div class="actions-cell">
+                <button
+                  type="button"
+                  class="small good"
+                  :disabled="runNowPendingId !== ''"
+                  title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
+                  @click="runCollectionNow(row)"
+                >
+                  {{ runNowPendingId === row.id ? '…' : 'Run now' }}
+                </button>
+                <button
+                  type="button"
+                  class="small neutral"
+                  title="Copy this source into the add form"
+                  @click="duplicateSource(row)"
+                >
+                  Duplicate
+                </button>
+              </div>
+            </template>
+          </Table>
+        </template>
       </Section>
     </main>
-
-    <dialog
-      ref="formDialogRef"
-      class="form-dialog"
-      aria-labelledby="form-dialog-title"
-      @close="onFormDialogClose"
-      @click="onFormDialogBackdropClick"
-    >
-      <div class="form-dialog-inner" @click.stop>
-        <h2 id="form-dialog-title" class="form-dialog-title">{{ formDialogTitle }}</h2>
-        <form class="form-grid" @submit.prevent="onFormSubmit">
-          <label class="field">
-            <span>Collector type</span>
-            <select v-model="formCollectorType" class="mono" required @change="onFormCollectorTypeChange">
-              <option v-if="formCollectorTypeOptions.length === 0" disabled value="">
-                No collector-* heartbeats
-              </option>
-              <option v-for="t in formCollectorTypeOptions" :key="t" :value="t">
-                {{ t }}
-              </option>
-            </select>
-          </label>
-          <fieldset
-            v-if="!oneOffMode && showStructuredSourceSpec && activeParsedSchema && formSchemaBuilder"
-            class="schema-builder wide"
-          >
-            <legend class="schema-legend">Source (from collector schema)</legend>
-            <div class="schema-patterns">
-              <label v-for="p in activeParsedSchema.primary_patterns" :key="p.id" class="schema-radio">
-                <input
-                  type="radio"
-                  name="source-pattern"
-                  :value="p.id"
-                  :checked="formSchemaBuilder?.patternId === p.id"
-                  @change="onBuilderPatternChange(p.id)"
-                />
-                <span>{{ p.label }}</span>
-                <span v-if="p.example" class="schema-example mono">{{ p.example }}</span>
-              </label>
-            </div>
-            <div class="schema-args">
-              <label v-for="a in activePatternArgs" :key="a.id" class="field">
-                <span>{{ a.label }}</span>
-                <input v-model="formSchemaBuilder.args[a.id]" class="mono" type="text" autocomplete="off" />
-              </label>
-            </div>
-            <div v-if="activeParsedSchema.modifiers?.length" class="schema-mods">
-              <span class="mods-label">Include</span>
-              <label v-for="m in activeParsedSchema.modifiers" :key="m.id" class="field check mod-check">
-                <input v-model="formSchemaBuilder!.modifiers[m.id]" type="checkbox" />
-                <span>{{ m.label }} <code class="mod-code">+{{ m.syntax_suffix }}</code></span>
-              </label>
-            </div>
-            <button type="button" class="tiny neutral schema-raw-btn" @click="toggleSourceSpecRaw">Edit raw source spec</button>
-          </fieldset>
-          <p v-else-if="!oneOffMode && canUseStructuredForm && formSourceSpecAdvanced" class="wide schema-raw-banner">
-            <button type="button" class="tiny neutral" @click="toggleSourceSpecRaw">Use structured form</button>
-          </p>
-          <label class="field wide">
-            <span>Source spec</span>
-            <input
-              v-model="formSourceSpec"
-              class="mono"
-              type="text"
-              required
-              :readonly="showStructuredSourceSpec"
-              :placeholder="
-                showStructuredSourceSpec ? '' : 'e.g. org.repos:jamesread +dependabot +pr'
-              "
-              :title="
-                showStructuredSourceSpec
-                  ? 'Composed from pattern, arguments, and modifiers above'
-                  : ''
-              "
-            />
-          </label>
-          <template v-if="!oneOffMode">
-            <p v-if="activeSchemaCronHint?.description" class="field wide schema-cron-hint">
-              {{ activeSchemaCronHint.description }}
-            </p>
-            <label class="field wide">
-              <span>Cron schedule (optional)</span>
-              <input
-                v-model="formCronLine"
-                class="mono cron-input"
-                type="text"
-                placeholder="empty = run now only, or e.g. 0 0 * * *"
-                spellcheck="false"
-                aria-describedby="cron-summary"
-              />
-            </label>
-            <div class="cron-block wide">
-              <p id="cron-summary" class="cron-summary" role="status">
-                <strong>Summary:</strong> {{ formCronSummary }}
-              </p>
-              <div class="presets">
-                <span class="presets-label">Presets:</span>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * *')">Daily midnight</button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 * * * *')">Hourly</button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('*/15 * * * *')">Every 15 min</button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * 0')">Weekly (Sun 00:00)</button>
-              </div>
-            </div>
-          </template>
-          <label v-if="!oneOffMode" class="field check">
-            <input v-model="formEnabled" type="checkbox" />
-            <span>Enabled</span>
-          </label>
-          <p v-if="oneOffMode" class="form-dialog-hint wide">
-            This publishes a <code>CollectionRequest</code> with an inline source (same shape as a saved source). Nothing
-            is written to the controller database; run history is not updated for a source id. Cron is omitted (empty
-            schedule: immediate run).
-          </p>
-          <p v-else class="form-dialog-hint">
-            Use standard 5-field cron when set. Empty cron is allowed: collectors only run the source when you use
-            <strong>Run now</strong>.
-          </p>
-          <div class="form-actions">
-            <template v-if="oneOffMode">
-              <button type="submit" class="good" :disabled="saving || runNowPendingId !== ''">
-                {{ saving ? 'Working…' : 'Run once without saving' }}
-              </button>
-              <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
-            </template>
-            <template v-else>
-              <button type="submit" class="good" :disabled="saving">
-                {{ saving ? 'Working…' : editId ? 'Update' : 'Create' }}
-              </button>
-              <button
-                v-if="editId"
-                type="button"
-                class="good"
-                :disabled="saving"
-                title="Save changes and publish a collection request immediately"
-                @click="saveSourceAndRunNow"
-              >
-                {{ saving ? 'Working…' : 'Update and run now' }}
-              </button>
-              <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
-            </template>
-          </div>
-        </form>
-      </div>
-    </dialog>
 
     <AppFooter />
   </div>
@@ -875,54 +887,42 @@ watch(
   flex: 1;
   padding: 1rem 1.5rem 2rem;
 }
-.lede {
-  color: #475569;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin: 0 0 1rem;
+.list-banner-pad {
+  padding-left: 1em;
+  padding-right: 1em;
 }
-.lede code {
-  font-size: 0.85em;
-  background: #f1f5f9;
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
+.list-table-wrap {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
 }
-.err {
-  background: #fef2f2;
-  color: #b91c1c;
-  padding: 0.65rem 0.85rem;
-  border-radius: 6px;
-  margin: 0 0 1rem;
+.toolbar-filter select {
+  max-width: 11rem;
+  padding: 0.35rem 0.5rem;
 }
-.collector-cell {
-  display: inline-flex;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.actions-cell {
+  text-align: right;
+  display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
 }
-.toolbar {
+.dialog-actions {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-end;
-  margin-bottom: 1rem;
-}
-.filter {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.filter span {
-  font-size: 0.8rem;
-  color: #475569;
-}
-.filter input,
-.filter select {
-  min-width: 14rem;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: #fff;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 .field select {
   padding: 0.35rem 0.5rem;
@@ -930,13 +930,6 @@ watch(
   border-radius: 4px;
   background: #fff;
   max-width: 100%;
-}
-.hint.warn {
-  color: #b45309;
-  background: #fffbeb;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #fde68a;
 }
 .form-grid {
   display: grid;
@@ -1019,31 +1012,6 @@ watch(
 .last-error-hint .annotation-val {
   word-break: break-word;
 }
-.row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-.form-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-.hint {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin: 0 0 1rem;
-}
-.small {
-  padding: 0.25rem 0.45rem;
-  font-size: 0.8rem;
-  margin-right: 0.25rem;
-}
-.table-hint {
-  margin-top: 0.75rem;
-}
 .form-dialog {
   padding: 0;
   border: none;
@@ -1074,18 +1042,9 @@ watch(
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.spec-link {
-  color: #2563eb;
-  text-decoration: none;
-}
-.spec-link:hover {
-  text-decoration: underline;
-}
 .small {
-  font-size: 0.75rem;
-  max-width: 8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.8rem;
 }
 .schema-builder {
   grid-column: 1 / -1;

@@ -28,6 +28,7 @@ type PersisterMySQLSettings struct {
 
 type HeartbeatRow struct {
 	ServiceName           string
+	Version               string
 	LatestHeartbeatUnixMs int64
 }
 
@@ -207,7 +208,7 @@ func GetMeta(ctx context.Context, db *sql.DB, key string) (string, bool, error) 
 	return value, true, nil
 }
 
-func UpsertHeartbeat(ctx context.Context, db *sql.DB, serviceName string, latestUnixMs int64) error {
+func UpsertHeartbeat(ctx context.Context, db *sql.DB, serviceName string, latestUnixMs int64, version string) error {
 	if db == nil {
 		return fmt.Errorf("nil DB")
 	}
@@ -220,11 +221,12 @@ func UpsertHeartbeat(ctx context.Context, db *sql.DB, serviceName string, latest
 	}
 	_, err := db.ExecContext(
 		ctx,
-		`INSERT INTO icehive_heartbeats (service_name, latest_heartbeat_unix_ms)
-		 VALUES (?, ?)
-		 ON DUPLICATE KEY UPDATE latest_heartbeat_unix_ms = VALUES(latest_heartbeat_unix_ms), updated_at = CURRENT_TIMESTAMP`,
+		`INSERT INTO icehive_heartbeats (service_name, latest_heartbeat_unix_ms, version)
+		 VALUES (?, ?, ?)
+		 ON DUPLICATE KEY UPDATE latest_heartbeat_unix_ms = VALUES(latest_heartbeat_unix_ms), version = VALUES(version), updated_at = CURRENT_TIMESTAMP`,
 		serviceName,
 		latestUnixMs,
+		strings.TrimSpace(version),
 	)
 	if err != nil {
 		return fmt.Errorf("upsert heartbeat %q: %w", serviceName, err)
@@ -237,7 +239,7 @@ func ListHeartbeats(ctx context.Context, db *sql.DB) ([]HeartbeatRow, error) {
 	if db == nil {
 		return nil, fmt.Errorf("nil DB")
 	}
-	rows, err := db.QueryContext(ctx, `SELECT service_name, latest_heartbeat_unix_ms FROM icehive_heartbeats`)
+	rows, err := db.QueryContext(ctx, `SELECT service_name, latest_heartbeat_unix_ms, version FROM icehive_heartbeats`)
 	if err != nil {
 		return nil, fmt.Errorf("query heartbeats: %w", err)
 	}
@@ -246,7 +248,7 @@ func ListHeartbeats(ctx context.Context, db *sql.DB) ([]HeartbeatRow, error) {
 	out := make([]HeartbeatRow, 0)
 	for rows.Next() {
 		var r HeartbeatRow
-		if err := rows.Scan(&r.ServiceName, &r.LatestHeartbeatUnixMs); err != nil {
+		if err := rows.Scan(&r.ServiceName, &r.LatestHeartbeatUnixMs, &r.Version); err != nil {
 			return nil, fmt.Errorf("scan heartbeat row: %w", err)
 		}
 		out = append(out, r)

@@ -198,81 +198,68 @@ watch(pageTitle, syncDocumentTitle)
             <button type="button" class="neutral" @click="router.push({ name: 'sources' })">Back to list</button>
           </div>
 
-          <dl class="detail-grid">
-            <div class="detail">
-              <dt>ID</dt>
-              <dd class="mono">{{ source.id }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Collector type</dt>
-              <dd class="mono">{{ source.collectorType }}</dd>
-            </div>
-            <div class="detail wide">
-              <dt>Source spec</dt>
-              <dd class="mono">{{ source.sourceSpec }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Schedule (cron)</dt>
-              <dd>
-                <div class="mono">{{ source.cronLine || '—' }}</div>
-                <div class="cron-desc">{{ cronSummary }}</div>
-              </dd>
-            </div>
-            <div class="detail">
-              <dt>Enabled</dt>
-              <dd>{{ source.enabled ? 'yes' : 'no' }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Last run</dt>
-              <dd class="mono">{{ fmtMs(source.lastRunUnixMs) }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Last success</dt>
-              <dd class="mono">{{ fmtMs(source.lastSuccessUnixMs) }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Pipeline status</dt>
-              <dd>
-                <span
-                  class="annotation"
-                  :class="pipelineStatusLabel() === 'stale' ? 'bad' : pipelineStatusLabel() === 'healthy' ? 'good' : 'neutral'"
-                >
-                  <span class="annotation-key">status</span>
-                  <span class="annotation-val">{{ pipelineStatusLabel() }}</span>
-                </span>
-                <div v-if="source.secondsSinceLastSuccess > 0n" class="cron-desc mono">
-                  last success {{ fmtAgeSeconds(source.secondsSinceLastSuccess) }}
+          <dl class="source-detail">
+            <dt>ID</dt>
+            <dd class="mono">{{ source.id }}</dd>
+
+            <dt>Collector type</dt>
+            <dd class="mono">{{ source.collectorType }}</dd>
+
+            <dt>Source spec</dt>
+            <dd class="mono">{{ source.sourceSpec }}</dd>
+
+            <dt>Schedule (cron)</dt>
+            <dd>
+              <div class="mono">{{ source.cronLine || '—' }}</div>
+              <div class="cron-desc">{{ cronSummary }}</div>
+            </dd>
+
+            <dt>Enabled</dt>
+            <dd>{{ source.enabled ? 'yes' : 'no' }}</dd>
+
+            <dt>Last run</dt>
+            <dd class="mono">{{ fmtMs(source.lastRunUnixMs) }}</dd>
+
+            <dt>Last success</dt>
+            <dd class="mono">{{ fmtMs(source.lastSuccessUnixMs) }}</dd>
+
+            <dt>Pipeline status</dt>
+            <dd>
+              <span
+                class="annotation"
+                :class="pipelineStatusLabel() === 'stale' ? 'bad' : pipelineStatusLabel() === 'healthy' ? 'good' : 'neutral'"
+              >
+                <span class="annotation-key">status</span>
+                <span class="annotation-val">{{ pipelineStatusLabel() }}</span>
+              </span>
+              <div v-if="source.secondsSinceLastSuccess > 0n" class="cron-desc mono">
+                last success {{ fmtAgeSeconds(source.secondsSinceLastSuccess) }}
+              </div>
+              <div v-if="source.entityFreshnessAgeSeconds > 0n" class="cron-desc mono">
+                entity rows {{ fmtAgeSeconds(source.entityFreshnessAgeSeconds) }}
+              </div>
+            </dd>
+
+            <dt>Next due</dt>
+            <dd class="mono">{{ fmtMs(source.nextDueUnixMs) }}</dd>
+
+            <dt>Created</dt>
+            <dd class="mono">{{ fmtMs(source.createdUnixMs) }}</dd>
+
+            <dt>Updated</dt>
+            <dd class="mono">{{ fmtMs(source.updatedUnixMs) }}</dd>
+
+            <dt>Last error</dt>
+            <dd>
+              <template v-if="(source.lastError ?? '').trim()">
+                <div class="annotation bad last-error-annotation">
+                  <span class="annotation-key">error</span>
+                  <span class="annotation-val">Last collection failed</span>
                 </div>
-                <div v-if="source.entityFreshnessAgeSeconds > 0n" class="cron-desc mono">
-                  entity rows {{ fmtAgeSeconds(source.entityFreshnessAgeSeconds) }}
-                </div>
-              </dd>
-            </div>
-            <div class="detail">
-              <dt>Next due</dt>
-              <dd class="mono">{{ fmtMs(source.nextDueUnixMs) }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Created</dt>
-              <dd class="mono">{{ fmtMs(source.createdUnixMs) }}</dd>
-            </div>
-            <div class="detail">
-              <dt>Updated</dt>
-              <dd class="mono">{{ fmtMs(source.updatedUnixMs) }}</dd>
-            </div>
-            <div class="detail wide">
-              <dt>Last error</dt>
-              <dd>
-                <template v-if="(source.lastError ?? '').trim()">
-                  <div class="annotation bad last-error-annotation">
-                    <span class="annotation-key">error</span>
-                    <span class="annotation-val">Last collection failed</span>
-                  </div>
-                  <pre class="err-body mono">{{ source.lastError }}</pre>
-                </template>
-                <span v-else>—</span>
-              </dd>
-            </div>
+                <pre class="err-body mono">{{ source.lastError }}</pre>
+              </template>
+              <span v-else>—</span>
+            </dd>
           </dl>
         </template>
       </Section>
@@ -313,35 +300,8 @@ watch(pageTitle, syncDocumentTitle)
   align-items: end;
   margin-bottom: 1rem;
 }
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 0.85rem 1.25rem;
+.source-detail {
   margin: 0;
-}
-.detail {
-  margin: 0;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-.detail.wide {
-  grid-column: 1 / -1;
-}
-.detail dt {
-  margin: 0 0 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
-}
-.detail dd {
-  margin: 0;
-  color: #0f172a;
-  line-height: 1.45;
-  word-break: break-word;
 }
 .cron-desc {
   margin-top: 0.25rem;

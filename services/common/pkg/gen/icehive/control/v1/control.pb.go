@@ -142,6 +142,8 @@ func (*ControlEvent_CollectorScaleHint) isControlEvent_Payload() {}
 type Ping struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SourceService string                 `protobuf:"bytes,1,opt,name=source_service,json=sourceService,proto3" json:"source_service,omitempty"`
+	// Application version (semver or dev snapshot) from the publishing service binary.
+	Version       string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,6 +181,13 @@ func (*Ping) Descriptor() ([]byte, []int) {
 func (x *Ping) GetSourceService() string {
 	if x != nil {
 		return x.SourceService
+	}
+	return ""
+}
+
+func (x *Ping) GetVersion() string {
+	if x != nil {
+		return x.Version
 	}
 	return ""
 }
@@ -293,9 +302,10 @@ const file_icehive_control_v1_control_proto_rawDesc = "" +
 	" \x01(\v2\x18.icehive.control.v1.PingH\x00R\x04ping\x12G\n" +
 	"\rrequest_drain\x18\v \x01(\v2 .icehive.control.v1.RequestDrainH\x00R\frequestDrain\x12Z\n" +
 	"\x14collector_scale_hint\x18\f \x01(\v2&.icehive.control.v1.CollectorScaleHintH\x00R\x12collectorScaleHintB\t\n" +
-	"\apayload\"-\n" +
+	"\apayload\"G\n" +
 	"\x04Ping\x12%\n" +
-	"\x0esource_service\x18\x01 \x01(\tR\rsourceService\"&\n" +
+	"\x0esource_service\x18\x01 \x01(\tR\rsourceService\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\"&\n" +
 	"\fRequestDrain\x12\x16\n" +
 	"\x06reason\x18\x01 \x01(\tR\x06reason\"b\n" +
 	"\x12CollectorScaleHint\x12!\n" +

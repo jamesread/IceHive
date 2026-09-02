@@ -107,6 +107,8 @@ message ServiceStatus {
   string service_name = 1;
   int64 latest_heartbeat_unix_ms = 2;
   string status = 3;
+  // Application version reported in the latest heartbeat, if any.
+  string version = 4;
 }
 
 message ListServicesResponse {

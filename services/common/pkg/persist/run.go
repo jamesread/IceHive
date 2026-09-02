@@ -155,7 +155,7 @@ func Main(cfg MainConfig) {
 	if err != nil {
 		log.WithError(err).Fatal("amqp connect")
 	}
-	amqpClient.StartHeartbeatPublisher(ctx, "persister-"+cfg.ID, 10*time.Second)
+	amqpClient.StartHeartbeatPublisher(ctx, "persister-"+cfg.ID, buildinfo.Version, 10*time.Second)
 	defer func() {
 		_ = amqpClient.Close()
 		log.Info("AMQP status=disconnected")

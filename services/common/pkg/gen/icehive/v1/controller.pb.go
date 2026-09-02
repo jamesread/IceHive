@@ -786,8 +786,10 @@ type ServiceStatus struct {
 	ServiceName           string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	LatestHeartbeatUnixMs int64                  `protobuf:"varint,2,opt,name=latest_heartbeat_unix_ms,json=latestHeartbeatUnixMs,proto3" json:"latest_heartbeat_unix_ms,omitempty"`
 	Status                string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// Application version reported in the latest heartbeat, if any.
+	Version       string `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServiceStatus) Reset() {
@@ -837,6 +839,13 @@ func (x *ServiceStatus) GetLatestHeartbeatUnixMs() int64 {
 func (x *ServiceStatus) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *ServiceStatus) GetVersion() string {
+	if x != nil {
+		return x.Version
 	}
 	return ""
 }
@@ -1776,11 +1785,12 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"\x13\n" +
 	"\x11SetConfigResponse\"\x15\n" +
-	"\x13ListServicesRequest\"\x83\x01\n" +
+	"\x13ListServicesRequest\"\x9d\x01\n" +
 	"\rServiceStatus\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x127\n" +
 	"\x18latest_heartbeat_unix_ms\x18\x02 \x01(\x03R\x15latestHeartbeatUnixMs\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\"M\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12\x18\n" +
+	"\aversion\x18\x04 \x01(\tR\aversion\"M\n" +
 	"\x14ListServicesResponse\x125\n" +
 	"\bservices\x18\x01 \x03(\v2\x19.icehive.v1.ServiceStatusR\bservices\"\xac\x04\n" +
 	"\x10CollectionSource\x12\x0e\n" +

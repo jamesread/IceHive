@@ -4,17 +4,17 @@ go 1.25.0
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/go-sql-driver/mysql v1.10.0
+	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/icehive/icehive/services/common v0.0.0
-	github.com/jamesread/golure v0.0.0-20260510214136-6ef80e0ce8da
+	github.com/jamesread/golure v0.0.0-20260902093223-27b18778c9a5
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/prometheus/client_golang v1.24.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sirupsen/logrus v1.10.1
-	github.com/stretchr/testify v1.12.0
+	github.com/sirupsen/logrus v1.10.2
+	github.com/stretchr/testify v1.12.1
 	google.golang.org/protobuf v1.36.12
 )
 
@@ -30,13 +30,12 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.70.1 // indirect
-	github.com/prometheus/procfs v0.21.1 // indirect
+	github.com/prometheus/client_model v0.6.3 // indirect
+	github.com/prometheus/common v0.71.0 // indirect
+	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.14.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/icehive/icehive/services/common => ../common

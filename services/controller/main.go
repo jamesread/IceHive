@@ -268,6 +268,7 @@ func (s *controllerSrv) ListServices(
 			ServiceName:           r.ServiceName,
 			LatestHeartbeatUnixMs: r.LatestHeartbeatUnixMs,
 			Status:                heartbeatStatus(r.LatestHeartbeatUnixMs),
+			Version:               r.Version,
 		})
 	}
 	return connect.NewResponse(&icehivev1.ListServicesResponse{Services: out}), nil
@@ -750,7 +751,7 @@ func main() {
 			return
 		}
 		ctrlSrv.setAMQPClient(amqpClient)
-		amqpClient.StartHeartbeatPublisher(ctx, "controller", 10*time.Second)
+		amqpClient.StartHeartbeatPublisher(ctx, "controller", buildinfo.Version, 10*time.Second)
 		go func() {
 			hbQueue := amqpctl.QueueName("controller-heartbeats")
 			if err := amqpClient.EnsureQueue(hbQueue, amqpctl.RoutingKeyHeartbeats); err != nil {
@@ -766,7 +767,7 @@ func main() {
 				if ts <= 0 {
 					ts = time.Now().UnixMilli()
 				}
-				return db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts)
+				return db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts, p.GetVersion())
 			})
 			if err != nil && hctxErr(ctx) == nil {
 				log.WithError(err).Warn("heartbeat consumer stopped")
