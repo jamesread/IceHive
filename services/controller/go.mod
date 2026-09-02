@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/go-sql-driver/mysql v1.10.0
+	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/icehive/icehive/services/common v0.0.0
 	github.com/jamesread/golure v0.0.0-20260510214136-6ef80e0ce8da
