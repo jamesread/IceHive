@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	connectrpc.com/connect v1.20.0
 	github.com/google/go-github/v71 v71.0.0
+	github.com/google/go-github/v90 v90.0.0
 	github.com/google/go-querystring v1.2.0
 	github.com/icehive/icehive/services/common v0.0.0
 	github.com/knadh/koanf/v2 v2.3.6
