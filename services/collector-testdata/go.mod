@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/icehive/icehive/services/common v0.0.0
 	github.com/knadh/koanf/v2 v2.3.6
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	golang.org/x/text v0.41.0
 )
 

@@ -7,7 +7,7 @@ require (
 	github.com/icehive/icehive/services/common v0.0.0
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	golang.org/x/text v0.41.0
 	google.golang.org/protobuf v1.36.12
 )
