@@ -12,6 +12,8 @@ import {
 } from '@hugeicons/core-free-icons'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
+import FormField from 'picocrank/vue/components/FormField.vue'
+import FormLayout from 'picocrank/vue/components/FormLayout.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import Table from 'picocrank/vue/components/Table.vue'
@@ -623,10 +625,15 @@ watch(
       >
         <div class="form-dialog-inner" @click.stop>
           <h2 id="form-dialog-title" class="form-dialog-title">{{ formDialogTitle }}</h2>
-          <form class="form-grid" @submit.prevent="onFormSubmit">
-            <label class="field">
-              <span>Collector type</span>
-              <select v-model="formCollectorType" class="mono" required @change="onFormCollectorTypeChange">
+          <FormLayout @submit.prevent="onFormSubmit">
+            <FormField label="Collector type" for="form-collector-type">
+              <select
+                id="form-collector-type"
+                v-model="formCollectorType"
+                class="mono"
+                required
+                @change="onFormCollectorTypeChange"
+              >
                 <option v-if="formCollectorTypeOptions.length === 0" disabled value="">
                   No collector-* heartbeats
                 </option>
@@ -634,10 +641,10 @@ watch(
                   {{ t }}
                 </option>
               </select>
-            </label>
+            </FormField>
             <fieldset
               v-if="!oneOffMode && showStructuredSourceSpec && activeParsedSchema && formSchemaBuilder"
-              class="schema-builder wide"
+              class="schema-builder"
             >
               <legend class="schema-legend">Source (from collector schema)</legend>
               <div class="schema-patterns">
@@ -654,26 +661,38 @@ watch(
                 </label>
               </div>
               <div class="schema-args">
-                <label v-for="a in activePatternArgs" :key="a.id" class="field">
-                  <span>{{ a.label }}</span>
-                  <input v-model="formSchemaBuilder.args[a.id]" class="mono" type="text" autocomplete="off" />
-                </label>
+                <FormField
+                  v-for="a in activePatternArgs"
+                  :key="a.id"
+                  :label="a.label"
+                  :for="`schema-arg-${a.id}`"
+                >
+                  <input
+                    :id="`schema-arg-${a.id}`"
+                    v-model="formSchemaBuilder.args[a.id]"
+                    class="mono"
+                    type="text"
+                    autocomplete="off"
+                  />
+                </FormField>
               </div>
               <div v-if="activeParsedSchema.modifiers?.length" class="schema-mods">
                 <span class="mods-label">Include</span>
-                <label v-for="m in activeParsedSchema.modifiers" :key="m.id" class="field check mod-check">
+                <label v-for="m in activeParsedSchema.modifiers" :key="m.id" class="mod-check">
                   <input v-model="formSchemaBuilder!.modifiers[m.id]" type="checkbox" />
                   <span>{{ m.label }} <code class="mod-code">+{{ m.syntax_suffix }}</code></span>
                 </label>
               </div>
-              <button type="button" class="tiny neutral schema-raw-btn" @click="toggleSourceSpecRaw">Edit raw source spec</button>
+              <button type="button" class="tiny neutral schema-raw-btn" @click="toggleSourceSpecRaw">
+                Edit raw source spec
+              </button>
             </fieldset>
-            <p v-else-if="!oneOffMode && canUseStructuredForm && formSourceSpecAdvanced" class="wide schema-raw-banner">
+            <p v-else-if="!oneOffMode && canUseStructuredForm && formSourceSpecAdvanced" class="schema-raw-banner">
               <button type="button" class="tiny neutral" @click="toggleSourceSpecRaw">Use structured form</button>
             </p>
-            <label class="field wide">
-              <span>Source spec</span>
+            <FormField label="Source spec" for="form-source-spec">
               <input
+                id="form-source-spec"
                 v-model="formSourceSpec"
                 class="mono"
                 type="text"
@@ -688,40 +707,43 @@ watch(
                     : ''
                 "
               />
-            </label>
+            </FormField>
             <template v-if="!oneOffMode">
-              <p v-if="activeSchemaCronHint?.description" class="field wide schema-cron-hint">
+              <p v-if="activeSchemaCronHint?.description" class="schema-cron-hint">
                 {{ activeSchemaCronHint.description }}
               </p>
-              <label class="field wide">
-                <span>Cron schedule (optional)</span>
+              <FormField
+                label="Cron schedule (optional)"
+                for="form-cron-line"
+                :description="formCronSummary"
+              >
                 <input
+                  id="form-cron-line"
                   v-model="formCronLine"
                   class="mono cron-input"
                   type="text"
                   placeholder="empty = run now only, or e.g. 0 0 * * *"
                   spellcheck="false"
-                  aria-describedby="cron-summary"
                 />
-              </label>
-              <div class="cron-block wide">
-                <p id="cron-summary" class="cron-summary" role="status">
-                  <strong>Summary:</strong> {{ formCronSummary }}
-                </p>
-                <div class="presets">
-                  <span class="presets-label">Presets:</span>
-                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * *')">Daily midnight</button>
-                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 * * * *')">Hourly</button>
-                  <button type="button" class="tiny neutral" @click="applyCronPreset('*/15 * * * *')">Every 15 min</button>
-                  <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * 0')">Weekly (Sun 00:00)</button>
-                </div>
+              </FormField>
+              <div class="cron-presets">
+                <span class="presets-label">Presets:</span>
+                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * *')">
+                  Daily midnight
+                </button>
+                <button type="button" class="tiny neutral" @click="applyCronPreset('0 * * * *')">Hourly</button>
+                <button type="button" class="tiny neutral" @click="applyCronPreset('*/15 * * * *')">
+                  Every 15 min
+                </button>
+                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * 0')">
+                  Weekly (Sun 00:00)
+                </button>
               </div>
             </template>
-            <label v-if="!oneOffMode" class="field check">
-              <input v-model="formEnabled" type="checkbox" />
-              <span>Enabled</span>
-            </label>
-            <p v-if="oneOffMode" class="form-dialog-hint wide">
+            <FormField v-if="!oneOffMode" label="Enabled" for="form-enabled">
+              <input id="form-enabled" v-model="formEnabled" type="checkbox" />
+            </FormField>
+            <p v-if="oneOffMode" class="form-dialog-hint">
               This publishes a <code>CollectionRequest</code> with an inline source (same shape as a saved source). Nothing
               is written to the controller database; run history is not updated for a source id. Cron is omitted (empty
               schedule: immediate run).
@@ -730,8 +752,8 @@ watch(
               Use standard 5-field cron when set. Empty cron is allowed: collectors only run the source when you use
               <strong>Run now</strong>.
             </p>
-            <p v-if="formErr" class="inline-notification error wide">{{ formErr }}</p>
-            <div class="dialog-actions">
+            <p v-if="formErr" class="inline-notification error">{{ formErr }}</p>
+            <template #actions>
               <template v-if="oneOffMode">
                 <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
                 <button type="submit" class="good" :disabled="saving || runNowPendingId !== ''">
@@ -754,8 +776,8 @@ watch(
                   {{ saving ? 'Working…' : 'Update and run now' }}
                 </button>
               </template>
-            </div>
-          </form>
+            </template>
+          </FormLayout>
         </div>
       </dialog>
 
@@ -917,67 +939,15 @@ watch(
   justify-content: flex-end;
   gap: 0.35rem;
 }
-.dialog-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-.field select {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: #fff;
-  max-width: 100%;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 0.65rem 1rem;
-  align-items: end;
-  margin-bottom: 0.5rem;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.field.wide {
-  grid-column: 1 / -1;
-}
-.field.check {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-}
-.field span {
-  font-size: 0.8rem;
-  color: #475569;
-}
-.field input[type='text'],
-.field input[type='number'] {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-}
 .cron-input {
   font-size: 0.9rem;
 }
-.cron-block.wide {
-  grid-column: 1 / -1;
-}
-.cron-summary {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  color: #334155;
-  line-height: 1.45;
-}
-.presets {
+.cron-presets {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
+  margin: 0 0 0.5rem;
 }
 .presets-label {
   font-size: 0.8rem;
@@ -1033,11 +1003,19 @@ watch(
   color: #0f172a;
 }
 .form-dialog-hint {
-  grid-column: 1 / -1;
   margin: 0;
   font-size: 0.8rem;
   color: #64748b;
   line-height: 1.45;
+}
+.schema-cron-hint {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+}
+.schema-raw-banner {
+  margin: 0 0 0.5rem;
 }
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1047,8 +1025,7 @@ watch(
   font-size: 0.8rem;
 }
 .schema-builder {
-  grid-column: 1 / -1;
-  margin: 0;
+  margin: 0 0 0.75rem;
   padding: 0.65rem 0.85rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -1107,15 +1084,5 @@ watch(
 }
 .schema-raw-btn {
   margin-top: 0.25rem;
-}
-.schema-raw-banner {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-.schema-cron-hint {
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.4;
-  margin: 0;
 }
 </style>

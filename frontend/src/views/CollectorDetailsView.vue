@@ -7,6 +7,7 @@ import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import DangerZone from 'picocrank/vue/components/DangerZone.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
 import { notifySuccess } from '../utils/notify'
@@ -171,6 +172,24 @@ watch(pageTitle, syncDocumentTitle)
     </AppHeader>
     <main class="main">
       <Section :title="pageTitle">
+        <template v-if="source" #toolbar>
+          <button type="button" class="neutral" :disabled="loading" @click="loadSource">
+            {{ loading ? 'Loading…' : 'Reload' }}
+          </button>
+          <button
+            type="button"
+            class="good"
+            :disabled="runNowPending"
+            title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
+            @click="runCollectionNow"
+          >
+            {{ runNowPending ? '…' : 'Run now' }}
+          </button>
+          <button type="button" class="neutral" @click="goEdit">Edit</button>
+          <button type="button" class="neutral" @click="duplicateSource">Duplicate</button>
+          <button type="button" class="neutral" @click="router.push({ name: 'sources' })">Back to list</button>
+        </template>
+
         <p class="lede">
           Full details for one collection source. Schedule, run history timestamps, and identity fields that are hidden
           from the sources list live here.
@@ -178,91 +197,82 @@ watch(pageTitle, syncDocumentTitle)
         <p v-if="err" class="err" role="alert">{{ err }}</p>
         <p v-if="loading && !source" class="hint">Loading…</p>
 
-        <template v-if="source">
-          <div class="toolbar">
-            <button type="button" class="neutral" :disabled="loading" @click="loadSource">
-              {{ loading ? 'Loading…' : 'Reload' }}
-            </button>
-            <button
-              type="button"
-              class="good"
-              :disabled="runNowPending"
-              title="Publish a CollectionRequest for this source (runs immediately, ignoring schedule)"
-              @click="runCollectionNow"
+        <dl v-if="source" class="source-detail">
+          <dt>ID</dt>
+          <dd class="mono">{{ source.id }}</dd>
+
+          <dt>Collector type</dt>
+          <dd class="mono">{{ source.collectorType }}</dd>
+
+          <dt>Source spec</dt>
+          <dd class="mono">{{ source.sourceSpec }}</dd>
+
+          <dt>Schedule (cron)</dt>
+          <dd>
+            <div class="mono">{{ source.cronLine || '—' }}</div>
+            <div class="cron-desc">{{ cronSummary }}</div>
+          </dd>
+
+          <dt>Enabled</dt>
+          <dd>{{ source.enabled ? 'yes' : 'no' }}</dd>
+
+          <dt>Last run</dt>
+          <dd class="mono">{{ fmtMs(source.lastRunUnixMs) }}</dd>
+
+          <dt>Last success</dt>
+          <dd class="mono">{{ fmtMs(source.lastSuccessUnixMs) }}</dd>
+
+          <dt>Pipeline status</dt>
+          <dd>
+            <span
+              class="annotation"
+              :class="pipelineStatusLabel() === 'stale' ? 'bad' : pipelineStatusLabel() === 'healthy' ? 'good' : 'neutral'"
             >
-              {{ runNowPending ? '…' : 'Run now' }}
-            </button>
-            <button type="button" class="neutral" @click="goEdit">Edit</button>
-            <button type="button" class="neutral" @click="duplicateSource">Duplicate</button>
-            <button type="button" class="bad" @click="removeSource">Delete</button>
-            <button type="button" class="neutral" @click="router.push({ name: 'sources' })">Back to list</button>
-          </div>
+              <span class="annotation-key">status</span>
+              <span class="annotation-val">{{ pipelineStatusLabel() }}</span>
+            </span>
+            <div v-if="source.secondsSinceLastSuccess > 0n" class="cron-desc mono">
+              last success {{ fmtAgeSeconds(source.secondsSinceLastSuccess) }}
+            </div>
+            <div v-if="source.entityFreshnessAgeSeconds > 0n" class="cron-desc mono">
+              entity rows {{ fmtAgeSeconds(source.entityFreshnessAgeSeconds) }}
+            </div>
+          </dd>
 
-          <dl class="source-detail">
-            <dt>ID</dt>
-            <dd class="mono">{{ source.id }}</dd>
+          <dt>Next due</dt>
+          <dd class="mono">{{ fmtMs(source.nextDueUnixMs) }}</dd>
 
-            <dt>Collector type</dt>
-            <dd class="mono">{{ source.collectorType }}</dd>
+          <dt>Created</dt>
+          <dd class="mono">{{ fmtMs(source.createdUnixMs) }}</dd>
 
-            <dt>Source spec</dt>
-            <dd class="mono">{{ source.sourceSpec }}</dd>
+          <dt>Updated</dt>
+          <dd class="mono">{{ fmtMs(source.updatedUnixMs) }}</dd>
 
-            <dt>Schedule (cron)</dt>
-            <dd>
-              <div class="mono">{{ source.cronLine || '—' }}</div>
-              <div class="cron-desc">{{ cronSummary }}</div>
-            </dd>
-
-            <dt>Enabled</dt>
-            <dd>{{ source.enabled ? 'yes' : 'no' }}</dd>
-
-            <dt>Last run</dt>
-            <dd class="mono">{{ fmtMs(source.lastRunUnixMs) }}</dd>
-
-            <dt>Last success</dt>
-            <dd class="mono">{{ fmtMs(source.lastSuccessUnixMs) }}</dd>
-
-            <dt>Pipeline status</dt>
-            <dd>
-              <span
-                class="annotation"
-                :class="pipelineStatusLabel() === 'stale' ? 'bad' : pipelineStatusLabel() === 'healthy' ? 'good' : 'neutral'"
-              >
-                <span class="annotation-key">status</span>
-                <span class="annotation-val">{{ pipelineStatusLabel() }}</span>
-              </span>
-              <div v-if="source.secondsSinceLastSuccess > 0n" class="cron-desc mono">
-                last success {{ fmtAgeSeconds(source.secondsSinceLastSuccess) }}
+          <dt>Last error</dt>
+          <dd>
+            <template v-if="(source.lastError ?? '').trim()">
+              <div class="annotation bad last-error-annotation">
+                <span class="annotation-key">error</span>
+                <span class="annotation-val">Last collection failed</span>
               </div>
-              <div v-if="source.entityFreshnessAgeSeconds > 0n" class="cron-desc mono">
-                entity rows {{ fmtAgeSeconds(source.entityFreshnessAgeSeconds) }}
-              </div>
-            </dd>
-
-            <dt>Next due</dt>
-            <dd class="mono">{{ fmtMs(source.nextDueUnixMs) }}</dd>
-
-            <dt>Created</dt>
-            <dd class="mono">{{ fmtMs(source.createdUnixMs) }}</dd>
-
-            <dt>Updated</dt>
-            <dd class="mono">{{ fmtMs(source.updatedUnixMs) }}</dd>
-
-            <dt>Last error</dt>
-            <dd>
-              <template v-if="(source.lastError ?? '').trim()">
-                <div class="annotation bad last-error-annotation">
-                  <span class="annotation-key">error</span>
-                  <span class="annotation-val">Last collection failed</span>
-                </div>
-                <pre class="err-body mono">{{ source.lastError }}</pre>
-              </template>
-              <span v-else>—</span>
-            </dd>
-          </dl>
-        </template>
+              <pre class="err-body mono">{{ source.lastError }}</pre>
+            </template>
+            <span v-else>—</span>
+          </dd>
+        </dl>
       </Section>
+
+      <DangerZone
+        v-if="source"
+        title="Danger zone"
+        subtitle="Destructive actions for this collection source"
+        description="Show destructive actions"
+        warning="Deleting this source removes its schedule and run history from the controller. Past collected entities are not removed."
+      >
+        <div role="toolbar" class="danger-zone-actions">
+          <button type="button" class="bad" @click="removeSource">Delete source</button>
+        </div>
+      </DangerZone>
     </main>
     <AppFooter />
   </div>
@@ -293,13 +303,6 @@ watch(pageTitle, syncDocumentTitle)
   color: #64748b;
   margin: 0 0 1rem;
 }
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: end;
-  margin-bottom: 1rem;
-}
 .source-detail {
   margin: 0;
 }
@@ -319,5 +322,10 @@ watch(pageTitle, syncDocumentTitle)
 }
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.danger-zone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 </style>

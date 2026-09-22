@@ -1,0 +1,1663 @@
+{
+  "openapi": "3.1.0",
+  "info": {},
+  "paths": {
+    "/api/icehive.v1.ControllerService/DeleteCollectionSource": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "DeleteCollectionSource",
+        "operationId": "icehive.v1.ControllerService.DeleteCollectionSource",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.DeleteCollectionSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.DeleteCollectionSourceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/EnqueueCollectionRequest": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.  Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).",
+        "description": "EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.\n Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).",
+        "operationId": "icehive.v1.ControllerService.EnqueueCollectionRequest",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.EnqueueCollectionRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.EnqueueCollectionRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/GetConfig": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "GetConfig returns a single flattened configuration key; creates it with empty value when missing.",
+        "description": "GetConfig returns a single flattened configuration key; creates it with empty value when missing.",
+        "operationId": "icehive.v1.ControllerService.GetConfig",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.GetConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.GetConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/Health": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "Health indicates whether the Controller process is reachable.",
+        "description": "Health indicates whether the Controller process is reachable.",
+        "operationId": "icehive.v1.ControllerService.Health",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.HealthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/Init": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "Init should be the first call from UI clients; returns server version and confirms connectivity.",
+        "description": "Init should be the first call from UI clients; returns server version and confirms connectivity.",
+        "operationId": "icehive.v1.ControllerService.Init",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.InitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.InitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ListActivity": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "ListActivity returns recent in-memory control-plane activity (heartbeats, enqueues, collection runs).",
+        "description": "ListActivity returns recent in-memory control-plane activity (heartbeats, enqueues, collection runs).",
+        "operationId": "icehive.v1.ControllerService.ListActivity",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ListActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ListActivityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ListCollectionSources": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "Collection sources: generic strings interpreted per collector_type.",
+        "description": "Collection sources: generic strings interpreted per collector_type.",
+        "operationId": "icehive.v1.ControllerService.ListCollectionSources",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ListCollectionSourcesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ListCollectionSourcesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ListCollectorSourceSchemas": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "ListCollectorSourceSchemas returns the latest SourceSchema JSON published by each collector (AMQP), for UI forms.",
+        "description": "ListCollectorSourceSchemas returns the latest SourceSchema JSON published by each collector (AMQP), for UI forms.",
+        "operationId": "icehive.v1.ControllerService.ListCollectorSourceSchemas",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ListCollectorSourceSchemasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ListCollectorSourceSchemasResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ListConfig": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "ListConfig returns flattened configuration keys and values from the loaded controller config file.",
+        "description": "ListConfig returns flattened configuration keys and values from the loaded controller config file.",
+        "operationId": "icehive.v1.ControllerService.ListConfig",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ListConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ListConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ListServices": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "ListServices returns latest heartbeat status for AMQP-connected services.",
+        "description": "ListServices returns latest heartbeat status for AMQP-connected services.",
+        "operationId": "icehive.v1.ControllerService.ListServices",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ListServicesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ListServicesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/ReportCollectionSourceRun": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "ReportCollectionSourceRun",
+        "operationId": "icehive.v1.ControllerService.ReportCollectionSourceRun",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.ReportCollectionSourceRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.ReportCollectionSourceRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/SetConfig": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "SetConfig updates a single flattened key and persists the full configuration back to the same file.",
+        "description": "SetConfig updates a single flattened key and persists the full configuration back to the same file.",
+        "operationId": "icehive.v1.ControllerService.SetConfig",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.SetConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.SetConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/UpsertCollectionSource": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "UpsertCollectionSource",
+        "operationId": "icehive.v1.ControllerService.UpsertCollectionSource",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.UpsertCollectionSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.UpsertCollectionSourceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/icehive.v1.ControllerService/WorkerBootstrap": {
+      "post": {
+        "tags": [
+          "icehive.v1.ControllerService"
+        ],
+        "summary": "WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.",
+        "description": "WorkerBootstrap returns runtime settings (AMQP, etc.) for collector and persister processes.",
+        "operationId": "icehive.v1.ControllerService.WorkerBootstrap",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/icehive.v1.WorkerBootstrapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/icehive.v1.WorkerBootstrapResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "connect-protocol-version": {
+        "type": "number",
+        "title": "Connect-Protocol-Version",
+        "enum": [
+          1
+        ],
+        "description": "Define the version of the Connect protocol",
+        "const": 1
+      },
+      "connect-timeout-header": {
+        "type": "number",
+        "title": "Connect-Timeout-Ms",
+        "description": "Define the timeout, in ms"
+      },
+      "connect.error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "examples": [
+              "not_found"
+            ],
+            "enum": [
+              "canceled",
+              "unknown",
+              "invalid_argument",
+              "deadline_exceeded",
+              "not_found",
+              "already_exists",
+              "permission_denied",
+              "resource_exhausted",
+              "failed_precondition",
+              "aborted",
+              "out_of_range",
+              "unimplemented",
+              "internal",
+              "unavailable",
+              "data_loss",
+              "unauthenticated"
+            ],
+            "description": "The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code]."
+          },
+          "message": {
+            "type": "string",
+            "description": "A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/connect.error_details.Any"
+            },
+            "description": "A list of messages that carry the error details. There is no limit on the number of messages."
+          }
+        },
+        "title": "Connect Error",
+        "additionalProperties": true,
+        "description": "Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation"
+      },
+      "connect.error_details.Any": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A URL that acts as a globally unique identifier for the type of the serialized message. For example: `type.googleapis.com/google.rpc.ErrorInfo`. This is used to determine the schema of the data in the `value` field and is the discriminator for the `debug` field."
+          },
+          "value": {
+            "type": "string",
+            "format": "binary",
+            "description": "The Protobuf message, serialized as bytes and base64-encoded. The specific message type is identified by the `type` field."
+          },
+          "debug": {
+            "oneOf": [
+              {
+                "type": "object",
+                "title": "Any",
+                "additionalProperties": true,
+                "description": "Detailed error information."
+              }
+            ],
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "title": "Debug",
+            "description": "Deserialized error detail payload. The 'type' field indicates the schema. This field is for easier debugging and should not be relied upon for application logic."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Contains an arbitrary serialized message along with a @type that describes the type of the serialized message, with an additional debug field for ConnectRPC error details."
+      },
+      "icehive.control.v1.CollectorScaleHint": {
+        "type": "object",
+        "properties": {
+          "collectorId": {
+            "type": "string",
+            "title": "collector_id"
+          },
+          "desiredReplicas": {
+            "type": "integer",
+            "title": "desired_replicas",
+            "format": "int32"
+          }
+        },
+        "title": "CollectorScaleHint",
+        "additionalProperties": false,
+        "description": "CollectorScaleHint carries non-gRPC scheduling hints for collector workers."
+      },
+      "icehive.control.v1.ControlEvent": {
+        "type": "object",
+        "allOf": [
+          {
+            "properties": {
+              "correlationId": {
+                "type": "string",
+                "title": "correlation_id",
+                "description": "Correlation identifier for tracing; should be unique per published event."
+              },
+              "createdUnixMs": {
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "title": "created_unix_ms",
+                "format": "int64",
+                "description": "Wall-clock time when the event was created, in milliseconds since Unix epoch."
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "collectorScaleHint": {
+                    "title": "collector_scale_hint",
+                    "$ref": "#/components/schemas/icehive.control.v1.CollectorScaleHint"
+                  }
+                },
+                "title": "collector_scale_hint",
+                "required": [
+                  "collectorScaleHint"
+                ]
+              },
+              {
+                "properties": {
+                  "ping": {
+                    "title": "ping",
+                    "$ref": "#/components/schemas/icehive.control.v1.Ping"
+                  }
+                },
+                "title": "ping",
+                "required": [
+                  "ping"
+                ]
+              },
+              {
+                "properties": {
+                  "requestDrain": {
+                    "title": "request_drain",
+                    "$ref": "#/components/schemas/icehive.control.v1.RequestDrain"
+                  }
+                },
+                "title": "request_drain",
+                "required": [
+                  "requestDrain"
+                ]
+              }
+            ]
+          }
+        ],
+        "title": "ControlEvent",
+        "additionalProperties": false,
+        "description": "ControlEvent is the envelope for broadcast or targeted control messages between IceHive services."
+      },
+      "icehive.control.v1.Ping": {
+        "type": "object",
+        "properties": {
+          "sourceService": {
+            "type": "string",
+            "title": "source_service"
+          },
+          "version": {
+            "type": "string",
+            "title": "version",
+            "description": "Application version (semver or dev snapshot) from the publishing service binary."
+          }
+        },
+        "title": "Ping",
+        "additionalProperties": false,
+        "description": "Ping is a liveness or connectivity check on the control channel."
+      },
+      "icehive.control.v1.RequestDrain": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "reason"
+          }
+        },
+        "title": "RequestDrain",
+        "additionalProperties": false,
+        "description": "RequestDrain asks consumers to finish in-flight work and stop accepting new tasks."
+      },
+      "icehive.v1.AMQPSettings": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "url"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "exchange"
+          },
+          "routingKeyControlEvents": {
+            "type": "string",
+            "title": "routing_key_control_events"
+          }
+        },
+        "title": "AMQPSettings",
+        "additionalProperties": false,
+        "description": "AMQPSettings describes how workers should connect to the message broker."
+      },
+      "icehive.v1.ActivityEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "Opaque monotonic id within this Controller process (resets on restart)."
+          },
+          "unixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "unix_ms",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string",
+            "title": "kind",
+            "description": "One of: heartbeat_received, collection_enqueued, collection_run."
+          },
+          "summary": {
+            "type": "string",
+            "title": "summary"
+          },
+          "serviceName": {
+            "type": "string",
+            "title": "service_name"
+          },
+          "collectorType": {
+            "type": "string",
+            "title": "collector_type"
+          },
+          "sourceId": {
+            "type": "string",
+            "title": "source_id"
+          },
+          "success": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "title": "success",
+            "description": "Set for collection_run events."
+          }
+        },
+        "title": "ActivityEvent",
+        "additionalProperties": false,
+        "description": "ActivityEvent is one recent control-plane observation recorded by the Controller process."
+      },
+      "icehive.v1.CollectionRequest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "title": "source",
+            "$ref": "#/components/schemas/icehive.v1.CollectionSource"
+          }
+        },
+        "title": "CollectionRequest",
+        "additionalProperties": false,
+        "description": "CollectionRequest is the JSON (protojson) body published to AMQP for on-demand collection."
+      },
+      "icehive.v1.CollectionSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id"
+          },
+          "collectorType": {
+            "type": "string",
+            "title": "collector_type"
+          },
+          "sourceSpec": {
+            "type": "string",
+            "title": "source_spec"
+          },
+          "cronLine": {
+            "type": "string",
+            "title": "cron_line",
+            "description": "Standard 5-field cron (minute hour day-of-month month day-of-week), e.g. \"0 0 * * *\" daily at midnight.\n When empty, the source has no schedule and is only collected when EnqueueCollectionRequest (Run now) is used."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled"
+          },
+          "lastRunUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "last_run_unix_ms",
+            "format": "int64"
+          },
+          "lastSuccessUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "last_success_unix_ms",
+            "format": "int64"
+          },
+          "lastError": {
+            "type": "string",
+            "title": "last_error"
+          },
+          "nextDueUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "next_due_unix_ms",
+            "format": "int64"
+          },
+          "createdUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "created_unix_ms",
+            "format": "int64"
+          },
+          "updatedUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "updated_unix_ms",
+            "format": "int64"
+          },
+          "secondsSinceLastSuccess": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "seconds_since_last_success",
+            "format": "int64",
+            "description": "Pipeline health (computed by controller when listing sources)."
+          },
+          "isStale": {
+            "type": "boolean",
+            "title": "is_stale"
+          },
+          "entityFreshnessAgeSeconds": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "entity_freshness_age_seconds",
+            "format": "int64",
+            "description": "Seconds since the newest entity row update for this collector type; 0 when unknown."
+          }
+        },
+        "title": "CollectionSource",
+        "additionalProperties": false
+      },
+      "icehive.v1.CollectorSourceSchema": {
+        "type": "object",
+        "properties": {
+          "collectorType": {
+            "type": "string",
+            "title": "collector_type"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "title": "schema_version"
+          },
+          "bodyJson": {
+            "type": "string",
+            "title": "body_json",
+            "description": "Full SourceSchema JSON document (kind, primary_patterns, modifiers, etc.)."
+          },
+          "updatedUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "updated_unix_ms",
+            "format": "int64"
+          }
+        },
+        "title": "CollectorSourceSchema",
+        "additionalProperties": false
+      },
+      "icehive.v1.ConfigVar": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          },
+          "value": {
+            "type": "string",
+            "title": "value",
+            "description": "Value as string; secrets may be redacted."
+          },
+          "redacted": {
+            "type": "boolean",
+            "title": "redacted"
+          }
+        },
+        "title": "ConfigVar",
+        "additionalProperties": false
+      },
+      "icehive.v1.DeleteCollectionSourceRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id"
+          }
+        },
+        "title": "DeleteCollectionSourceRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.DeleteCollectionSourceResponse": {
+        "type": "object",
+        "title": "DeleteCollectionSourceResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.EnqueueCollectionRequestRequest": {
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "collectionSourceId": {
+                "type": "string",
+                "title": "collection_source_id",
+                "description": "Load the source from the controller DB and publish it."
+              }
+            },
+            "title": "collection_source_id",
+            "required": [
+              "collectionSourceId"
+            ]
+          },
+          {
+            "properties": {
+              "ephemeralCollection": {
+                "title": "ephemeral_collection",
+                "description": "Inline source: published as CollectionRequest.source with id cleared; not persisted.",
+                "$ref": "#/components/schemas/icehive.v1.CollectionSource"
+              }
+            },
+            "title": "ephemeral_collection",
+            "required": [
+              "ephemeralCollection"
+            ]
+          }
+        ],
+        "title": "EnqueueCollectionRequestRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.EnqueueCollectionRequestResponse": {
+        "type": "object",
+        "title": "EnqueueCollectionRequestResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.GetConfigRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          }
+        },
+        "title": "GetConfigRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.GetConfigResponse": {
+        "type": "object",
+        "properties": {
+          "var": {
+            "title": "var",
+            "$ref": "#/components/schemas/icehive.v1.ConfigVar"
+          }
+        },
+        "title": "GetConfigResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.HealthRequest": {
+        "type": "object",
+        "title": "HealthRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "status",
+            "description": "Status summary, e.g. \"ok\"."
+          }
+        },
+        "title": "HealthResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.InitRequest": {
+        "type": "object",
+        "title": "InitRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.InitResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "version",
+            "description": "Application version (semver or dev snapshot) from the controller binary."
+          }
+        },
+        "title": "InitResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListActivityRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "title": "limit",
+            "format": "int32",
+            "description": "Max events to return (newest first). Defaults to 50; capped at 100."
+          }
+        },
+        "title": "ListActivityRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListActivityResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/icehive.v1.ActivityEvent"
+            },
+            "title": "events"
+          }
+        },
+        "title": "ListActivityResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListCollectionSourcesRequest": {
+        "type": "object",
+        "properties": {
+          "collectorType": {
+            "type": "string",
+            "title": "collector_type"
+          }
+        },
+        "title": "ListCollectionSourcesRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListCollectionSourcesResponse": {
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/icehive.v1.CollectionSource"
+            },
+            "title": "sources"
+          }
+        },
+        "title": "ListCollectionSourcesResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListCollectorSourceSchemasRequest": {
+        "type": "object",
+        "properties": {
+          "collectorType": {
+            "type": "string",
+            "title": "collector_type",
+            "description": "When empty, returns all stored schemas. Otherwise filters by collector_type."
+          }
+        },
+        "title": "ListCollectorSourceSchemasRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListCollectorSourceSchemasResponse": {
+        "type": "object",
+        "properties": {
+          "schemas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/icehive.v1.CollectorSourceSchema"
+            },
+            "title": "schemas"
+          }
+        },
+        "title": "ListCollectorSourceSchemasResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListConfigRequest": {
+        "type": "object",
+        "title": "ListConfigRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListConfigResponse": {
+        "type": "object",
+        "properties": {
+          "vars": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/icehive.v1.ConfigVar"
+            },
+            "title": "vars"
+          }
+        },
+        "title": "ListConfigResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListServicesRequest": {
+        "type": "object",
+        "title": "ListServicesRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ListServicesResponse": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/icehive.v1.ServiceStatus"
+            },
+            "title": "services"
+          }
+        },
+        "title": "ListServicesResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.MySQLSettings": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "host"
+          },
+          "port": {
+            "type": "integer",
+            "title": "port",
+            "format": "int32"
+          },
+          "user": {
+            "type": "string",
+            "title": "user"
+          },
+          "password": {
+            "type": "string",
+            "title": "password"
+          },
+          "database": {
+            "type": "string",
+            "title": "database"
+          }
+        },
+        "title": "MySQLSettings",
+        "additionalProperties": false,
+        "description": "MySQLSettings describes how workers should connect to a MySQL database."
+      },
+      "icehive.v1.ReportCollectionSourceRunRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id"
+          },
+          "runUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "run_unix_ms",
+            "format": "int64"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "success"
+          },
+          "error": {
+            "type": "string",
+            "title": "error"
+          },
+          "nextDueUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "next_due_unix_ms",
+            "format": "int64"
+          }
+        },
+        "title": "ReportCollectionSourceRunRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.ReportCollectionSourceRunResponse": {
+        "type": "object",
+        "title": "ReportCollectionSourceRunResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.ServiceStatus": {
+        "type": "object",
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "title": "service_name"
+          },
+          "latestHeartbeatUnixMs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "latest_heartbeat_unix_ms",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "title": "status"
+          },
+          "version": {
+            "type": "string",
+            "title": "version",
+            "description": "Application version reported in the latest heartbeat, if any."
+          }
+        },
+        "title": "ServiceStatus",
+        "additionalProperties": false
+      },
+      "icehive.v1.SetConfigRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "title": "SetConfigRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.SetConfigResponse": {
+        "type": "object",
+        "title": "SetConfigResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.UpsertCollectionSourceRequest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "title": "source",
+            "$ref": "#/components/schemas/icehive.v1.CollectionSource"
+          }
+        },
+        "title": "UpsertCollectionSourceRequest",
+        "additionalProperties": false
+      },
+      "icehive.v1.UpsertCollectionSourceResponse": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "title": "source",
+            "$ref": "#/components/schemas/icehive.v1.CollectionSource"
+          }
+        },
+        "title": "UpsertCollectionSourceResponse",
+        "additionalProperties": false
+      },
+      "icehive.v1.WorkerBootstrapRequest": {
+        "type": "object",
+        "properties": {
+          "workerKind": {
+            "type": "string",
+            "title": "worker_kind"
+          },
+          "workerId": {
+            "type": "string",
+            "title": "worker_id"
+          }
+        },
+        "title": "WorkerBootstrapRequest",
+        "additionalProperties": false,
+        "description": "WorkerBootstrapRequest identifies the calling worker binary."
+      },
+      "icehive.v1.WorkerBootstrapResponse": {
+        "type": "object",
+        "properties": {
+          "amqp": {
+            "title": "amqp",
+            "$ref": "#/components/schemas/icehive.v1.AMQPSettings"
+          },
+          "mysql": {
+            "title": "mysql",
+            "description": "Present for persister workers that require a target sink database.",
+            "$ref": "#/components/schemas/icehive.v1.MySQLSettings"
+          }
+        },
+        "title": "WorkerBootstrapResponse",
+        "additionalProperties": false,
+        "description": "WorkerBootstrapResponse is returned by the Controller for collector/persister startup."
+      }
+    }
+  },
+  "security": [],
+  "tags": [
+    {
+      "name": "icehive.v1.ControllerService",
+      "description": "ControllerService exposes the primary API clients use to request and inspect data."
+    }
+  ]
+}

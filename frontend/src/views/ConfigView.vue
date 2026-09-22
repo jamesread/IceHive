@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import { Add01Icon, ArrowReloadHorizontalIcon, Configuration01Icon } from '@hugeicons/core-free-icons'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
@@ -14,23 +17,12 @@ import {
 import { getControllerClient } from '../api/controllerClient'
 import { notifySuccess } from '../utils/notify'
 
-const GITHUB_TOKEN_KEY = 'github.token'
-
+const router = useRouter()
 const rows = ref<ConfigVar[]>([])
 const edits = ref<Record<string, string>>({})
 const loading = ref(false)
 const err = ref<string | null>(null)
 const savingKey = ref<string | null>(null)
-const creating = ref(false)
-const newKey = ref('')
-const newValue = ref('')
-
-const hasGitHubToken = computed(() => rows.value.some((r) => r.key === GITHUB_TOKEN_KEY))
-
-function addGitHubTokenPreset() {
-  newKey.value = GITHUB_TOKEN_KEY
-  newValue.value = ''
-}
 
 async function loadConfig() {
   err.value = null
@@ -73,31 +65,8 @@ async function saveRow(key: string) {
   }
 }
 
-async function createKeyRow() {
-  err.value = null
-  const key = newKey.value.trim()
-  if (key === '') {
-    err.value = 'Enter a key name before creating.'
-    return
-  }
-  if (rows.value.some((r) => r.key === key)) {
-    err.value = `Key "${key}" already exists.`
-    return
-  }
-  creating.value = true
-  try {
-    await getControllerClient().setConfig(
-      create(SetConfigRequestSchema, { key, value: newValue.value }),
-    )
-    newKey.value = ''
-    newValue.value = ''
-    notifySuccess(`Created "${key}".`)
-    await loadConfig()
-  } catch (e) {
-    err.value = e instanceof ConnectError ? e.message : String(e)
-  } finally {
-    creating.value = false
-  }
+function openCreate() {
+  void router.push({ name: 'config-create' })
 }
 
 onMounted(() => {
@@ -113,57 +82,24 @@ onMounted(() => {
       </template>
     </AppHeader>
     <main class="config-main">
-      <Section title="Controller configuration">
-        <p class="lede">
-          Values come from the controller process via Connect RPC (<code>ListConfig</code> /
-          <code>SetConfig</code>). Changes are written to controller metadata.
-        </p>
-        <p v-if="err" class="err" role="alert">{{ err }}</p>
-        <section class="create-panel">
-          <h2>Create configuration key</h2>
-          <p v-if="!hasGitHubToken" class="hint">
-            GitHub collection requires a <code class="mono">{{ GITHUB_TOKEN_KEY }}</code> entry.
-          </p>
-          <form class="create-form" @submit.prevent="createKeyRow">
-            <label class="field">
-              <span>Key</span>
-              <input
-                v-model="newKey"
-                class="val-input mono"
-                type="text"
-                placeholder="example: amqp.routing_key_control_events"
-                aria-label="New key"
-              />
-            </label>
-            <label class="field">
-              <span>Value</span>
-              <input
-                v-model="newValue"
-                class="val-input mono"
-                type="text"
-                placeholder="Value"
-                aria-label="New value"
-              />
-            </label>
-            <button type="submit" class="good" :disabled="creating">
-              {{ creating ? 'Creating…' : 'Create key' }}
-            </button>
-            <button
-              v-if="!hasGitHubToken"
-              type="button"
-              class="neutral"
-              @click="addGitHubTokenPreset"
-            >
-              Use {{ GITHUB_TOKEN_KEY }}
-            </button>
-          </form>
-        </section>
-        <div class="toolbar">
-          <button type="button" class="neutral" :disabled="loading" @click="loadConfig">
-            {{ loading ? 'Loading…' : 'Reload' }}
+      <Section
+        title="Controller configuration"
+        :icon="Configuration01Icon"
+        subtitle="Values come from the controller via Connect RPC (ListConfig / SetConfig). Changes are written to controller metadata."
+        :padding="false"
+      >
+        <template #toolbar>
+          <button type="button" class="neutral" title="Reload" :disabled="loading" @click="loadConfig">
+            <HugeiconsIcon :icon="ArrowReloadHorizontalIcon" width="1em" height="1em" aria-hidden="true" />
           </button>
-        </div>
-        <div class="table-wrap">
+          <button type="button" class="good" title="Create key" :disabled="loading" @click="openCreate">
+            <HugeiconsIcon :icon="Add01Icon" width="1em" height="1em" aria-hidden="true" />
+          </button>
+        </template>
+
+        <p v-if="err" class="err list-banner-pad" role="alert">{{ err }}</p>
+        <div v-if="loading && !rows.length" class="list-banner-pad muted">Loading…</div>
+        <div v-else class="table-wrap">
           <table class="cfg-table">
             <thead>
               <tr>
@@ -196,6 +132,9 @@ onMounted(() => {
                   </button>
                 </td>
               </tr>
+              <tr v-if="!rows.length">
+                <td colspan="3">No configuration keys yet.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -215,17 +154,12 @@ onMounted(() => {
   flex: 1;
   padding: 1rem 1.5rem 2rem;
 }
-.lede {
-  color: #475569;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin: 0 0 1rem;
+.list-banner-pad {
+  padding-left: 1em;
+  padding-right: 1em;
 }
-.lede code {
-  font-size: 0.85em;
-  background: #f1f5f9;
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
+.muted {
+  color: #64748b;
 }
 .err {
   background: #fef2f2;
@@ -234,42 +168,14 @@ onMounted(() => {
   border-radius: 6px;
   margin: 0 0 1rem;
 }
-.toolbar {
-  margin-bottom: 0.75rem;
-}
-.create-panel {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-}
-.create-panel h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-}
-.create-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  align-items: end;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.field span {
-  font-size: 0.8rem;
-  color: #475569;
-}
 .small {
   padding: 0.3rem 0.55rem;
   font-size: 0.8rem;
 }
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
 }
 .cfg-table {
   width: 100%;

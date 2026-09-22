@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"flag"
 	"fmt"
 	"net"
@@ -36,15 +37,24 @@ import (
 	"github.com/icehive/icehive/services/common/pkg/httpshim"
 	"github.com/icehive/icehive/services/common/pkg/logging"
 	"github.com/icehive/icehive/services/common/pkg/obsmetrics"
+	"github.com/icehive/icehive/services/controller/internal/activity"
 	"github.com/icehive/icehive/services/controller/internal/db"
 	"github.com/icehive/icehive/services/controller/internal/healthmetrics"
+	controllermcp "github.com/icehive/icehive/services/controller/internal/mcp"
 )
+
+//go:embed llms.txt
+var llmsTxt []byte
+
+//go:embed gen/openapi.json
+var openAPISpec []byte
 
 type controllerSrv struct {
 	db         *sql.DB
 	k          *koanf.Koanf
 	amqpClient *amqpctl.Client
 	health     *healthmetrics.Refresher
+	activity   *activity.Ring
 	mu         sync.RWMutex
 }
 
@@ -274,6 +284,30 @@ func (s *controllerSrv) ListServices(
 	return connect.NewResponse(&icehivev1.ListServicesResponse{Services: out}), nil
 }
 
+func (s *controllerSrv) ListActivity(
+	_ context.Context,
+	req *connect.Request[icehivev1.ListActivityRequest],
+) (*connect.Response[icehivev1.ListActivityResponse], error) {
+	events := s.activity.List(int(req.Msg.GetLimit()))
+	out := make([]*icehivev1.ActivityEvent, 0, len(events))
+	for _, e := range events {
+		ev := &icehivev1.ActivityEvent{
+			Id:            e.ID,
+			UnixMs:        e.UnixMs,
+			Kind:          e.Kind,
+			Summary:       e.Summary,
+			ServiceName:   e.ServiceName,
+			CollectorType: e.CollectorType,
+			SourceId:      e.SourceID,
+		}
+		if e.Success != nil {
+			ev.Success = e.Success
+		}
+		out = append(out, ev)
+	}
+	return connect.NewResponse(&icehivev1.ListActivityResponse{Events: out}), nil
+}
+
 func collectionSourceToProto(r db.CollectionSourceRow, health healthmetrics.PipelineHealth) *icehivev1.CollectionSource {
 	p := &icehivev1.CollectionSource{
 		Id:                        r.ID,
@@ -437,6 +471,7 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 		if err := amqpClient.PublishJSON(ctx, rk, body); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
+		s.activity.RecordCollectionEnqueued(row.CollectorType, row.ID, row.SourceSpec)
 	case *icehivev1.EnqueueCollectionRequestRequest_EphemeralCollection:
 		src := t.EphemeralCollection
 		if src == nil {
@@ -458,6 +493,7 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 		if err := amqpClient.PublishJSON(ctx, rk, body); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
+		s.activity.RecordCollectionEnqueued(collType, "", spec)
 	case nil:
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("specify collection_source_id or ephemeral_collection"))
 	default:
@@ -486,6 +522,11 @@ func (s *controllerSrv) ReportCollectionSourceRun(
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
+	collectorType := ""
+	if row, err := db.GetCollectionSourceByID(ctx, s.db, id); err == nil {
+		collectorType = row.CollectorType
+	}
+	s.activity.RecordCollectionRun(id, collectorType, req.Msg.GetSuccess(), req.Msg.GetError())
 	return connect.NewResponse(&icehivev1.ReportCollectionSourceRunResponse{}), nil
 }
 
@@ -717,7 +758,25 @@ func main() {
 	})
 	mux.Handle("/metrics", promhttp.Handler())
 
-	ctrlSrv := &controllerSrv{db: sqlDB, k: k, health: healthmetrics.NewRefresher(log, sqlDB, k, entitiesDB)}
+	mux.HandleFunc("GET /llms.txt", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write(llmsTxt)
+	})
+	mux.HandleFunc("GET /openapi", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(openAPISpec)
+	})
+
+	ctrlSrv := &controllerSrv{
+		db:       sqlDB,
+		k:        k,
+		health:   healthmetrics.NewRefresher(log, sqlDB, k, entitiesDB),
+		activity: activity.NewRing(activity.DefaultCapacity),
+	}
+	mcpHandler := controllermcp.NewHandler(ctrlSrv)
+	mux.Handle("/mcp", mcpHandler)
+	mux.Handle("/mcp/", mcpHandler)
+
 	path, h := icehivev1connect.NewControllerServiceHandler(ctrlSrv)
 	mux.Handle(path, h)
 	apiInner := http.NewServeMux()
@@ -767,7 +826,11 @@ func main() {
 				if ts <= 0 {
 					ts = time.Now().UnixMilli()
 				}
-				return db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts, p.GetVersion())
+				if err := db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts, p.GetVersion()); err != nil {
+					return err
+				}
+				ctrlSrv.activity.RecordHeartbeat(p.GetSourceService(), p.GetVersion(), ts)
+				return nil
 			})
 			if err != nil && hctxErr(ctx) == nil {
 				log.WithError(err).Warn("heartbeat consumer stopped")

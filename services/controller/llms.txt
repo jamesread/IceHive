@@ -1,0 +1,22 @@
+# IceHive
+
+> Collect, normalize, and store data from vendor APIs. Integrate via the Controller Connect RPC API, OpenAPI spec, or MCP server.
+
+IceHive exposes machine-readable integration endpoints on the same base URL as the web application (proxied to the Controller).
+
+The Controller API and MCP currently do not require authentication. When API authentication is enabled, MCP will use the same credentials (Bearer API key in the `Authorization` header).
+
+## API
+
+- [Connect RPC API](/api): IceHive Controller Connect/gRPC-over-HTTP API (prefix `/api`)
+- [OpenAPI spec](/openapi): OpenAPI 3.1 JSON description of the Connect RPC API
+
+## MCP
+
+- [MCP server](/mcp): Model Context Protocol (Streamable HTTP) endpoint for AI assistants and agents
+
+## Documentation
+
+- [GitHub repository](https://github.com/jamesread/icehive): Source code, issues, and releases
+- [README](https://github.com/jamesread/icehive#readme): Project overview and setup
+- [AGENTS.md](https://github.com/jamesread/icehive/blob/main/AGENTS.md): AI agent integration guide and MCP tool reference

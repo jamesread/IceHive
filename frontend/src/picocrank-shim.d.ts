@@ -26,6 +26,13 @@ declare module 'picocrank/vue/components/Section.vue' {
   export default component
 }
 
+declare module 'picocrank/vue/components/DangerZone.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
 declare module 'picocrank/vue/components/QuickSearch.vue' {
   import type { DefineComponent } from 'vue'
 
@@ -48,6 +55,20 @@ declare module 'picocrank/vue/components/Table.vue' {
 }
 
 declare module 'picocrank/vue/components/NotificationPopups.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
+declare module 'picocrank/vue/components/FormLayout.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
+declare module 'picocrank/vue/components/FormField.vue' {
   import type { DefineComponent } from 'vue'
 
   const component: DefineComponent<object, object, unknown>

@@ -71,6 +71,9 @@ const (
 	// ControllerServiceEnqueueCollectionRequestProcedure is the fully-qualified name of the
 	// ControllerService's EnqueueCollectionRequest RPC.
 	ControllerServiceEnqueueCollectionRequestProcedure = "/icehive.v1.ControllerService/EnqueueCollectionRequest"
+	// ControllerServiceListActivityProcedure is the fully-qualified name of the ControllerService's
+	// ListActivity RPC.
+	ControllerServiceListActivityProcedure = "/icehive.v1.ControllerService/ListActivity"
 )
 
 // ControllerServiceClient is a client for the icehive.v1.ControllerService service.
@@ -99,6 +102,8 @@ type ControllerServiceClient interface {
 	// EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.
 	// Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).
 	EnqueueCollectionRequest(context.Context, *connect.Request[v1.EnqueueCollectionRequestRequest]) (*connect.Response[v1.EnqueueCollectionRequestResponse], error)
+	// ListActivity returns recent in-memory control-plane activity (heartbeats, enqueues, collection runs).
+	ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error)
 }
 
 // NewControllerServiceClient constructs a client for the icehive.v1.ControllerService service. By
@@ -190,6 +195,12 @@ func NewControllerServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(controllerServiceMethods.ByName("EnqueueCollectionRequest")),
 			connect.WithClientOptions(opts...),
 		),
+		listActivity: connect.NewClient[v1.ListActivityRequest, v1.ListActivityResponse](
+			httpClient,
+			baseURL+ControllerServiceListActivityProcedure,
+			connect.WithSchema(controllerServiceMethods.ByName("ListActivity")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -208,6 +219,7 @@ type controllerServiceClient struct {
 	deleteCollectionSource     *connect.Client[v1.DeleteCollectionSourceRequest, v1.DeleteCollectionSourceResponse]
 	reportCollectionSourceRun  *connect.Client[v1.ReportCollectionSourceRunRequest, v1.ReportCollectionSourceRunResponse]
 	enqueueCollectionRequest   *connect.Client[v1.EnqueueCollectionRequestRequest, v1.EnqueueCollectionRequestResponse]
+	listActivity               *connect.Client[v1.ListActivityRequest, v1.ListActivityResponse]
 }
 
 // Init calls icehive.v1.ControllerService.Init.
@@ -275,6 +287,11 @@ func (c *controllerServiceClient) EnqueueCollectionRequest(ctx context.Context, 
 	return c.enqueueCollectionRequest.CallUnary(ctx, req)
 }
 
+// ListActivity calls icehive.v1.ControllerService.ListActivity.
+func (c *controllerServiceClient) ListActivity(ctx context.Context, req *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error) {
+	return c.listActivity.CallUnary(ctx, req)
+}
+
 // ControllerServiceHandler is an implementation of the icehive.v1.ControllerService service.
 type ControllerServiceHandler interface {
 	// Init should be the first call from UI clients; returns server version and confirms connectivity.
@@ -301,6 +318,8 @@ type ControllerServiceHandler interface {
 	// EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.
 	// Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).
 	EnqueueCollectionRequest(context.Context, *connect.Request[v1.EnqueueCollectionRequestRequest]) (*connect.Response[v1.EnqueueCollectionRequestResponse], error)
+	// ListActivity returns recent in-memory control-plane activity (heartbeats, enqueues, collection runs).
+	ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error)
 }
 
 // NewControllerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -388,6 +407,12 @@ func NewControllerServiceHandler(svc ControllerServiceHandler, opts ...connect.H
 		connect.WithSchema(controllerServiceMethods.ByName("EnqueueCollectionRequest")),
 		connect.WithHandlerOptions(opts...),
 	)
+	controllerServiceListActivityHandler := connect.NewUnaryHandler(
+		ControllerServiceListActivityProcedure,
+		svc.ListActivity,
+		connect.WithSchema(controllerServiceMethods.ByName("ListActivity")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/icehive.v1.ControllerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ControllerServiceInitProcedure:
@@ -416,6 +441,8 @@ func NewControllerServiceHandler(svc ControllerServiceHandler, opts ...connect.H
 			controllerServiceReportCollectionSourceRunHandler.ServeHTTP(w, r)
 		case ControllerServiceEnqueueCollectionRequestProcedure:
 			controllerServiceEnqueueCollectionRequestHandler.ServeHTTP(w, r)
+		case ControllerServiceListActivityProcedure:
+			controllerServiceListActivityHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -475,4 +502,8 @@ func (UnimplementedControllerServiceHandler) ReportCollectionSourceRun(context.C
 
 func (UnimplementedControllerServiceHandler) EnqueueCollectionRequest(context.Context, *connect.Request[v1.EnqueueCollectionRequestRequest]) (*connect.Response[v1.EnqueueCollectionRequestResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("icehive.v1.ControllerService.EnqueueCollectionRequest is not implemented"))
+}
+
+func (UnimplementedControllerServiceHandler) ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("icehive.v1.ControllerService.ListActivity is not implemented"))
 }

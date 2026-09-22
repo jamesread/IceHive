@@ -1741,6 +1741,199 @@ func (*EnqueueCollectionRequestResponse) Descriptor() ([]byte, []int) {
 	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{32}
 }
 
+// ActivityEvent is one recent control-plane observation recorded by the Controller process.
+type ActivityEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Opaque monotonic id within this Controller process (resets on restart).
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UnixMs int64  `protobuf:"varint,2,opt,name=unix_ms,json=unixMs,proto3" json:"unix_ms,omitempty"`
+	// One of: heartbeat_received, collection_enqueued, collection_run.
+	Kind          string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Summary       string `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
+	ServiceName   string `protobuf:"bytes,5,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	CollectorType string `protobuf:"bytes,6,opt,name=collector_type,json=collectorType,proto3" json:"collector_type,omitempty"`
+	SourceId      string `protobuf:"bytes,7,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	// Set for collection_run events.
+	Success       *bool `protobuf:"varint,8,opt,name=success,proto3,oneof" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivityEvent) Reset() {
+	*x = ActivityEvent{}
+	mi := &file_icehive_v1_controller_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivityEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivityEvent) ProtoMessage() {}
+
+func (x *ActivityEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_icehive_v1_controller_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivityEvent.ProtoReflect.Descriptor instead.
+func (*ActivityEvent) Descriptor() ([]byte, []int) {
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ActivityEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetUnixMs() int64 {
+	if x != nil {
+		return x.UnixMs
+	}
+	return 0
+}
+
+func (x *ActivityEvent) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetCollectorType() string {
+	if x != nil {
+		return x.CollectorType
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *ActivityEvent) GetSuccess() bool {
+	if x != nil && x.Success != nil {
+		return *x.Success
+	}
+	return false
+}
+
+type ListActivityRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Max events to return (newest first). Defaults to 50; capped at 100.
+	Limit         int32 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivityRequest) Reset() {
+	*x = ListActivityRequest{}
+	mi := &file_icehive_v1_controller_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivityRequest) ProtoMessage() {}
+
+func (x *ListActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_icehive_v1_controller_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivityRequest.ProtoReflect.Descriptor instead.
+func (*ListActivityRequest) Descriptor() ([]byte, []int) {
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *ListActivityRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListActivityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Events        []*ActivityEvent       `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivityResponse) Reset() {
+	*x = ListActivityResponse{}
+	mi := &file_icehive_v1_controller_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivityResponse) ProtoMessage() {}
+
+func (x *ListActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_icehive_v1_controller_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivityResponse.ProtoReflect.Descriptor instead.
+func (*ListActivityResponse) Descriptor() ([]byte, []int) {
+	return file_icehive_v1_controller_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ListActivityResponse) GetEvents() []*ActivityEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
 var File_icehive_v1_controller_proto protoreflect.FileDescriptor
 
 const file_icehive_v1_controller_proto_rawDesc = "" +
@@ -1844,7 +2037,23 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x14collection_source_id\x18\x01 \x01(\tH\x00R\x12collectionSourceId\x12Q\n" +
 	"\x14ephemeral_collection\x18\x02 \x01(\v2\x1c.icehive.v1.CollectionSourceH\x00R\x13ephemeralCollectionB\b\n" +
 	"\x06target\"\"\n" +
-	" EnqueueCollectionRequestResponse2\xdd\t\n" +
+	" EnqueueCollectionRequestResponse\"\xf8\x01\n" +
+	"\rActivityEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aunix_ms\x18\x02 \x01(\x03R\x06unixMs\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x18\n" +
+	"\asummary\x18\x04 \x01(\tR\asummary\x12!\n" +
+	"\fservice_name\x18\x05 \x01(\tR\vserviceName\x12%\n" +
+	"\x0ecollector_type\x18\x06 \x01(\tR\rcollectorType\x12\x1b\n" +
+	"\tsource_id\x18\a \x01(\tR\bsourceId\x12\x1d\n" +
+	"\asuccess\x18\b \x01(\bH\x00R\asuccess\x88\x01\x01B\n" +
+	"\n" +
+	"\b_success\"+\n" +
+	"\x13ListActivityRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\"I\n" +
+	"\x14ListActivityResponse\x121\n" +
+	"\x06events\x18\x01 \x03(\v2\x19.icehive.v1.ActivityEventR\x06events2\xb0\n" +
+	"\n" +
 	"\x11ControllerService\x129\n" +
 	"\x04Init\x12\x17.icehive.v1.InitRequest\x1a\x18.icehive.v1.InitResponse\x12?\n" +
 	"\x06Health\x12\x19.icehive.v1.HealthRequest\x1a\x1a.icehive.v1.HealthResponse\x12Z\n" +
@@ -1859,7 +2068,8 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\x16UpsertCollectionSource\x12).icehive.v1.UpsertCollectionSourceRequest\x1a*.icehive.v1.UpsertCollectionSourceResponse\x12o\n" +
 	"\x16DeleteCollectionSource\x12).icehive.v1.DeleteCollectionSourceRequest\x1a*.icehive.v1.DeleteCollectionSourceResponse\x12x\n" +
 	"\x19ReportCollectionSourceRun\x12,.icehive.v1.ReportCollectionSourceRunRequest\x1a-.icehive.v1.ReportCollectionSourceRunResponse\x12u\n" +
-	"\x18EnqueueCollectionRequest\x12+.icehive.v1.EnqueueCollectionRequestRequest\x1a,.icehive.v1.EnqueueCollectionRequestResponseB\xb3\x01\n" +
+	"\x18EnqueueCollectionRequest\x12+.icehive.v1.EnqueueCollectionRequestRequest\x1a,.icehive.v1.EnqueueCollectionRequestResponse\x12Q\n" +
+	"\fListActivity\x12\x1f.icehive.v1.ListActivityRequest\x1a .icehive.v1.ListActivityResponseB\xb3\x01\n" +
 	"\x0ecom.icehive.v1B\x0fControllerProtoP\x01ZGgithub.com/icehive/icehive/services/common/pkg/gen/icehive/v1;icehivev1\xa2\x02\x03IXX\xaa\x02\n" +
 	"Icehive.V1\xca\x02\n" +
 	"Icehive\\V1\xe2\x02\x16Icehive\\V1\\GPBMetadata\xea\x02\vIcehive::V1b\x06proto3"
@@ -1876,7 +2086,7 @@ func file_icehive_v1_controller_proto_rawDescGZIP() []byte {
 	return file_icehive_v1_controller_proto_rawDescData
 }
 
-var file_icehive_v1_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_icehive_v1_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_icehive_v1_controller_proto_goTypes = []any{
 	(*InitRequest)(nil),                        // 0: icehive.v1.InitRequest
 	(*InitResponse)(nil),                       // 1: icehive.v1.InitResponse
@@ -1911,6 +2121,9 @@ var file_icehive_v1_controller_proto_goTypes = []any{
 	(*CollectionRequest)(nil),                  // 30: icehive.v1.CollectionRequest
 	(*EnqueueCollectionRequestRequest)(nil),    // 31: icehive.v1.EnqueueCollectionRequestRequest
 	(*EnqueueCollectionRequestResponse)(nil),   // 32: icehive.v1.EnqueueCollectionRequestResponse
+	(*ActivityEvent)(nil),                      // 33: icehive.v1.ActivityEvent
+	(*ListActivityRequest)(nil),                // 34: icehive.v1.ListActivityRequest
+	(*ListActivityResponse)(nil),               // 35: icehive.v1.ListActivityResponse
 }
 var file_icehive_v1_controller_proto_depIdxs = []int32{
 	5,  // 0: icehive.v1.WorkerBootstrapResponse.amqp:type_name -> icehive.v1.AMQPSettings
@@ -1924,37 +2137,40 @@ var file_icehive_v1_controller_proto_depIdxs = []int32{
 	18, // 8: icehive.v1.UpsertCollectionSourceResponse.source:type_name -> icehive.v1.CollectionSource
 	18, // 9: icehive.v1.CollectionRequest.source:type_name -> icehive.v1.CollectionSource
 	18, // 10: icehive.v1.EnqueueCollectionRequestRequest.ephemeral_collection:type_name -> icehive.v1.CollectionSource
-	0,  // 11: icehive.v1.ControllerService.Init:input_type -> icehive.v1.InitRequest
-	2,  // 12: icehive.v1.ControllerService.Health:input_type -> icehive.v1.HealthRequest
-	4,  // 13: icehive.v1.ControllerService.WorkerBootstrap:input_type -> icehive.v1.WorkerBootstrapRequest
-	8,  // 14: icehive.v1.ControllerService.ListConfig:input_type -> icehive.v1.ListConfigRequest
-	11, // 15: icehive.v1.ControllerService.GetConfig:input_type -> icehive.v1.GetConfigRequest
-	13, // 16: icehive.v1.ControllerService.SetConfig:input_type -> icehive.v1.SetConfigRequest
-	15, // 17: icehive.v1.ControllerService.ListServices:input_type -> icehive.v1.ListServicesRequest
-	19, // 18: icehive.v1.ControllerService.ListCollectionSources:input_type -> icehive.v1.ListCollectionSourcesRequest
-	22, // 19: icehive.v1.ControllerService.ListCollectorSourceSchemas:input_type -> icehive.v1.ListCollectorSourceSchemasRequest
-	24, // 20: icehive.v1.ControllerService.UpsertCollectionSource:input_type -> icehive.v1.UpsertCollectionSourceRequest
-	26, // 21: icehive.v1.ControllerService.DeleteCollectionSource:input_type -> icehive.v1.DeleteCollectionSourceRequest
-	28, // 22: icehive.v1.ControllerService.ReportCollectionSourceRun:input_type -> icehive.v1.ReportCollectionSourceRunRequest
-	31, // 23: icehive.v1.ControllerService.EnqueueCollectionRequest:input_type -> icehive.v1.EnqueueCollectionRequestRequest
-	1,  // 24: icehive.v1.ControllerService.Init:output_type -> icehive.v1.InitResponse
-	3,  // 25: icehive.v1.ControllerService.Health:output_type -> icehive.v1.HealthResponse
-	7,  // 26: icehive.v1.ControllerService.WorkerBootstrap:output_type -> icehive.v1.WorkerBootstrapResponse
-	10, // 27: icehive.v1.ControllerService.ListConfig:output_type -> icehive.v1.ListConfigResponse
-	12, // 28: icehive.v1.ControllerService.GetConfig:output_type -> icehive.v1.GetConfigResponse
-	14, // 29: icehive.v1.ControllerService.SetConfig:output_type -> icehive.v1.SetConfigResponse
-	17, // 30: icehive.v1.ControllerService.ListServices:output_type -> icehive.v1.ListServicesResponse
-	20, // 31: icehive.v1.ControllerService.ListCollectionSources:output_type -> icehive.v1.ListCollectionSourcesResponse
-	23, // 32: icehive.v1.ControllerService.ListCollectorSourceSchemas:output_type -> icehive.v1.ListCollectorSourceSchemasResponse
-	25, // 33: icehive.v1.ControllerService.UpsertCollectionSource:output_type -> icehive.v1.UpsertCollectionSourceResponse
-	27, // 34: icehive.v1.ControllerService.DeleteCollectionSource:output_type -> icehive.v1.DeleteCollectionSourceResponse
-	29, // 35: icehive.v1.ControllerService.ReportCollectionSourceRun:output_type -> icehive.v1.ReportCollectionSourceRunResponse
-	32, // 36: icehive.v1.ControllerService.EnqueueCollectionRequest:output_type -> icehive.v1.EnqueueCollectionRequestResponse
-	24, // [24:37] is the sub-list for method output_type
-	11, // [11:24] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	33, // 11: icehive.v1.ListActivityResponse.events:type_name -> icehive.v1.ActivityEvent
+	0,  // 12: icehive.v1.ControllerService.Init:input_type -> icehive.v1.InitRequest
+	2,  // 13: icehive.v1.ControllerService.Health:input_type -> icehive.v1.HealthRequest
+	4,  // 14: icehive.v1.ControllerService.WorkerBootstrap:input_type -> icehive.v1.WorkerBootstrapRequest
+	8,  // 15: icehive.v1.ControllerService.ListConfig:input_type -> icehive.v1.ListConfigRequest
+	11, // 16: icehive.v1.ControllerService.GetConfig:input_type -> icehive.v1.GetConfigRequest
+	13, // 17: icehive.v1.ControllerService.SetConfig:input_type -> icehive.v1.SetConfigRequest
+	15, // 18: icehive.v1.ControllerService.ListServices:input_type -> icehive.v1.ListServicesRequest
+	19, // 19: icehive.v1.ControllerService.ListCollectionSources:input_type -> icehive.v1.ListCollectionSourcesRequest
+	22, // 20: icehive.v1.ControllerService.ListCollectorSourceSchemas:input_type -> icehive.v1.ListCollectorSourceSchemasRequest
+	24, // 21: icehive.v1.ControllerService.UpsertCollectionSource:input_type -> icehive.v1.UpsertCollectionSourceRequest
+	26, // 22: icehive.v1.ControllerService.DeleteCollectionSource:input_type -> icehive.v1.DeleteCollectionSourceRequest
+	28, // 23: icehive.v1.ControllerService.ReportCollectionSourceRun:input_type -> icehive.v1.ReportCollectionSourceRunRequest
+	31, // 24: icehive.v1.ControllerService.EnqueueCollectionRequest:input_type -> icehive.v1.EnqueueCollectionRequestRequest
+	34, // 25: icehive.v1.ControllerService.ListActivity:input_type -> icehive.v1.ListActivityRequest
+	1,  // 26: icehive.v1.ControllerService.Init:output_type -> icehive.v1.InitResponse
+	3,  // 27: icehive.v1.ControllerService.Health:output_type -> icehive.v1.HealthResponse
+	7,  // 28: icehive.v1.ControllerService.WorkerBootstrap:output_type -> icehive.v1.WorkerBootstrapResponse
+	10, // 29: icehive.v1.ControllerService.ListConfig:output_type -> icehive.v1.ListConfigResponse
+	12, // 30: icehive.v1.ControllerService.GetConfig:output_type -> icehive.v1.GetConfigResponse
+	14, // 31: icehive.v1.ControllerService.SetConfig:output_type -> icehive.v1.SetConfigResponse
+	17, // 32: icehive.v1.ControllerService.ListServices:output_type -> icehive.v1.ListServicesResponse
+	20, // 33: icehive.v1.ControllerService.ListCollectionSources:output_type -> icehive.v1.ListCollectionSourcesResponse
+	23, // 34: icehive.v1.ControllerService.ListCollectorSourceSchemas:output_type -> icehive.v1.ListCollectorSourceSchemasResponse
+	25, // 35: icehive.v1.ControllerService.UpsertCollectionSource:output_type -> icehive.v1.UpsertCollectionSourceResponse
+	27, // 36: icehive.v1.ControllerService.DeleteCollectionSource:output_type -> icehive.v1.DeleteCollectionSourceResponse
+	29, // 37: icehive.v1.ControllerService.ReportCollectionSourceRun:output_type -> icehive.v1.ReportCollectionSourceRunResponse
+	32, // 38: icehive.v1.ControllerService.EnqueueCollectionRequest:output_type -> icehive.v1.EnqueueCollectionRequestResponse
+	35, // 39: icehive.v1.ControllerService.ListActivity:output_type -> icehive.v1.ListActivityResponse
+	26, // [26:40] is the sub-list for method output_type
+	12, // [12:26] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_icehive_v1_controller_proto_init() }
@@ -1966,13 +2182,14 @@ func file_icehive_v1_controller_proto_init() {
 		(*EnqueueCollectionRequestRequest_CollectionSourceId)(nil),
 		(*EnqueueCollectionRequestRequest_EphemeralCollection)(nil),
 	}
+	file_icehive_v1_controller_proto_msgTypes[33].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_icehive_v1_controller_proto_rawDesc), len(file_icehive_v1_controller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

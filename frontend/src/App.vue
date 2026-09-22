@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ConnectError } from '@connectrpc/connect'
+import FormField from 'picocrank/vue/components/FormField.vue'
+import FormLayout from 'picocrank/vue/components/FormLayout.vue'
 import NotificationPopups from 'picocrank/vue/components/NotificationPopups.vue'
 import {
   connectToFirstAvailableController,
@@ -68,23 +70,25 @@ function forgetStoredAndRetry() {
       <p class="connect-gate-lead">
         Tried: {{ attempted.join(', ') }}. Last error: {{ lastDiscoveryErr }}
       </p>
-      <form class="connect-form" @submit.prevent="submitPrompt">
-        <label class="connect-label" for="controller-url">Controller base URL</label>
-        <input
-          id="controller-url"
-          v-model="promptUrl"
-          type="text"
-          name="controllerUrl"
-          class="connect-input"
-          autocomplete="url"
-          :placeholder="defaultHint"
-        />
+      <FormLayout @submit.prevent="submitPrompt">
+        <FormField label="Controller base URL" for="controller-url">
+          <input
+            id="controller-url"
+            v-model="promptUrl"
+            type="text"
+            name="controllerUrl"
+            autocomplete="url"
+            :placeholder="defaultHint"
+          />
+        </FormField>
         <p v-if="promptErr" class="connect-err">{{ promptErr }}</p>
-        <div class="connect-actions">
+        <template #actions>
           <button type="submit" class="good">Connect</button>
-          <button type="button" class="neutral" @click="forgetStoredAndRetry">Forget saved URL &amp; retry</button>
-        </div>
-      </form>
+          <button type="button" class="neutral" @click="forgetStoredAndRetry">
+            Forget saved URL &amp; retry
+          </button>
+        </template>
+      </FormLayout>
     </div>
     <router-view v-else />
     <NotificationPopups />
@@ -117,37 +121,9 @@ function forgetStoredAndRetry() {
   color: #475569;
   line-height: 1.5;
 }
-.connect-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.connect-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-}
-.connect-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.9375rem;
-}
-.connect-input:focus {
-  outline: 2px solid #0369a1;
-  outline-offset: 1px;
-}
 .connect-err {
   margin: 0;
   font-size: 0.875rem;
   color: #b91c1c;
-}
-.connect-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
 }
 </style>

@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { Configuration01Icon, DatabaseIcon } from '@hugeicons/core-free-icons'
+import { Activity01Icon, Configuration01Icon, DatabaseIcon } from '@hugeicons/core-free-icons'
 import HomeView from '../views/HomeView.vue'
 import ConfigView from '../views/ConfigView.vue'
+import ConfigCreateView from '../views/ConfigCreateView.vue'
 import CollectionSourcesView from '../views/CollectionSourcesView.vue'
 import CollectorDetailsView from '../views/CollectorDetailsView.vue'
+import ServiceHeartbeatsView from '../views/ServiceHeartbeatsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +29,20 @@ const router = createRouter({
         breadcrumbs: () => [
           { name: 'Home', href: '/' },
           { name: 'Controller configuration', href: '/config' },
+        ],
+      },
+    },
+    {
+      path: '/config/create',
+      name: 'config-create',
+      component: ConfigCreateView,
+      meta: {
+        title: 'Create configuration key',
+        icon: Configuration01Icon,
+        breadcrumbs: () => [
+          { name: 'Home', href: '/' },
+          { name: 'Controller configuration', href: '/config' },
+          { name: 'Create key', href: '/config/create' },
         ],
       },
     },
@@ -59,6 +75,19 @@ const router = createRouter({
             { name: short, href: id ? `/sources/${id}` : '/sources' },
           ]
         },
+      },
+    },
+    {
+      path: '/services',
+      name: 'services',
+      component: ServiceHeartbeatsView,
+      meta: {
+        title: 'Service heartbeats',
+        icon: Activity01Icon,
+        breadcrumbs: () => [
+          { name: 'Home', href: '/' },
+          { name: 'Service heartbeats', href: '/services' },
+        ],
       },
     },
   ],

@@ -13,6 +13,18 @@ export default defineConfig({
         target: controllerProxyTarget,
         changeOrigin: true,
       },
+      '/llms.txt': {
+        target: controllerProxyTarget,
+        changeOrigin: true,
+      },
+      '/openapi': {
+        target: controllerProxyTarget,
+        changeOrigin: true,
+      },
+      '/mcp': {
+        target: controllerProxyTarget,
+        changeOrigin: true,
+      },
     },
   },
 })

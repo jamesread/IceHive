@@ -28,6 +28,8 @@ service ControllerService {
   // EnqueueCollectionRequest publishes a CollectionRequest on AMQP so the matching collector runs the source immediately.
   // Use collection_source_id for a persisted source, or ephemeral_collection for a one-off run (nothing written to the controller DB).
   rpc EnqueueCollectionRequest(EnqueueCollectionRequestRequest) returns (EnqueueCollectionRequestResponse);
+  // ListActivity returns recent in-memory control-plane activity (heartbeats, enqueues, collection runs).
+  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse);
 }
 
 message InitRequest {}
@@ -201,3 +203,27 @@ message EnqueueCollectionRequestRequest {
 }
 
 message EnqueueCollectionRequestResponse {}
+
+// ActivityEvent is one recent control-plane observation recorded by the Controller process.
+message ActivityEvent {
+  // Opaque monotonic id within this Controller process (resets on restart).
+  string id = 1;
+  int64 unix_ms = 2;
+  // One of: heartbeat_received, collection_enqueued, collection_run.
+  string kind = 3;
+  string summary = 4;
+  string service_name = 5;
+  string collector_type = 6;
+  string source_id = 7;
+  // Set for collection_run events.
+  optional bool success = 8;
+}
+
+message ListActivityRequest {
+  // Max events to return (newest first). Defaults to 50; capped at 100.
+  int32 limit = 1;
+}
+
+message ListActivityResponse {
+  repeated ActivityEvent events = 1;
+}
