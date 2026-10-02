@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue'
 import ConfigView from '../views/ConfigView.vue'
 import ConfigCreateView from '../views/ConfigCreateView.vue'
 import CollectionSourcesView from '../views/CollectionSourcesView.vue'
+import CollectionSourceFormView from '../views/CollectionSourceFormView.vue'
 import CollectorDetailsView from '../views/CollectorDetailsView.vue'
 import ServiceHeartbeatsView from '../views/ServiceHeartbeatsView.vue'
 
@@ -57,6 +58,38 @@ const router = createRouter({
           { name: 'Home', href: '/' },
           { name: 'Collection sources', href: '/sources' },
         ],
+      },
+    },
+    {
+      path: '/sources/create',
+      name: 'source-create',
+      component: CollectionSourceFormView,
+      meta: {
+        title: 'Add collection source',
+        icon: DatabaseIcon,
+        breadcrumbs: () => [
+          { name: 'Home', href: '/' },
+          { name: 'Collection sources', href: '/sources' },
+          { name: 'Add', href: '/sources/create' },
+        ],
+      },
+    },
+    {
+      path: '/sources/:id/edit',
+      name: 'source-edit',
+      component: CollectionSourceFormView,
+      meta: {
+        title: 'Edit collection source',
+        icon: DatabaseIcon,
+        breadcrumbs: (route: { params: { id?: string | string[] } }) => {
+          const raw = route.params.id
+          const id = Array.isArray(raw) ? raw[0] : raw
+          return [
+            { name: 'Home', href: '/' },
+            { name: 'Collection sources', href: '/sources' },
+            { name: 'Edit', href: id ? `/sources/${id}/edit` : '/sources' },
+          ]
+        },
       },
     },
     {

@@ -60,9 +60,11 @@ func (*InitRequest) Descriptor() ([]byte, []int) {
 type InitResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Application version (semver or dev snapshot) from the controller binary.
-	Version       string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// Non-fatal issues detected at startup (e.g. missing config.yaml); UI may surface these to operators.
+	StartupWarnings []string `protobuf:"bytes,2,rep,name=startup_warnings,json=startupWarnings,proto3" json:"startup_warnings,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *InitResponse) Reset() {
@@ -100,6 +102,13 @@ func (x *InitResponse) GetVersion() string {
 		return x.Version
 	}
 	return ""
+}
+
+func (x *InitResponse) GetStartupWarnings() []string {
+	if x != nil {
+		return x.StartupWarnings
+	}
+	return nil
 }
 
 type HealthRequest struct {
@@ -1940,9 +1949,10 @@ const file_icehive_v1_controller_proto_rawDesc = "" +
 	"\n" +
 	"\x1bicehive/v1/controller.proto\x12\n" +
 	"icehive.v1\"\r\n" +
-	"\vInitRequest\"(\n" +
+	"\vInitRequest\"S\n" +
 	"\fInitResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\"\x0f\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12)\n" +
+	"\x10startup_warnings\x18\x02 \x03(\tR\x0fstartupWarnings\"\x0f\n" +
 	"\rHealthRequest\"(\n" +
 	"\x0eHealthResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\"V\n" +

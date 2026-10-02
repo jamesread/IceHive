@@ -110,7 +110,7 @@ onMounted(() => {
   navigation.value?.addCallback(
     'One-off collection',
     () => {
-      void router.push({ name: 'sources', query: { oneOff: '1' } })
+      void router.push({ name: 'source-create', query: { oneOff: '1' } })
     },
     {
       name: 'one-off-collection',

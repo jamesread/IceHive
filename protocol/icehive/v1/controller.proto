@@ -37,6 +37,8 @@ message InitRequest {}
 message InitResponse {
   // Application version (semver or dev snapshot) from the controller binary.
   string version = 1;
+  // Non-fatal issues detected at startup (e.g. missing config.yaml); UI may surface these to operators.
+  repeated string startup_warnings = 2;
 }
 
 message HealthRequest {}

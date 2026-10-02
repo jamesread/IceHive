@@ -2,6 +2,15 @@
  * Human-readable summary for a standard 5-field cron line
  * (minute hour day-of-month month day-of-week), e.g. `0 0 * * *`.
  */
+/** Empty cron is allowed; non-empty lines must have exactly five fields. */
+export function isValidCronLine(line: string): boolean {
+  const s = line.trim()
+  if (!s) {
+    return true
+  }
+  return s.split(/\s+/).filter((p) => p.length > 0).length === 5
+}
+
 export function describeCronLine(line: string): string {
   const s = line.trim()
   if (!s) {

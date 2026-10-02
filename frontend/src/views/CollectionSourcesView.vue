@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { create } from '@bufbuild/protobuf'
 import { ConnectError } from '@connectrpc/connect'
 import { HugeiconsIcon } from '@hugeicons/vue'
@@ -12,74 +12,28 @@ import {
 } from '@hugeicons/core-free-icons'
 import AppHeader from '../components/AppHeader.vue'
 import AppFooter from '../components/AppFooter.vue'
-import FormField from 'picocrank/vue/components/FormField.vue'
-import FormLayout from 'picocrank/vue/components/FormLayout.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import Table from 'picocrank/vue/components/Table.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
-import { notifySuccess } from '../utils/notify'
+import { notifyRunEnqueued } from '../utils/notify'
 import { pollAfterCollectionRun } from '../utils/pollAfterRun'
+import type { CollectionSource } from '../gen/icehive/v1/controller_pb'
 import {
-  builderStateForPattern,
-  composeSpec,
-  defaultBuilderState,
-  parseSourceSchemaDoc,
-  parseSpecIntoBuilder,
-  type BuilderState,
-  type SourceSchemaDoc,
-} from '../utils/sourceSchemaForm'
-import type { CollectionSource, CollectorSourceSchema } from '../gen/icehive/v1/controller_pb'
-import {
-  CollectionSourceSchema,
   EnqueueCollectionRequestRequestSchema,
   ListCollectionSourcesRequestSchema,
-  ListCollectorSourceSchemasRequestSchema,
   ListServicesRequestSchema,
-  UpsertCollectionSourceRequestSchema,
 } from '../gen/icehive/v1/controller_pb'
 
-const route = useRoute()
 const router = useRouter()
 
 const sources = ref<CollectionSource[]>([])
-/** Latest SourceSchema rows from the controller (populated from collector AMQP at startup). */
-const collectorSourceSchemas = ref<CollectorSourceSchema[]>([])
-/** Problem filter: all sources, stale pipeline only, or sources with last_error. */
+const collectorHeartbeatTypes = ref<string[]>([])
 const filterProblems = ref<'all' | 'stale' | 'error'>('all')
 const loading = ref(false)
 const listErr = ref<string | null>(null)
-const formErr = ref<string | null>(null)
-const saving = ref(false)
-/** Collection source id currently sending EnqueueCollectionRequest, or empty when idle. */
 const runNowPendingId = ref('')
-
-const formDialogRef = ref<HTMLDialogElement | null>(null)
-/** When true, the dialog only enqueues an ephemeral CollectionSource (nothing persisted). */
-const oneOffMode = ref(false)
-const formDialogTitle = computed(() => {
-  if (oneOffMode.value) {
-    return 'One-off collection (not saved)'
-  }
-  return editId.value ? 'Edit collection source' : 'Add collection source'
-})
-
-/** Service names from heartbeats that look like collectors (`collector-*`). */
-const collectorHeartbeatTypes = ref<string[]>([])
-
-const editId = ref('')
-const formCollectorType = ref('')
-const formSourceSpec = ref('')
-/** Five-field cron: minute hour day-of-month month day-of-week */
-const formCronLine = ref('0 0 * * *')
-const formEnabled = ref(true)
-/** When true, user edits `source_spec` as free text instead of pattern + args + modifiers. */
-const formSourceSpecAdvanced = ref(false)
-/** Parsed schema-driven form state; null when no structured schema for the selected collector. */
-const formSchemaBuilder = ref<BuilderState | null>(null)
-
-const formCronSummary = computed(() => describeCronLine(formCronLine.value))
 
 const tableHeaders = computed(() => [
   { key: 'collectorType', label: 'Collector', sortable: true, width: '10rem' },
@@ -109,186 +63,11 @@ const tableRows = computed(() =>
   })),
 )
 
-const activeParsedSchema = computed((): SourceSchemaDoc | null => {
-  const ct = formCollectorType.value.trim()
-  const row = collectorSourceSchemas.value.find((s) => (s.collectorType ?? '').trim() === ct)
-  const raw = row?.bodyJson?.trim()
-  if (!raw) {
-    return null
-  }
-  return parseSourceSchemaDoc(raw)
-})
-
-const showStructuredSourceSpec = computed(
-  () =>
-    !formSourceSpecAdvanced.value &&
-    formSchemaBuilder.value !== null &&
-    (activeParsedSchema.value?.primary_patterns?.length ?? 0) > 0,
-)
-
-const canUseStructuredForm = computed(() => (activeParsedSchema.value?.primary_patterns?.length ?? 0) > 0)
-
-const activeSchemaCronHint = computed(() => activeParsedSchema.value?.cron)
-
-const activePatternArgs = computed(() => {
-  const doc = activeParsedSchema.value
-  const b = formSchemaBuilder.value
-  if (!doc || !b) {
-    return []
-  }
-  return doc.primary_patterns.find((x) => x.id === b.patternId)?.args ?? []
-})
-
-/** Options for the form select: heartbeats plus current value when editing a type not in the list. */
-const formCollectorTypeOptions = computed(() => {
-  const set = new Set(collectorHeartbeatTypes.value)
-  const cur = formCollectorType.value.trim()
-  if (cur) {
-    set.add(cur)
-  }
-  return Array.from(set).sort()
-})
-
-function defaultCollectorType(): string {
-  const opts = collectorHeartbeatTypes.value
-  return opts.length > 0 ? opts[0] : ''
-}
-
-function resetForm() {
-  editId.value = ''
-  formCollectorType.value = defaultCollectorType()
-  formSourceSpec.value = ''
-  formCronLine.value = '0 0 * * *'
-  formEnabled.value = true
-  formSourceSpecAdvanced.value = false
-  formSchemaBuilder.value = null
-}
-
-function onFormCollectorTypeChange() {
-  if (oneOffMode.value) {
-    return
-  }
-  syncSchemaBuilderFromForm()
-}
-
-function syncSchemaBuilderFromForm() {
-  if (oneOffMode.value) {
-    return
-  }
-  const doc = activeParsedSchema.value
-  if (!doc || doc.primary_patterns.length === 0) {
-    formSchemaBuilder.value = null
-    return
-  }
-  const parsed = parseSpecIntoBuilder(doc, formSourceSpec.value)
-  if (parsed) {
-    formSchemaBuilder.value = parsed
-    formSourceSpecAdvanced.value = false
-    return
-  }
-  if (formSourceSpec.value.trim()) {
-    formSourceSpecAdvanced.value = true
-    formSchemaBuilder.value = null
-    return
-  }
-  formSchemaBuilder.value = defaultBuilderState(doc)
-  formSourceSpecAdvanced.value = false
-}
-
-function toggleSourceSpecRaw() {
-  formSourceSpecAdvanced.value = !formSourceSpecAdvanced.value
-  if (!formSourceSpecAdvanced.value) {
-    syncSchemaBuilderFromForm()
-  }
-}
-
-function onBuilderPatternChange(id: string) {
-  const doc = activeParsedSchema.value
-  if (!doc) {
-    return
-  }
-  formSchemaBuilder.value = builderStateForPattern(doc, id, formSchemaBuilder.value)
-}
-
-watch(
-  [activeParsedSchema, formSchemaBuilder, formSourceSpecAdvanced],
-  () => {
-    if (formSourceSpecAdvanced.value) {
-      return
-    }
-    const doc = activeParsedSchema.value
-    const b = formSchemaBuilder.value
-    if (!doc || !b || doc.primary_patterns.length === 0) {
-      return
-    }
-    formSourceSpec.value = composeSpec(doc, b)
-  },
-  { deep: true },
-)
-
-function openAddSource() {
-  listErr.value = null
-  formErr.value = null
-  oneOffMode.value = false
-  resetForm()
-  void nextTick(() => {
-    syncSchemaBuilderFromForm()
-    formDialogRef.value?.showModal()
-  })
-}
-
-function openOneOffCollect() {
-  listErr.value = null
-  formErr.value = null
-  oneOffMode.value = true
-  resetForm()
-  formSourceSpecAdvanced.value = true
-  formSchemaBuilder.value = null
-  formCronLine.value = ''
-  void nextTick(() => {
-    formDialogRef.value?.showModal()
-  })
-}
-
-function startEdit(s: CollectionSource) {
-  listErr.value = null
-  formErr.value = null
-  oneOffMode.value = false
-  editId.value = s.id
-  formCollectorType.value = s.collectorType
-  formSourceSpec.value = s.sourceSpec
-  formCronLine.value = s.cronLine ?? ''
-  formEnabled.value = s.enabled
-  void nextTick(() => {
-    formDialogRef.value?.showModal()
-    syncSchemaBuilderFromForm()
-  })
-}
-
-function cancelFormDialog() {
-  formDialogRef.value?.close()
-}
-
-function onFormDialogClose() {
-  oneOffMode.value = false
-  resetForm()
-}
-
-function onFormDialogBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    cancelFormDialog()
-  }
-}
-
 function fmtMs(ms: bigint | undefined): string {
   if (ms === undefined || ms === 0n) return '—'
   const n = Number(ms)
   if (!Number.isFinite(n) || n <= 0) return '—'
   return new Date(n).toLocaleString()
-}
-
-function applyCronPreset(expr: string) {
-  formCronLine.value = expr
 }
 
 function hasLastError(s: CollectionSource): boolean {
@@ -299,21 +78,6 @@ function truncateError(msg: string, max = 72): string {
   const t = msg.trim()
   if (t.length <= max) return t
   return `${t.slice(0, max - 1)}…`
-}
-
-function duplicateSource(s: CollectionSource) {
-  listErr.value = null
-  formErr.value = null
-  oneOffMode.value = false
-  editId.value = ''
-  formCollectorType.value = s.collectorType
-  formSourceSpec.value = s.sourceSpec
-  formCronLine.value = s.cronLine ?? ''
-  formEnabled.value = s.enabled
-  void nextTick(() => {
-    syncSchemaBuilderFromForm()
-    formDialogRef.value?.showModal()
-  })
 }
 
 function fmtAgeSeconds(sec: bigint | undefined): string {
@@ -335,31 +99,16 @@ function pipelineHealthLabel(s: CollectionSource): string {
   return 'healthy'
 }
 
-async function loadCollectorSourceSchemas() {
-  const res = await getControllerClient().listCollectorSourceSchemas(
-    create(ListCollectorSourceSchemasRequestSchema, { collectorType: '' }),
-  )
-  collectorSourceSchemas.value = [...res.schemas]
-}
-
 async function loadCollectorTypesFromHeartbeats() {
-  try {
-    const res = await getControllerClient().listServices(create(ListServicesRequestSchema, {}))
-    const names = new Set<string>()
-    for (const s of res.services) {
-      const name = (s.serviceName ?? '').trim()
-      if (name.startsWith('collector-')) {
-        names.add(name)
-      }
+  const res = await getControllerClient().listServices(create(ListServicesRequestSchema, {}))
+  const names = new Set<string>()
+  for (const s of res.services) {
+    const name = (s.serviceName ?? '').trim()
+    if (name.startsWith('collector-')) {
+      names.add(name)
     }
-    collectorHeartbeatTypes.value = Array.from(names).sort()
-    if (!editId.value && !formCollectorType.value.trim() && collectorHeartbeatTypes.value.length > 0) {
-      formCollectorType.value = collectorHeartbeatTypes.value[0]
-    }
-  } catch (e) {
-    collectorHeartbeatTypes.value = []
-    throw e
   }
+  collectorHeartbeatTypes.value = Array.from(names).sort()
 }
 
 async function loadSources(withLoading = true) {
@@ -388,130 +137,12 @@ async function reloadAll() {
   loading.value = true
   try {
     await loadCollectorTypesFromHeartbeats()
-    await loadCollectorSourceSchemas()
     await loadSources(false)
   } catch (e) {
     listErr.value = e instanceof ConnectError ? e.message : String(e)
   } finally {
     loading.value = false
   }
-}
-
-/** Persist the dialog form; when `runAfterSave`, enqueue an immediate collection run (edit mode only). */
-function onFormSubmit() {
-  if (oneOffMode.value) {
-    void runOneOffFromDialog()
-    return
-  }
-  void saveSource()
-}
-
-async function runOneOffFromDialog() {
-  formErr.value = null
-  const spec = formSourceSpec.value.trim()
-  const ct = formCollectorType.value.trim()
-  if (!ct) {
-    formErr.value = 'Collector type is required.'
-    return
-  }
-  if (!spec) {
-    formErr.value = 'Source spec is required.'
-    return
-  }
-  const cron = formCronLine.value.trim()
-  saving.value = true
-  runNowPendingId.value = '__oneoff__'
-  try {
-    const ephemeral = create(CollectionSourceSchema, {
-      id: '',
-      collectorType: ct,
-      sourceSpec: spec,
-      cronLine: cron,
-      enabled: formEnabled.value,
-    })
-    await getControllerClient().enqueueCollectionRequest(
-      create(EnqueueCollectionRequestRequestSchema, {
-        target: { case: 'ephemeralCollection', value: ephemeral },
-      }),
-    )
-    formDialogRef.value?.close()
-    notifySuccess('One-off collection enqueued.')
-  } catch (e) {
-    formErr.value = e instanceof ConnectError ? e.message : String(e)
-  } finally {
-    saving.value = false
-    runNowPendingId.value = ''
-  }
-}
-
-async function persistSource(runAfterSave: boolean) {
-  formErr.value = null
-  const spec = formSourceSpec.value.trim()
-  const ct = formCollectorType.value.trim()
-  if (!ct) {
-    formErr.value = 'Collector type is required.'
-    return
-  }
-  if (!spec) {
-    formErr.value = 'Source spec is required.'
-    return
-  }
-  const sourceIdForRun = editId.value.trim()
-  if (runAfterSave && !sourceIdForRun) {
-    formErr.value = 'Run now is only available when editing an existing source.'
-    return
-  }
-  const cron = formCronLine.value.trim()
-  saving.value = true
-  try {
-    const source = create(CollectionSourceSchema, {
-      id: editId.value,
-      collectorType: ct,
-      sourceSpec: spec,
-      cronLine: cron,
-      enabled: formEnabled.value,
-    })
-    await getControllerClient().upsertCollectionSource(
-      create(UpsertCollectionSourceRequestSchema, { source }),
-    )
-    if (runAfterSave) {
-      runNowPendingId.value = sourceIdForRun
-      try {
-        const beforeRun = BigInt(
-          sources.value.find((row) => row.id === sourceIdForRun)?.lastRunUnixMs ?? 0,
-        )
-        await getControllerClient().enqueueCollectionRequest(
-          create(EnqueueCollectionRequestRequestSchema, {
-            target: { case: 'collectionSourceId', value: sourceIdForRun },
-          }),
-        )
-        notifySuccess('Source saved and collection run enqueued.')
-        void pollAfterCollectionRun(
-          beforeRun,
-          () => loadSources(false),
-          () => sources.value.find((row) => row.id === sourceIdForRun)?.lastRunUnixMs,
-        )
-      } finally {
-        runNowPendingId.value = ''
-      }
-    } else {
-      notifySuccess(editId.value ? 'Collection source updated.' : 'Collection source created.')
-    }
-    await loadSources()
-    formDialogRef.value?.close()
-  } catch (e) {
-    formErr.value = e instanceof ConnectError ? e.message : String(e)
-  } finally {
-    saving.value = false
-  }
-}
-
-async function saveSource() {
-  await persistSource(false)
-}
-
-async function saveSourceAndRunNow() {
-  await persistSource(true)
 }
 
 async function runCollectionNow(s: CollectionSource) {
@@ -524,7 +155,7 @@ async function runCollectionNow(s: CollectionSource) {
         target: { case: 'collectionSourceId', value: s.id },
       }),
     )
-    notifySuccess('Collection run enqueued.')
+    notifyRunEnqueued()
     void pollAfterCollectionRun(
       beforeRun,
       () => loadSources(false),
@@ -541,71 +172,21 @@ function openSourceDetail({ row }: { row: CollectionSource }) {
   void router.push({ name: 'collector-details', params: { id: row.id } })
 }
 
-async function openOneOffFromQueryIfNeeded() {
-  if (route.query.oneOff !== '1') return
-  openOneOffCollect()
-  await router.replace({ name: 'sources' })
+function openAddSource() {
+  void router.push({ name: 'source-create' })
 }
 
-async function openEditFromQueryIfNeeded() {
-  const raw = route.query.edit
-  const id = typeof raw === 'string' ? raw.trim() : ''
-  if (!id) return
-  const s = sources.value.find((row) => row.id === id)
-  await router.replace({ name: 'sources' })
-  if (!s) {
-    listErr.value = `Collection source "${id}" was not found for editing.`
-    return
-  }
-  startEdit(s)
+function openOneOffCollect() {
+  void router.push({ name: 'source-create', query: { oneOff: '1' } })
 }
 
-async function openDuplicateFromQueryIfNeeded() {
-  const raw = route.query.duplicate
-  const id = typeof raw === 'string' ? raw.trim() : ''
-  if (!id) return
-  const s = sources.value.find((row) => row.id === id)
-  await router.replace({ name: 'sources' })
-  if (!s) {
-    listErr.value = `Collection source "${id}" was not found for duplication.`
-    return
-  }
-  duplicateSource(s)
+function duplicateSource(s: CollectionSource) {
+  void router.push({ name: 'source-create', query: { duplicate: s.id } })
 }
 
-onMounted(async () => {
-  await reloadAll()
-  await openOneOffFromQueryIfNeeded()
-  await openEditFromQueryIfNeeded()
-  await openDuplicateFromQueryIfNeeded()
+onMounted(() => {
+  void reloadAll()
 })
-
-watch(
-  () => route.query.oneOff,
-  (v) => {
-    if (v === '1') {
-      void openOneOffFromQueryIfNeeded()
-    }
-  },
-)
-
-watch(
-  () => route.query.edit,
-  (v) => {
-    if (typeof v === 'string' && v.trim()) {
-      void openEditFromQueryIfNeeded()
-    }
-  },
-)
-
-watch(
-  () => route.query.duplicate,
-  (v) => {
-    if (typeof v === 'string' && v.trim()) {
-      void openDuplicateFromQueryIfNeeded()
-    }
-  },
-)
 </script>
 
 <template>
@@ -616,171 +197,6 @@ watch(
       </template>
     </AppHeader>
     <main class="main">
-      <dialog
-        ref="formDialogRef"
-        class="dialog form-dialog"
-        aria-labelledby="form-dialog-title"
-        @close="onFormDialogClose"
-        @click="onFormDialogBackdropClick"
-      >
-        <div class="form-dialog-inner" @click.stop>
-          <h2 id="form-dialog-title" class="form-dialog-title">{{ formDialogTitle }}</h2>
-          <FormLayout @submit.prevent="onFormSubmit">
-            <FormField label="Collector type" for="form-collector-type">
-              <select
-                id="form-collector-type"
-                v-model="formCollectorType"
-                class="mono"
-                required
-                @change="onFormCollectorTypeChange"
-              >
-                <option v-if="formCollectorTypeOptions.length === 0" disabled value="">
-                  No collector-* heartbeats
-                </option>
-                <option v-for="t in formCollectorTypeOptions" :key="t" :value="t">
-                  {{ t }}
-                </option>
-              </select>
-            </FormField>
-            <fieldset
-              v-if="!oneOffMode && showStructuredSourceSpec && activeParsedSchema && formSchemaBuilder"
-              class="schema-builder"
-            >
-              <legend class="schema-legend">Source (from collector schema)</legend>
-              <div class="schema-patterns">
-                <label v-for="p in activeParsedSchema.primary_patterns" :key="p.id" class="schema-radio">
-                  <input
-                    type="radio"
-                    name="source-pattern"
-                    :value="p.id"
-                    :checked="formSchemaBuilder?.patternId === p.id"
-                    @change="onBuilderPatternChange(p.id)"
-                  />
-                  <span>{{ p.label }}</span>
-                  <span v-if="p.example" class="schema-example mono">{{ p.example }}</span>
-                </label>
-              </div>
-              <div class="schema-args">
-                <FormField
-                  v-for="a in activePatternArgs"
-                  :key="a.id"
-                  :label="a.label"
-                  :for="`schema-arg-${a.id}`"
-                >
-                  <input
-                    :id="`schema-arg-${a.id}`"
-                    v-model="formSchemaBuilder.args[a.id]"
-                    class="mono"
-                    type="text"
-                    autocomplete="off"
-                  />
-                </FormField>
-              </div>
-              <div v-if="activeParsedSchema.modifiers?.length" class="schema-mods">
-                <span class="mods-label">Include</span>
-                <label v-for="m in activeParsedSchema.modifiers" :key="m.id" class="mod-check">
-                  <input v-model="formSchemaBuilder!.modifiers[m.id]" type="checkbox" />
-                  <span>{{ m.label }} <code class="mod-code">+{{ m.syntax_suffix }}</code></span>
-                </label>
-              </div>
-              <button type="button" class="tiny neutral schema-raw-btn" @click="toggleSourceSpecRaw">
-                Edit raw source spec
-              </button>
-            </fieldset>
-            <p v-else-if="!oneOffMode && canUseStructuredForm && formSourceSpecAdvanced" class="schema-raw-banner">
-              <button type="button" class="tiny neutral" @click="toggleSourceSpecRaw">Use structured form</button>
-            </p>
-            <FormField label="Source spec" for="form-source-spec">
-              <input
-                id="form-source-spec"
-                v-model="formSourceSpec"
-                class="mono"
-                type="text"
-                required
-                :readonly="showStructuredSourceSpec"
-                :placeholder="
-                  showStructuredSourceSpec ? '' : 'e.g. org.repos:jamesread +dependabot +pr'
-                "
-                :title="
-                  showStructuredSourceSpec
-                    ? 'Composed from pattern, arguments, and modifiers above'
-                    : ''
-                "
-              />
-            </FormField>
-            <template v-if="!oneOffMode">
-              <p v-if="activeSchemaCronHint?.description" class="schema-cron-hint">
-                {{ activeSchemaCronHint.description }}
-              </p>
-              <FormField
-                label="Cron schedule (optional)"
-                for="form-cron-line"
-                :description="formCronSummary"
-              >
-                <input
-                  id="form-cron-line"
-                  v-model="formCronLine"
-                  class="mono cron-input"
-                  type="text"
-                  placeholder="empty = run now only, or e.g. 0 0 * * *"
-                  spellcheck="false"
-                />
-              </FormField>
-              <div class="cron-presets">
-                <span class="presets-label">Presets:</span>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * *')">
-                  Daily midnight
-                </button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 * * * *')">Hourly</button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('*/15 * * * *')">
-                  Every 15 min
-                </button>
-                <button type="button" class="tiny neutral" @click="applyCronPreset('0 0 * * 0')">
-                  Weekly (Sun 00:00)
-                </button>
-              </div>
-            </template>
-            <FormField v-if="!oneOffMode" label="Enabled" for="form-enabled">
-              <input id="form-enabled" v-model="formEnabled" type="checkbox" />
-            </FormField>
-            <p v-if="oneOffMode" class="form-dialog-hint">
-              This publishes a <code>CollectionRequest</code> with an inline source (same shape as a saved source). Nothing
-              is written to the controller database; run history is not updated for a source id. Cron is omitted (empty
-              schedule: immediate run).
-            </p>
-            <p v-else class="form-dialog-hint">
-              Use standard 5-field cron when set. Empty cron is allowed: collectors only run the source when you use
-              <strong>Run now</strong>.
-            </p>
-            <p v-if="formErr" class="inline-notification error">{{ formErr }}</p>
-            <template #actions>
-              <template v-if="oneOffMode">
-                <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
-                <button type="submit" class="good" :disabled="saving || runNowPendingId !== ''">
-                  {{ saving ? 'Working…' : 'Run once without saving' }}
-                </button>
-              </template>
-              <template v-else>
-                <button type="button" class="neutral" :disabled="saving" @click="cancelFormDialog">Cancel</button>
-                <button type="submit" class="good" :disabled="saving">
-                  {{ saving ? 'Working…' : editId ? 'Update' : 'Create' }}
-                </button>
-                <button
-                  v-if="editId"
-                  type="button"
-                  class="good"
-                  :disabled="saving"
-                  title="Save changes and publish a collection request immediately"
-                  @click="saveSourceAndRunNow"
-                >
-                  {{ saving ? 'Working…' : 'Update and run now' }}
-                </button>
-              </template>
-            </template>
-          </FormLayout>
-        </div>
-      </dialog>
-
       <Section
         title="Collection sources"
         :icon="DatabaseIcon"
@@ -939,25 +355,6 @@ watch(
   justify-content: flex-end;
   gap: 0.35rem;
 }
-.cron-input {
-  font-size: 0.9rem;
-}
-.cron-presets {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0 0 0.5rem;
-}
-.presets-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-right: 0.25rem;
-}
-.tiny {
-  padding: 0.2rem 0.45rem;
-  font-size: 0.75rem;
-}
 .schedule-cell {
   max-width: 14rem;
 }
@@ -982,107 +379,11 @@ watch(
 .last-error-hint .annotation-val {
   word-break: break-word;
 }
-.form-dialog {
-  padding: 0;
-  border: none;
-  border-radius: 10px;
-  max-width: min(48rem, calc(100vw - 2rem));
-  width: 100%;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-}
-.form-dialog::backdrop {
-  background: rgb(15 23 42 / 0.45);
-}
-.form-dialog-inner {
-  padding: 1.25rem 1.35rem 1.35rem;
-}
-.form-dialog-title {
-  margin: 0 0 1rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.form-dialog-hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.45;
-}
-.schema-cron-hint {
-  margin: 0 0 0.35rem;
-  font-size: 0.85rem;
-  color: #475569;
-  line-height: 1.4;
-}
-.schema-raw-banner {
-  margin: 0 0 0.5rem;
-}
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .small {
   padding: 0.25rem 0.45rem;
   font-size: 0.8rem;
-}
-.schema-builder {
-  margin: 0 0 0.75rem;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-.schema-legend {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #334155;
-  padding: 0 0.25rem;
-}
-.schema-patterns {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.65rem;
-}
-.schema-radio {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
-.schema-example {
-  font-size: 0.78rem;
-  color: #64748b;
-}
-.schema-args {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  margin-bottom: 0.5rem;
-}
-.schema-mods {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.75rem;
-  margin-bottom: 0.5rem;
-}
-.mods-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-right: 0.25rem;
-}
-.mod-check {
-  margin: 0;
-}
-.mod-code {
-  font-size: 0.78em;
-  background: #f1f5f9;
-  padding: 0.05em 0.25em;
-  border-radius: 3px;
-}
-.schema-raw-btn {
-  margin-top: 0.25rem;
 }
 </style>

@@ -20,9 +20,9 @@ Optional **`LOG_LEVEL`** env controls verbosity (**`trace` → `panic`**, defaul
 
 Startup behaviour:
 
-- Locates **`config.yaml`** (preferred) or **`controller.yaml`** under **`-configdir`**.
+- Locates **`config.yaml`** (preferred) or **`controller.yaml`** under **`-configdir`**. If neither file exists, the HTTP listener still starts so the web UI and **`Init`** can connect; **`Init`** includes **`startup_warnings`** describing the missing file.
 - Applies SQL migrations from **`/opt/ih/migrations`** when that directory exists (official images); otherwise from **`<configdir>/migrations/`** for development and integration tests.
-- Retries **[golang-migrate](https://github.com/golang-migrate/migrate)** + MySQL **`Ping`** until the primary database succeeds (5 second backoff between attempts).
+- Retries **[golang-migrate](https://github.com/golang-migrate/migrate)** + MySQL **`Ping`** in the background until the primary database succeeds (5 second backoff between attempts). RPCs that need MySQL return **`UNAVAILABLE`** until then.
 - Opens an AMQP client using **`icehive_meta`** keys (`amqp.*`) with the same retry philosophy as collectors (10 seconds).
 - Prints the resolved YAML absolute path plus non-secret MySQL identifiers for easier log tracing.
 

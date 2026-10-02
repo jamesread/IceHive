@@ -10,7 +10,7 @@ import Section from 'picocrank/vue/components/Section.vue'
 import DangerZone from 'picocrank/vue/components/DangerZone.vue'
 import { getControllerClient } from '../api/controllerClient'
 import { describeCronLine } from '../utils/cronHuman'
-import { notifySuccess } from '../utils/notify'
+import { notifyRunEnqueued } from '../utils/notify'
 import { pollAfterCollectionRun } from '../utils/pollAfterRun'
 import type { CollectionSource } from '../gen/icehive/v1/controller_pb'
 import {
@@ -109,7 +109,7 @@ async function runCollectionNow() {
         target: { case: 'collectionSourceId', value: s.id },
       }),
     )
-    notifySuccess('Collection run enqueued.')
+    notifyRunEnqueued()
     void pollAfterCollectionRun(
       beforeRun,
       () => loadSource(),
@@ -140,14 +140,14 @@ async function removeSource() {
 function goEdit() {
   const s = source.value
   if (!s) return
-  void router.push({ name: 'sources', query: { edit: s.id } })
+  void router.push({ name: 'source-edit', params: { id: s.id } })
 }
 
 function duplicateSource() {
   const s = source.value
   if (!s) return
   void router.push({
-    name: 'sources',
+    name: 'source-create',
     query: { duplicate: s.id },
   })
 }

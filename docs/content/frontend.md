@@ -10,7 +10,7 @@ At build time (CI `docker build`, `npm run build`, or equivalent), set:
 |----------------------|---------|
 | **`VITE_CONTROLLER_BASE_URL`** | Forces the first candidate Connect base URL (`https://controller.example.com` or `http://internal-svc:8080`). Must include scheme, omit trailing slash. |
 
-If you omit the variable, the SPA still works: it probes common candidates (saved session value, same-host `:8080`, same-origin). For predictable behaviour in production, bake the correct controller URL into the build.
+If you omit the variable, the SPA still works: it probes common candidates (most recent saved controller URL, same-host `:8080`, same-origin). Successful manual connections are kept in browser local storage (newest first, up to five) and can be picked again from the controller-not-reachable screen. For predictable behaviour in production, bake the correct controller URL into the build.
 
 ## Operator checklist
 

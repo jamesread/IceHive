@@ -7,6 +7,9 @@ const controllerProxyTarget = controllerProxyTargetFromEnv(process.env.ICEHIVE_C
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    dedupe: ['vue', 'picocrank'],
+  },
   server: {
     proxy: {
       '/api': {

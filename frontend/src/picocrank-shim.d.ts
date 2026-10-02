@@ -75,6 +75,20 @@ declare module 'picocrank/vue/components/FormField.vue' {
   export default component
 }
 
+declare module 'picocrank/vue/components/RadioGroup.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
+declare module 'picocrank/vue/components/CheckGroup.vue' {
+  import type { DefineComponent } from 'vue'
+
+  const component: DefineComponent<object, object, unknown>
+  export default component
+}
+
 declare module 'picocrank/vue/composables/useNotificationPopups.js' {
   export function showNotificationPopup(options?: {
     message?: string

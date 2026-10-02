@@ -50,12 +50,33 @@ var llmsTxt []byte
 var openAPISpec []byte
 
 type controllerSrv struct {
-	db         *sql.DB
-	k          *koanf.Koanf
-	amqpClient *amqpctl.Client
-	health     *healthmetrics.Refresher
-	activity   *activity.Ring
-	mu         sync.RWMutex
+	db              *sql.DB
+	k               *koanf.Koanf
+	amqpClient      *amqpctl.Client
+	health          *healthmetrics.Refresher
+	activity        *activity.Ring
+	startupWarnings []string
+	mu              sync.RWMutex
+	dbMu            sync.RWMutex
+}
+
+func (s *controllerSrv) setDB(db *sql.DB) {
+	s.dbMu.Lock()
+	defer s.dbMu.Unlock()
+	s.db = db
+}
+
+func (s *controllerSrv) metaDB(ctx context.Context) (*sql.DB, error) {
+	s.dbMu.RLock()
+	db := s.db
+	s.dbMu.RUnlock()
+	if db == nil {
+		return nil, connect.NewError(
+			connect.CodeUnavailable,
+			fmt.Errorf("metadata database not connected yet; configure mysql in config.yaml and ensure the database is reachable"),
+		)
+	}
+	return db, nil
 }
 
 type migrationLogger struct {
@@ -112,7 +133,8 @@ func (s *controllerSrv) Init(
 	_ *connect.Request[icehivev1.InitRequest],
 ) (*connect.Response[icehivev1.InitResponse], error) {
 	return connect.NewResponse(&icehivev1.InitResponse{
-		Version: buildinfo.Version,
+		Version:         buildinfo.Version,
+		StartupWarnings: append([]string(nil), s.startupWarnings...),
 	}), nil
 }
 
@@ -120,7 +142,11 @@ func (s *controllerSrv) Health(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.HealthRequest],
 ) (*connect.Response[icehivev1.HealthResponse], error) {
-	if err := s.db.PingContext(ctx); err != nil {
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := sqlDB.PingContext(ctx); err != nil {
 		return nil, connect.NewError(connect.CodeUnavailable, err)
 	}
 	return connect.NewResponse(&icehivev1.HealthResponse{Status: "ok"}), nil
@@ -133,7 +159,11 @@ func (s *controllerSrv) WorkerBootstrap(
 ) (*connect.Response[icehivev1.WorkerBootstrapResponse], error) {
 	_ = req.Msg
 
-	settings, err := db.LoadAMQPBootstrapSettings(ctx, s.db)
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	settings, err := db.LoadAMQPBootstrapSettings(ctx, sqlDB)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
 	}
@@ -154,7 +184,7 @@ func (s *controllerSrv) WorkerBootstrap(
 		},
 	}
 	if strings.EqualFold(strings.TrimSpace(req.Msg.GetWorkerKind()), "persister") {
-		mysqlSettings, mysqlErr := db.LoadPersisterMySQLSettings(ctx, s.db)
+		mysqlSettings, mysqlErr := db.LoadPersisterMySQLSettings(ctx, sqlDB)
 		if mysqlErr != nil {
 			if fallback, ok := persisterMySQLSettingsFromConfig(s.k); ok {
 				mysqlSettings = fallback
@@ -193,7 +223,11 @@ func (s *controllerSrv) ListConfig(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.ListConfigRequest],
 ) (*connect.Response[icehivev1.ListConfigResponse], error) {
-	rows, err := db.ListMeta(ctx, s.db)
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.ListMeta(ctx, sqlDB)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -214,6 +248,7 @@ func (s *controllerSrv) ListConfig(
 	return connect.NewResponse(&icehivev1.ListConfigResponse{Vars: vars}), nil
 }
 
+//gocyclo:ignore
 func (s *controllerSrv) GetConfig(
 	ctx context.Context,
 	req *connect.Request[icehivev1.GetConfigRequest],
@@ -223,12 +258,16 @@ func (s *controllerSrv) GetConfig(
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty config key"))
 	}
 	created := false
-	value, found, err := db.GetMeta(ctx, s.db, key)
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	value, found, err := db.GetMeta(ctx, sqlDB, key)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	if !found {
-		if err := db.SetMeta(ctx, s.db, key, ""); err != nil {
+		if err := db.SetMeta(ctx, sqlDB, key, ""); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
 		value = ""
@@ -258,7 +297,11 @@ func (s *controllerSrv) SetConfig(
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty config key"))
 	}
 
-	if err := db.SetMeta(ctx, s.db, key, req.Msg.GetValue()); err != nil {
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.SetMeta(ctx, sqlDB, key, req.Msg.GetValue()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&icehivev1.SetConfigResponse{}), nil
@@ -268,7 +311,11 @@ func (s *controllerSrv) ListServices(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.ListServicesRequest],
 ) (*connect.Response[icehivev1.ListServicesResponse], error) {
-	rows, err := db.ListHeartbeats(ctx, s.db)
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.ListHeartbeats(ctx, sqlDB)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -340,7 +387,11 @@ func (s *controllerSrv) ListCollectionSources(
 	ctx context.Context,
 	req *connect.Request[icehivev1.ListCollectionSourcesRequest],
 ) (*connect.Response[icehivev1.ListCollectionSourcesResponse], error) {
-	rows, err := db.ListCollectionSources(ctx, s.db, req.Msg.GetCollectorType())
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.ListCollectionSources(ctx, sqlDB, req.Msg.GetCollectorType())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -361,7 +412,11 @@ func (s *controllerSrv) ListCollectorSourceSchemas(
 	ctx context.Context,
 	req *connect.Request[icehivev1.ListCollectorSourceSchemasRequest],
 ) (*connect.Response[icehivev1.ListCollectorSourceSchemasResponse], error) {
-	rows, err := db.ListCollectorSourceSchemas(ctx, s.db, req.Msg.GetCollectorType())
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.ListCollectorSourceSchemas(ctx, sqlDB, req.Msg.GetCollectorType())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -392,7 +447,11 @@ func (s *controllerSrv) UpsertCollectionSource(
 		CronLine:      src.GetCronLine(),
 		Enabled:       src.GetEnabled(),
 	}
-	saved, err := db.UpsertCollectionSource(ctx, s.db, row)
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	saved, err := db.UpsertCollectionSource(ctx, sqlDB, row)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -414,7 +473,11 @@ func (s *controllerSrv) DeleteCollectionSource(
 	if id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty id"))
 	}
-	if err := db.DeleteCollectionSource(ctx, s.db, id); err != nil {
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.DeleteCollectionSource(ctx, sqlDB, id); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, connect.NewError(connect.CodeNotFound, err)
 		}
@@ -450,7 +513,11 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 		if id == "" {
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty collection_source_id"))
 		}
-		row, err := db.GetCollectionSourceByID(ctx, s.db, id)
+		sqlDB, err := s.metaDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		row, err := db.GetCollectionSourceByID(ctx, sqlDB, id)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				return nil, connect.NewError(connect.CodeNotFound, err)
@@ -502,6 +569,7 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 	return connect.NewResponse(&icehivev1.EnqueueCollectionRequestResponse{}), nil
 }
 
+//gocyclo:ignore
 func (s *controllerSrv) ReportCollectionSourceRun(
 	ctx context.Context,
 	req *connect.Request[icehivev1.ReportCollectionSourceRunRequest],
@@ -510,8 +578,12 @@ func (s *controllerSrv) ReportCollectionSourceRun(
 	if id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty id"))
 	}
+	sqlDB, err := s.metaDB(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if err := db.ReportCollectionSourceRun(
-		ctx, s.db, id,
+		ctx, sqlDB, id,
 		req.Msg.GetRunUnixMs(),
 		req.Msg.GetSuccess(),
 		req.Msg.GetError(),
@@ -523,7 +595,7 @@ func (s *controllerSrv) ReportCollectionSourceRun(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	collectorType := ""
-	if row, err := db.GetCollectionSourceByID(ctx, s.db, id); err == nil {
+	if row, err := db.GetCollectionSourceByID(ctx, sqlDB, id); err == nil {
 		collectorType = row.CollectorType
 	}
 	s.activity.RecordCollectionRun(id, collectorType, req.Msg.GetSuccess(), req.Msg.GetError())
@@ -542,7 +614,7 @@ func loadConfig(dir string) (*koanf.Koanf, string, error) {
 		}
 		return k, path, nil
 	}
-	return nil, "", fmt.Errorf("no config.yaml or controller.yaml found under %q", dir)
+	return k, "", nil
 }
 
 // bundledMigrationsDir holds SQL revisions baked into official container images (see Dockerfile.goreleaser).
@@ -712,12 +784,33 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("configuration")
 	}
-	absConfigPath := configPath
-	if p, absErr := filepath.Abs(configPath); absErr == nil {
-		absConfigPath = p
+	var startupWarnings []string
+	absConfigDir := *configDir
+	if p, absErr := filepath.Abs(*configDir); absErr == nil {
+		absConfigDir = p
 	}
-	log.WithField("yaml_config_path", absConfigPath).Info("YAML configuration loaded")
-	log.Infof("mysql.host=%s mysql.user=%s", k.String("mysql.host"), k.String("mysql.user"))
+	if configPath == "" {
+		msg := fmt.Sprintf(
+			"config.yaml (or controller.yaml) not found under %q; mount a config file to enable MySQL, AMQP, and full controller features",
+			absConfigDir,
+		)
+		log.Warn(msg)
+		startupWarnings = append(startupWarnings, msg)
+	} else {
+		absConfigPath := configPath
+		if p, absErr := filepath.Abs(configPath); absErr == nil {
+			absConfigPath = p
+		}
+		log.WithField("yaml_config_path", absConfigPath).Info("YAML configuration loaded")
+		log.Infof("mysql.host=%s mysql.user=%s", k.String("mysql.host"), k.String("mysql.user"))
+	}
+	if configPath != "" {
+		if _, ok := db.SettingsFromKoanf(k); !ok {
+			msg := "mysql configuration missing in config.yaml (need mysql.host and related fields)"
+			log.Warn(msg)
+			startupWarnings = append(startupWarnings, msg)
+		}
+	}
 
 	listenAddr := strings.TrimSpace(*flagListen)
 	if k.Exists("listen") {
@@ -734,20 +827,7 @@ func main() {
 		listenAddr = auto
 	}
 
-	sqlDB, err := openMySQLUntilReady(ctx, log, k, *configDir)
-	if err != nil {
-		log.WithError(err).Fatal("database")
-	}
-	defer func() { _ = sqlDB.Close() }()
-
 	obsmetrics.Register()
-
-	entitiesDB, err := healthmetrics.OpenEntitiesDB(ctx, k, sqlDB)
-	if err != nil {
-		log.WithError(err).Warn("entity sink DB unavailable; entity freshness metrics disabled")
-	} else {
-		defer func() { _ = entitiesDB.Close() }()
-	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", serveControllerWelcome)
@@ -768,10 +848,9 @@ func main() {
 	})
 
 	ctrlSrv := &controllerSrv{
-		db:       sqlDB,
-		k:        k,
-		health:   healthmetrics.NewRefresher(log, sqlDB, k, entitiesDB),
-		activity: activity.NewRing(activity.DefaultCapacity),
+		k:               k,
+		startupWarnings: startupWarnings,
+		activity:        activity.NewRing(activity.DefaultCapacity),
 	}
 	mcpHandler := controllermcp.NewHandler(ctrlSrv)
 	mux.Handle("/mcp", mcpHandler)
@@ -794,65 +873,16 @@ func main() {
 			log.WithError(err).Fatal("http server failed")
 		}
 	}()
-	go ctrlSrv.health.Start(ctx, 60*time.Second)
 	if paste := controllerHTTPPasteBaseURL(listenAddr); paste != "" {
 		log.Infof("listening on %s (frontend controller base URL: %s)", listenAddr, paste)
 	} else {
 		log.Infof("listening on %s", listenAddr)
 	}
 
-	amqpDone := make(chan struct{})
+	backendDone := make(chan struct{})
 	go func() {
-		defer close(amqpDone)
-		amqpClient, err := openAMQUntilReady(ctx, log, sqlDB)
-		if err != nil {
-			log.WithError(err).Warn("amqp background bootstrap stopped")
-			return
-		}
-		ctrlSrv.setAMQPClient(amqpClient)
-		amqpClient.StartHeartbeatPublisher(ctx, "controller", buildinfo.Version, 10*time.Second)
-		go func() {
-			hbQueue := amqpctl.QueueName("controller-heartbeats")
-			if err := amqpClient.EnsureQueue(hbQueue, amqpctl.RoutingKeyHeartbeats); err != nil {
-				log.WithError(err).Warn("heartbeat queue declare/bind failed")
-				return
-			}
-			err := amqpClient.ConsumeControl(ctx, hbQueue, amqpctl.RoutingKeyHeartbeats, func(hctx context.Context, evt *controlv1.ControlEvent) error {
-				p := evt.GetPing()
-				if p == nil || strings.TrimSpace(p.GetSourceService()) == "" {
-					return nil
-				}
-				ts := evt.GetCreatedUnixMs()
-				if ts <= 0 {
-					ts = time.Now().UnixMilli()
-				}
-				if err := db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts, p.GetVersion()); err != nil {
-					return err
-				}
-				ctrlSrv.activity.RecordHeartbeat(p.GetSourceService(), p.GetVersion(), ts)
-				return nil
-			})
-			if err != nil && hctxErr(ctx) == nil {
-				log.WithError(err).Warn("heartbeat consumer stopped")
-			}
-		}()
-		go func() {
-			bind := amqpctl.RoutingKeyCollectorSourceSchemaPrefix + ".#"
-			schemaQueue := amqpctl.QueueName("controller-source-schemas")
-			if err := amqpClient.EnsureQueue(schemaQueue, bind); err != nil {
-				log.WithError(err).Warn("source schema queue declare/bind failed")
-				return
-			}
-			err := amqpClient.ConsumeJSON(ctx, schemaQueue, bind, func(sctx context.Context, body []byte) error {
-				return handleCollectorSourceSchemaMessage(sctx, log, sqlDB, body)
-			})
-			if err != nil && hctxErr(ctx) == nil {
-				log.WithError(err).Warn("source schema consumer stopped")
-			}
-		}()
-		<-ctx.Done()
-		_ = amqpClient.Close()
-		log.Info("AMQP status=disconnected")
+		defer close(backendDone)
+		runControllerBackend(ctx, log, ctrlSrv, k, *configDir)
 	}()
 
 	<-ctx.Done()
@@ -863,7 +893,78 @@ func main() {
 	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
 		log.WithError(err).Fatal("graceful shutdown")
 	}
-	<-amqpDone
+	<-backendDone
+}
+
+//gocyclo:ignore
+func runControllerBackend(ctx context.Context, log *logrus.Logger, ctrlSrv *controllerSrv, k *koanf.Koanf, configDir string) {
+	sqlDB, err := openMySQLUntilReady(ctx, log, k, configDir)
+	if err != nil {
+		log.WithError(err).Warn("database bootstrap stopped")
+		return
+	}
+	ctrlSrv.setDB(sqlDB)
+	defer func() { _ = sqlDB.Close() }()
+
+	entitiesDB, err := healthmetrics.OpenEntitiesDB(ctx, k, sqlDB)
+	if err != nil {
+		log.WithError(err).Warn("entity sink DB unavailable; entity freshness metrics disabled")
+	} else {
+		defer func() { _ = entitiesDB.Close() }()
+	}
+
+	ctrlSrv.health = healthmetrics.NewRefresher(log, sqlDB, k, entitiesDB)
+	go ctrlSrv.health.Start(ctx, 60*time.Second)
+
+	amqpClient, err := openAMQUntilReady(ctx, log, sqlDB)
+	if err != nil {
+		log.WithError(err).Warn("amqp background bootstrap stopped")
+		return
+	}
+	ctrlSrv.setAMQPClient(amqpClient)
+	amqpClient.StartHeartbeatPublisher(ctx, "controller", buildinfo.Version, 10*time.Second)
+	go func() {
+		hbQueue := amqpctl.QueueName("controller-heartbeats")
+		if err := amqpClient.EnsureQueue(hbQueue, amqpctl.RoutingKeyHeartbeats); err != nil {
+			log.WithError(err).Warn("heartbeat queue declare/bind failed")
+			return
+		}
+		err := amqpClient.ConsumeControl(ctx, hbQueue, amqpctl.RoutingKeyHeartbeats, func(hctx context.Context, evt *controlv1.ControlEvent) error {
+			p := evt.GetPing()
+			if p == nil || strings.TrimSpace(p.GetSourceService()) == "" {
+				return nil
+			}
+			ts := evt.GetCreatedUnixMs()
+			if ts <= 0 {
+				ts = time.Now().UnixMilli()
+			}
+			if err := db.UpsertHeartbeat(hctx, sqlDB, p.GetSourceService(), ts, p.GetVersion()); err != nil {
+				return err
+			}
+			ctrlSrv.activity.RecordHeartbeat(p.GetSourceService(), p.GetVersion(), ts)
+			return nil
+		})
+		if err != nil && hctxErr(ctx) == nil {
+			log.WithError(err).Warn("heartbeat consumer stopped")
+		}
+	}()
+	go func() {
+		bind := amqpctl.RoutingKeyCollectorSourceSchemaPrefix + ".#"
+		schemaQueue := amqpctl.QueueName("controller-source-schemas")
+		if err := amqpClient.EnsureQueue(schemaQueue, bind); err != nil {
+			log.WithError(err).Warn("source schema queue declare/bind failed")
+			return
+		}
+		err := amqpClient.ConsumeJSON(ctx, schemaQueue, bind, func(sctx context.Context, body []byte) error {
+			return handleCollectorSourceSchemaMessage(sctx, log, sqlDB, body)
+		})
+		if err != nil && hctxErr(ctx) == nil {
+			log.WithError(err).Warn("source schema consumer stopped")
+		}
+	}()
+	<-ctx.Done()
+	_ = amqpClient.Close()
+	log.Info("AMQP status=disconnected")
 }
 
 func hctxErr(ctx context.Context) error {

@@ -16,6 +16,7 @@ function onLogoClick() {
     :show-branding="true"
     :breadcrumbs="true"
     :theme-toggle-enabled="true"
+    :fixed="false"
     logo-url="/favicon.svg"
     @logo-click="onLogoClick"
   >
