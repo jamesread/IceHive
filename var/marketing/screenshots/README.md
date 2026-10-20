@@ -19,12 +19,18 @@ and `repo-helper` with Chrome/Chromium.
 | File | Purpose |
 |------|---------|
 | `screenshots.ini` | Pages to capture (one section per PNG) |
+| `screenshot-manifest.yaml` | Generated index for indexers: title, description, GitHub URL and size of each PNG |
+| `generate-manifest.py` | Writes the manifest from `screenshots.ini` (`make manifest`) |
 | `scripts/prepare.py` | Waits for the SPA to render data before capture |
 | `scripts/light.py`, `scripts/dark.py` | Pin the picocrank theme for a capture |
 | `seed/run-history.sql` | Fictional last-run timestamps so sources look healthy |
 | `seed/config.json` | Config vars set via `SetConfig` |
 | `seed/sources.json` | Fictional collection sources set via `UpsertCollectionSource` |
 | `*.yaml`, `mysql-init.sql` | Configs for the throwaway services |
+
+To add a screenshot, add a section to `screenshots.ini` with `url`, `title` and
+`description`, then run `make`. The manifest is regenerated automatically
+(`make manifest` regenerates it on its own from the existing PNGs).
 
 Use `make up seed` to start the seeded stack and browse it at
 <http://127.0.0.1:18400/>, then `make down` when finished.

@@ -15,10 +15,10 @@ FRONTEND_PORT := 18400
 DOCS_ASSETS := $(ROOT)/docs/content/assets/marketing
 DOCS_IMAGES := home.png sources.png source-details.png services.png config.png
 
-.PHONY: all build up seed shoot publish down clean
+.PHONY: all build up seed shoot manifest publish down clean
 
 all:
-	@$(MAKE) build up seed shoot publish; rc=$$?; $(MAKE) down; exit $$rc
+	@$(MAKE) build up seed shoot manifest publish; rc=$$?; $(MAKE) down; exit $$rc
 
 build:
 	$(MAKE) -C $(ROOT)/services/controller build
@@ -72,6 +72,9 @@ seed:
 
 shoot:
 	repo-helper screenshot --config screenshots.ini
+
+manifest:
+	./generate-manifest.py
 
 publish:
 	mkdir -p $(DOCS_ASSETS)
