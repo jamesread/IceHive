@@ -1,0 +1,14 @@
+# Controller config for the throwaway marketing stack (see Makefile).
+listen: ":18480"
+mysql:
+    database: icehive
+    host: 127.0.0.1
+    password: icehive-demo
+    port: "13306"
+    user: icehive
+persister_mysql:
+    database: icehive_sink
+    host: 127.0.0.1
+    password: icehive-sink-demo
+    port: "13306"
+    user: icehive_sink

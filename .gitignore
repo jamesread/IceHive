@@ -55,5 +55,6 @@ docs/site/
 
 # Selenium / integration artifacts
 **/screenshots/
+!var/marketing/screenshots/
 
 dist

@@ -1,0 +1,7 @@
+[
+  {"id": "demo-animals", "collectorType": "collector-testdata", "sourceSpec": "animals", "cronLine": "*/5 * * * *", "enabled": true},
+  {"id": "demo-github-api", "collectorType": "collector-github", "sourceSpec": "repo:example-org/demo-api +packages", "cronLine": "0 * * * *", "enabled": true},
+  {"id": "demo-github-org", "collectorType": "collector-github", "sourceSpec": "org.repos:example-org", "cronLine": "0 2 * * *", "enabled": false},
+  {"id": "demo-rss-news", "collectorType": "collector-rss", "sourceSpec": "feed:https://news.example.com/rss.xml", "cronLine": "*/30 * * * *", "enabled": true},
+  {"id": "demo-jmap-inbox", "collectorType": "collector-jmap", "sourceSpec": "mailbox:inbox", "cronLine": "15 * * * *", "enabled": false}
+]

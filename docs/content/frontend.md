@@ -2,6 +2,28 @@
 
 The production UI is a static **Vue 3 + Vite** bundle. You normally serve it from any object store or generic web server container (NGINX, Caddy, `ingress-nginx` static backend, etc.) independent of the Go microservices.
 
+## Tour
+
+The home page links to each area and shows a live feed of control-plane activity (heartbeats, enqueued collection requests, runs).
+
+![Home page](assets/marketing/home.png)
+
+**Collection sources** lists every source with its schedule, last success and pipeline health. You can run a source immediately or duplicate it from here.
+
+![Collection sources](assets/marketing/sources.png)
+
+Each source has a details page with its full run history and identity fields.
+
+![Collection source details](assets/marketing/source-details.png)
+
+**Service heartbeats** shows which collectors, persisters and controllers are reporting in.
+
+![Service heartbeats](assets/marketing/services.png)
+
+**Controller configuration** edits the `icehive_meta` config vars. Secrets are redacted.
+
+![Controller configuration](assets/marketing/config.png)
+
 ## Runtime configuration
 
 At build time (CI `docker build`, `npm run build`, or equivalent), set:

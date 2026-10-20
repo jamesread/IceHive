@@ -1,0 +1,11 @@
+{
+  "amqp.host": "127.0.0.1",
+  "amqp.port": "15682",
+  "amqp.user": "guest",
+  "amqp.password": "guest",
+  "persister_mysql.host": "127.0.0.1",
+  "persister_mysql.port": "13306",
+  "persister_mysql.user": "icehive_sink",
+  "persister_mysql.password": "icehive-sink-demo",
+  "persister_mysql.database": "icehive_sink"
+}

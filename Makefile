@@ -1,5 +1,5 @@
 .PHONY: all build test lint clean proto frontend services docs integration-tests \
-	go-tools services-codestyle services-unittests frontend-codestyle frontend-unittests
+	go-tools services-codestyle services-unittests frontend-codestyle frontend-unittests screenshots
 
 all: proto services frontend
 
@@ -63,6 +63,9 @@ integration-tests:
 
 docs:
 	$(MAKE) -wC docs
+
+screenshots:
+	$(MAKE) -wC var/marketing/screenshots
 
 clean:
 	$(MAKE) -wC services/common clean
