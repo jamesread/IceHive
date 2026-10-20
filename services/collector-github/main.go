@@ -167,6 +167,7 @@ func runOneSource(
 		"opt_dependabot":  srcOpts.Dependabot,
 		"opt_prs":         srcOpts.PRs,
 		"opt_issues":      srcOpts.Issues,
+		"opt_packages":    srcOpts.Packages,
 		"all_under_login": allUnderLogin,
 		"resolved_owner":  owner,
 		"resolved_repo":   repoName,
@@ -187,6 +188,7 @@ func runOneSource(
 		return
 	}
 
+	pkgNamespaceCache := make(map[string]namespacePackagesEntry)
 	for _, repo := range repos {
 		if enriched, err := enrichRepo(ctx, ghClient, repo, src.GetId()); err != nil {
 			log.WithError(err).WithFields(logrus.Fields{
@@ -280,7 +282,19 @@ func runOneSource(
 				}
 			}
 		}
-		entity := buildGitRepoEntity(repo, depSnap, prSnap)
+		var pkgSnap *packagesSnapshot
+		if srcOpts.Packages {
+			snap := fetchPackagesForRepo(ctx, ghClient, repo, pkgNamespaceCache, src.GetId())
+			pkgSnap = &snap
+			if snap.Err != "" {
+				log.WithFields(logrus.Fields{
+					"source_id": src.GetId(),
+					"repo":      repo.GetFullName(),
+					"error":     snap.Err,
+				}).Warn("github packages fetch failed (entity includes packages_fetch_error)")
+			}
+		}
+		entity := buildGitRepoEntity(repo, depSnap, prSnap, pkgSnap)
 		if err := publishCollectorEntity(ctx, amqpClient, entity); err != nil {
 			_ = reportCollectionSourceRun(ctx, controllerBaseURL, src.GetId(), false, truncateErr(err), nextDue)
 			incCollectionRun(src.GetId(), "failure")

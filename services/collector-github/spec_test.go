@@ -19,12 +19,20 @@ func TestParseGitHubSourceSpecIssueModifier(t *testing.T) {
 
 func TestParseGitHubSourceSpecAllModifiers(t *testing.T) {
 	t.Parallel()
-	_, _, _, opts, err := parseGitHubSourceSpec("org.repos:icehive +dependabot +pr +issue")
+	_, _, _, opts, err := parseGitHubSourceSpec("org.repos:icehive +dependabot +pr +issue +packages")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !opts.Dependabot || !opts.PRs || !opts.Issues {
-		t.Fatalf("opts: %+v", opts)
+	enabled := map[string]bool{
+		"dependabot": opts.Dependabot,
+		"pr":         opts.PRs,
+		"issue":      opts.Issues,
+		"packages":   opts.Packages,
+	}
+	for name, on := range enabled {
+		if !on {
+			t.Errorf("+%s not enabled: %+v", name, opts)
+		}
 	}
 }
 

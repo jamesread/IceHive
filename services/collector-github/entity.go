@@ -133,7 +133,7 @@ type entityMessage struct {
 }
 
 //gocyclo:ignore
-func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pullRequestsSnapshot) entityMessage {
+func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pullRequestsSnapshot, pkg *packagesSnapshot) entityMessage {
 	uniqueID := norm.NFC.String(repo.GetNodeID())
 	now := time.Now().UnixMilli()
 
@@ -192,6 +192,51 @@ func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pu
 			values["pull_requests_truncated"] = listTrunc || pr.FetchCapped
 			values["pull_requests_fetch_capped"] = pr.FetchCapped
 			values["pull_requests_fetch_error"] = ""
+		}
+	}
+
+	if pkg != nil {
+		structure["package_count"] = fieldDescriptor{Type: "int64"}
+		structure["packages"] = fieldDescriptor{Type: "string", Length: 1 << 20}
+		structure["packages_truncated"] = fieldDescriptor{Type: "bool"}
+		structure["packages_fetch_capped"] = fieldDescriptor{Type: "bool"}
+		structure["packages_fetch_error"] = fieldDescriptor{Type: "string", Length: 4096}
+		structure["latest_package_type"] = fieldDescriptor{Type: "string", Length: 64}
+		structure["latest_package_name"] = fieldDescriptor{Type: "string", Length: 512}
+		structure["latest_package_version"] = fieldDescriptor{Type: "string", Length: 512}
+		if pkg.Err != "" {
+			errStr := pkg.Err
+			if len(errStr) > 4096 {
+				errStr = errStr[:4096]
+			}
+			values["package_count"] = int64(0)
+			values["packages"] = "[]"
+			values["packages_truncated"] = false
+			values["packages_fetch_capped"] = false
+			values["packages_fetch_error"] = errStr
+			values["latest_package_type"] = ""
+			values["latest_package_name"] = ""
+			values["latest_package_version"] = ""
+		} else {
+			list, listTrunc := packagesForEntity(pkg.Packages, pkg.FetchCapped)
+			values["package_count"] = int64(len(pkg.Packages))
+			if len(list) == 0 {
+				values["packages"] = "[]"
+			} else {
+				values["packages"] = jsonScalar(list)
+			}
+			values["packages_truncated"] = listTrunc
+			values["packages_fetch_capped"] = pkg.FetchCapped
+			values["packages_fetch_error"] = ""
+			if newest, ok := newestPackageSummary(pkg.Packages); ok {
+				values["latest_package_type"] = norm.NFC.String(newest.PackageType)
+				values["latest_package_name"] = truncStr(norm.NFC.String(newest.Name), 512)
+				values["latest_package_version"] = truncStr(norm.NFC.String(newest.LatestVersion), 512)
+			} else {
+				values["latest_package_type"] = ""
+				values["latest_package_name"] = ""
+				values["latest_package_version"] = ""
+			}
 		}
 	}
 

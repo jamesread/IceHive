@@ -19,7 +19,7 @@ func TestBuildGitRepoEntityDescriptionAndTags(t *testing.T) {
 		Description: &desc,
 		Topics:      topics,
 	}
-	entity := buildGitRepoEntity(repo, nil, nil)
+	entity := buildGitRepoEntity(repo, nil, nil, nil)
 	if entity.Values["description"] != desc {
 		t.Fatalf("description: got %v", entity.Values["description"])
 	}

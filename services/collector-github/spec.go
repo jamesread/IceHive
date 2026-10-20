@@ -15,6 +15,7 @@ type githubSourceOpts struct {
 	Dependabot bool
 	PRs        bool
 	Issues     bool
+	Packages   bool
 }
 
 // splitSourceSpec splits "primary +mod1 +mod2" (modifiers are separated by a space followed by +).
@@ -59,8 +60,10 @@ func githubSourceOptsFromModifiers(modifiers []string) (githubSourceOpts, error)
 			out.PRs = true
 		case "issue":
 			out.Issues = true
+		case "packages":
+			out.Packages = true
 		default:
-			return githubSourceOpts{}, fmt.Errorf("unknown source_spec modifier %q (supported: dependabot, pr, issue)", m)
+			return githubSourceOpts{}, fmt.Errorf("unknown source_spec modifier %q (supported: dependabot, pr, issue, packages)", m)
 		}
 	}
 	return out, nil

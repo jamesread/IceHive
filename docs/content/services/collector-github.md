@@ -27,7 +27,7 @@ You can also pass **`-listen :8081`** on the command line; if **`listen`** appea
 
 | `icehive_meta` key | Purpose |
 |--------------------|---------|
-| `github.token` | Personal access token or GitHub App installation token with scopes appropriate for your configured repositories (used via **`GetConfig`**) |
+| `github.token` | Personal access token or GitHub App installation token with scopes appropriate for your configured repositories (used via **`GetConfig`**). Use **`read:packages`** when sources include **`+packages`**. |
 
 Missing or blank tokens degrade to anonymous GitHub REST limits—avoid in production.
 
@@ -40,7 +40,18 @@ Loaded only when present; filenames are lowercase with service suffix.
 | `listen` | `:8081` | HTTP bind for **`/metrics`** & **`/healthz`** when set (overrides the **`-listen`** flag) |
 | `poll_interval_seconds` | `60` | How often the collector re-queries the Controller for collection sources (seconds) |
 
-Anything else belongs in relational **`collection_sources.source_spec`** (repository scopes, Dependabot toggle, PR snapshot toggle, …) rather than static YAML because operators iterate those rows through RPC/UI.
+Anything else belongs in relational **`collection_sources.source_spec`** (repository scopes, Dependabot toggle, PR snapshot toggle, GitHub Packages via **`+packages`**, …) rather than static YAML because operators iterate those rows through RPC/UI.
+
+### `+packages` on `source_spec`
+
+Append **` +packages`** (e.g. `repo:org/app +packages`) to list [GitHub Packages](https://docs.github.com/en/rest/packages/packages) linked to each repository. The collector lists packages under the repository **owner namespace** (`GET /users/{owner}/packages` or `GET /orgs/{org}/packages`, once per owner per run) and keeps rows whose `repository.full_name` matches the repo. The **GitRepo** entity gains:
+
+| Field | Meaning |
+|-------|---------|
+| `package_count` | Packages returned for the repo |
+| `packages` | JSON array of `{package_type, name, latest_version, …}` |
+| `latest_package_type` / `latest_package_name` / `latest_package_version` | Newest package by version timestamp |
+| `packages_fetch_error` | Set when the Packages REST API call fails |
 
 ### Health endpoints
 
