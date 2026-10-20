@@ -1,5 +1,8 @@
 site_name: IceHive
 site_description: Runbooks for deploying and operating IceHive in containers (especially Kubernetes).
+repo_url: https://github.com/jamesread/icehive
+repo_name: jamesread/icehive
+edit_uri: edit/main/docs/content/
 docs_dir: content
 site_dir: site
 
