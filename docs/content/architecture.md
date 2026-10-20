@@ -18,4 +18,4 @@ IceHive divides responsibilities between a centralized **controller**, interchan
 - **Persisters** bind durable queues to the same routing key and land rows in MySQL (current production path) or future filesystem sinks.
 - **Frontend** is a static web bundle that points at the controller base URL (build-time or user-selected) to inspect service heartbeats and configuration.
 
-For concrete deployment patterns (Service layout, configuration mounts, health checks, bootstrapping **`icehive_meta`**), read **[Deploying IceHive](deployment.md)**.
+For concrete deployment patterns (Service layout, configuration mounts, health checks, bootstrapping **`icehive_meta`**), read **[Deploying IceHive](deployment/index.md)**.

@@ -72,7 +72,7 @@ IceHive ships as a single container image, **`ghcr.io/jamesread/icehive`**, that
 docker run -e ICEHIVE_SERVICE=controller ghcr.io/jamesread/icehive:latest
 ```
 
-**Deploying on Kubernetes is the recommended approach.** Run the controller, collectors and persisters as separate Deployments from the same image, alongside MySQL and RabbitMQ. See [Deploying IceHive → Kubernetes](docs/content/deployment.md#typical-kubernetes-footprint) and the ready-to-edit [example manifest](docs/content/examples/kubernetes-icehive.yaml).
+**Deploying on Kubernetes is the recommended approach.** Run the controller, collectors and persisters as separate Deployments from the same image, alongside MySQL and RabbitMQ. See [Deploying on Kubernetes](https://jamesread.github.io/IceHive/deployment/kubernetes) and the ready-to-edit [example manifest](docs/content/examples/kubernetes-icehive.yaml). To run plain containers instead, see [Deploying with Docker](https://jamesread.github.io/IceHive/deployment/docker).
 
 ### Building from source
 

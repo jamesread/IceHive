@@ -8,7 +8,7 @@
 #
 # Collectors and persisters use the same container image; set ICEHIVE_SERVICE and
 # ICEHIVE_CONTROLLER_URL=http://icehive-controller.icehive.svc.cluster.local:8080
-# on additional Deployments (see docs/content/deployment.md).
+# on additional Deployments (see docs/content/deployment/kubernetes.md).
 
 ---
 apiVersion: v1

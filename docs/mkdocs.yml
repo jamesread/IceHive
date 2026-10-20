@@ -10,7 +10,10 @@ theme:
 
 nav:
   - Home: index.md
-  - Deploying IceHive: deployment.md
+  - Deploying IceHive:
+      - Overview: deployment/index.md
+      - Kubernetes: deployment/kubernetes.md
+      - Docker: deployment/docker.md
   - Architecture: architecture.md
   - Services:
       - Controller: services/controller.md

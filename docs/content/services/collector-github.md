@@ -65,4 +65,4 @@ Append **` +packages`** (e.g. `repo:org/app +packages`) to list [GitHub Packages
 
 ## Related docs
 
-[Deploying IceHive → Collector-specific meta](../deployment.md#collector-specific-meta-keys-githubtoken)
+[Deploying IceHive → Collector-specific meta](../deployment/index.md#collector-specific-meta-keys-githubtoken)

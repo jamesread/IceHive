@@ -4,7 +4,7 @@ The controller is IceHive’s **control plane**. It exposes the Connect surface 
 
 ## Container invocation
 
-Use the unified distribution image (**see [Deploying IceHive](../deployment.md)**):
+Use the unified distribution image (**see [Deploying IceHive](../deployment/index.md)**):
 
 | Setting | Typical value |
 |---------|---------------|
@@ -58,7 +58,7 @@ Every key sits in **`config.yaml`** / **`controller.yaml`**:
 | `mysql.database` | _required_ | Must already exist; migrations run here |
 | `persister_mysql.*` | Optional | Fallback sink credentials returned to **`persister-mysql`** when **`icehive_meta`** lacks `persister_mysql.*` rows (bootstrap only) |
 
-The sample `worker_bootstrap` stanza sometimes shipped in developer trees is **documentation-only**—runtime distribution still reads **`icehive_meta`**. Populate AMQP + sink keys through SQL or RPC as described in **[Deploying IceHive](../deployment.md#operational-settings-icehive_meta)**.
+The sample `worker_bootstrap` stanza sometimes shipped in developer trees is **documentation-only**—runtime distribution still reads **`icehive_meta`**. Populate AMQP + sink keys through SQL or RPC as described in **[Deploying IceHive](../deployment/index.md#operational-settings-icehive_meta)**.
 
 ## Operational metadata vs YAML
 
@@ -73,5 +73,5 @@ Calling **`Health`** executes a live **`Ping`** against the controller MySQL poo
 
 ## Related reading
 
-- **AMQP bootstrap keys**: [Deploying IceHive → Operational settings](../deployment.md#amqp-bootstrap-keys-amqp)
-- **Shared env/flags**: [Deploying IceHive → Shared environment variables](../deployment.md#shared-environment-variables-and-flags)
+- **AMQP bootstrap keys**: [Deploying IceHive → Operational settings](../deployment/index.md#amqp-bootstrap-keys-amqp)
+- **Shared env/flags**: [Deploying IceHive → Shared environment variables](../deployment/index.md#shared-environment-variables-and-flags)

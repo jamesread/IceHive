@@ -24,7 +24,7 @@ Persisters authenticate to **sink MySQL** solely through bootstrap payloads—ne
 
 During **`WorkerBootstrap`**, **`persister-mysql`** requests MySQL knobs when `worker_kind == persister`. The controller resolves in order:
 
-1. **`icehive_meta`** keys prefixed **`persister_mysql.`** (recommended production path—see **[Deploying IceHive](../deployment.md#sink-database-keys-persister_mysql)**).
+1. **`icehive_meta`** keys prefixed **`persister_mysql.`** (recommended production path—see **[Deploying IceHive](../deployment/index.md#sink-database-keys-persister_mysql)**).
 2. YAML block **`persister_mysql`** shipped with controller config if relational storage lacks those rows (temporary bootstrap shortcut).
 
 Either way manifests as host/port/user/password/database fields inside the Connect response.

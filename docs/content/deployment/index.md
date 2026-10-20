@@ -6,18 +6,19 @@ Official release images carry the registry and tags listed on GitHub Releases (c
 
 ## How the container starts
 
-Inside the image the entrypoint runs:
+For every backend service the entrypoint runs:
 
 ```shell
 exec "/usr/local/bin/${ICEHIVE_SERVICE}" "$@"
 ```
 
-Anything you append after the image name (`args` in Kubernetes, trailing arguments after `docker run`) is passed straight through (for example **`-configdir /etc/icehive`**).
+Anything you append after the image name (`args` in Kubernetes, trailing arguments after `docker run`) is passed straight through (for example **`-configdir /etc/icehive`**). `ICEHIVE_SERVICE=frontend` instead starts NGINX with the bundled web UI.
 
 ## Choosing `ICEHIVE_SERVICE`
 
 | `ICEHIVE_SERVICE` value | Role |
 |------------------------|------|
+| `frontend` | NGINX serving the web UI and proxying `/api`, `/mcp`, `/openapi` and `/llms.txt` to the controller |
 | `controller` | Connect (gRPC-compatible) HTTP API, MySQL for platform metadata, distributes worker bootstrap data |
 | `collector-github` | Pulls configured GitHub repositories on a cron schedule |
 | `collector-azure` | Azure integrations (minimal behaviour today—see service page) |
@@ -27,51 +28,12 @@ Anything you append after the image name (`args` in Kubernetes, trailing argumen
 | `persister-mysql` | Dynamically tails entity messages into a sink MySQL database |
 | `persister-yaml` | Placeholder YAML sink (consumes bootstrap only—see service page) |
 
-### Example Docker
+## Choosing how to deploy
 
-```shell
-docker run --rm \
-  -e ICEHIVE_SERVICE=persister-mysql \
-  -e ICEHIVE_CONTROLLER_URL=http://controller:8080 \
-  -v /path/to/instance-config:/etc/icehive:ro \
-  ghcr.io/jamesread/icehive:v0.1.2 \
-  -configdir /etc/icehive
-```
+- **[Kubernetes](kubernetes.md)** (recommended): one Deployment per service from the same image, with probes, config mounts and the example manifest.
+- **[Docker](docker.md)**: run each service as its own container. Useful for evaluation or single-host setups.
 
-## Typical Kubernetes footprint
-
-### Example manifest
-
-A minimal multi-document manifest that runs the **controller** (ConfigMap-mounted `config.yaml`, SQL migrations baked into the container at `/opt/ih/migrations`, ClusterIP Service, `tcpSocket` probes) lives at [`examples/kubernetes-icehive.yaml`](examples/kubernetes-icehive.yaml). Edit image tag, hostnames, and passwords, deploy MySQL and RabbitMQ (or point at existing brokers / databases), then `kubectl apply -f` the file. Add collectors and persisters as separate Deployments using the **same** image and `ICEHIVE_CONTROLLER_URL=http://icehive-controller.icehive.svc.cluster.local:8080` as described in [Shared environment variables](#shared-environment-variables-and-flags).
-
-Provision these shared dependencies:
-
-1. **MySQL cluster A (“controller”)** holding IceHive operational tables (`collection_sources`, `icehive_meta`, heartbeat tracking, migrations applied by controller).
-2. **MySQL cluster B (“sink”)** *optional but recommended*: dedicated database reachable only by **`persister-mysql`** credentials you publish through the Controller.
-3. **RabbitMQ** (compatible AMQP URI) reachable from every Pod.
-
-Recommended workload split:
-
-| Workload category | Scheduling notes |
-|------------------|------------------|
-| `controller` | Mount **config only** (migrations ship in the image under `/opt/ih/migrations`); expose Service/Ingress suitable for HTTPS termination if externally facing |
-| collectors / persisters | Set `ICEHIVE_CONTROLLER_URL` to your controller Service Cluster DNS |
-
-### Observability probes
-
-Collectors and persisters expose Prometheus metrics on **`/metrics`** plus **`GET /healthz`** (**`200`** body `ok`). Use HTTP probes targeting **`/healthz`**.
-
-The **controller** exposes **`/metrics`** and the Connect endpoints but **not** **`/healthz`**. Prefer a **`tcpSocket`** readiness probe matching the RPC port until you add an HTTP-compatible health shim.
-
-Pin stable HTTP binds in YAML. Collectors/persisters can usually set **`listen: ":8080"`**, but **`controller`** treats **`":8080"` specially (it participates in dynamic port allocation). Use **`listen: "0.0.0.0:8080"`**—or another explicit **`host:port`**—inside Kubernetes so Deployments/Services/targetPorts stay aligned.
-
-### Configuration volumes
-
-Treat `/etc/icehive` as a standard mount inside every Pod (`emptyDir`, **ConfigMap** + **Secret** projections, CSI, etc.). Start every process with **`args: ["-configdir", "/etc/icehive"]`** unless you reorganize layouts.
-
-Secrets (password fields) normally live in Kubernetes **Secrets** layered under the same path.
-
----
+Both need **MySQL** and **RabbitMQ**, and both use the same `icehive_meta` settings and environment variables described below.
 
 ## Operational settings (`icehive_meta`)
 
