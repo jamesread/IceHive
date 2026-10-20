@@ -13,6 +13,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TestMain clears repository-local git variables (`git rev-parse --local-env-vars`)
+// so tests run from a git hook (e.g. pre-commit) operate on their temp repos,
+// not the enclosing checkout's index.
+func TestMain(m *testing.M) {
+	for _, k := range []string{
+		"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT",
+		"GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE",
+		"GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
+		"GIT_SHALLOW_FILE", "GIT_COMMON_DIR",
+	} {
+		_ = os.Unsetenv(k)
+	}
+	os.Exit(m.Run())
+}
+
 func initGitRepo(t *testing.T, dir string) {
 	t.Helper()
 	for _, args := range [][]string{
