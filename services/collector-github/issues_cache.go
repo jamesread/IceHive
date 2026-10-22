@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,11 +61,16 @@ func newIssueCollector(k *koanf.Koanf) *issueCollector {
 	}
 }
 
-func issueCacheDir(k *koanf.Koanf) string {
+func configuredIssueCacheDir(k *koanf.Koanf) string {
 	if k != nil && k.Exists("issue_cache_dir") {
-		if d := strings.TrimSpace(k.String("issue_cache_dir")); d != "" {
-			return d
-		}
+		return strings.TrimSpace(k.String("issue_cache_dir"))
+	}
+	return ""
+}
+
+func issueCacheDir(k *koanf.Koanf) string {
+	if d := configuredIssueCacheDir(k); d != "" {
+		return d
 	}
 	if base, err := os.UserCacheDir(); err == nil {
 		return filepath.Join(base, "icehive", "collector-github", "issues")
@@ -203,9 +209,7 @@ func mergeIssueCache(cache *repoIssueCacheFile, fetched []*github.Issue, repoUID
 		Issues:  map[string]cachedIssueEntry{},
 	}
 	if cache != nil && cache.Issues != nil {
-		for k, v := range cache.Issues {
-			out.Issues[k] = v
-		}
+		maps.Copy(out.Issues, cache.Issues)
 		if cache.RepoFullName != "" {
 			out.RepoFullName = cache.RepoFullName
 		}
@@ -281,6 +285,17 @@ func (c *issueCollector) cachePath(owner, repo string) string {
 	return filepath.Join(c.dir, safe+".json")
 }
 
+func decodeIssueCache(b []byte) (*repoIssueCacheFile, error) {
+	var cache repoIssueCacheFile
+	if err := json.Unmarshal(b, &cache); err != nil {
+		return nil, err
+	}
+	if cache.Issues == nil {
+		cache.Issues = map[string]cachedIssueEntry{}
+	}
+	return &cache, nil
+}
+
 func (c *issueCollector) load(owner, repo string) (*repoIssueCacheFile, error) {
 	path := c.cachePath(owner, repo)
 	// #nosec G304 -- cachePath derives the filename from sanitized repository identifiers.
@@ -291,14 +306,15 @@ func (c *issueCollector) load(owner, repo string) (*repoIssueCacheFile, error) {
 		}
 		return nil, err
 	}
-	var cache repoIssueCacheFile
-	if err := json.Unmarshal(b, &cache); err != nil {
-		return nil, err
+	return decodeIssueCache(b)
+}
+
+func writeIssueCacheFile(path string, b []byte) error {
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, b, 0o600); err != nil {
+		return err
 	}
-	if cache.Issues == nil {
-		cache.Issues = map[string]cachedIssueEntry{}
-	}
-	return &cache, nil
+	return os.Rename(tmp, path)
 }
 
 func (c *issueCollector) save(owner, repo string, cache *repoIssueCacheFile) error {
@@ -312,12 +328,7 @@ func (c *issueCollector) save(owner, repo string, cache *repoIssueCacheFile) err
 	if err != nil {
 		return err
 	}
-	path := c.cachePath(owner, repo)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return writeIssueCacheFile(c.cachePath(owner, repo), b)
 }
 
 func probeLatestRepoIssue(ctx context.Context, sourceID string, gh *github.Client, owner, repo string) (*github.Issue, error) {
@@ -337,10 +348,17 @@ func probeLatestRepoIssue(ctx context.Context, sourceID string, gh *github.Clien
 	if err != nil {
 		return nil, err
 	}
-	for _, issue := range issues {
-		if issue != nil && !issue.IsPullRequest() {
-			return issue, nil
-		}
+	if issue := firstNonPRIssue(issues); issue != nil {
+		return issue, nil
 	}
 	return nil, fmt.Errorf("no non-PR issues found in probe for %s/%s", owner, repo)
+}
+
+func firstNonPRIssue(issues []*github.Issue) *github.Issue {
+	for _, issue := range issues {
+		if issue != nil && !issue.IsPullRequest() {
+			return issue
+		}
+	}
+	return nil
 }

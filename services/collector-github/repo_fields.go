@@ -187,7 +187,7 @@ func securityAndAnalysisJSON(s *github.SecurityAndAnalysis) string {
 	return jsonScalar(m)
 }
 
-func customPropertiesJSON(props map[string]interface{}) string {
+func customPropertiesJSON(props map[string]any) string {
 	if len(props) == 0 {
 		return "{}"
 	}

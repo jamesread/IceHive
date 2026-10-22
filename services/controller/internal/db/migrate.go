@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -57,7 +57,7 @@ func availableUpVersions(migrationsDir string) ([]uint, error) {
 		}
 		versions = append(versions, uint(n))
 	}
-	sort.Slice(versions, func(i, j int) bool { return versions[i] < versions[j] })
+	slices.Sort(versions)
 	return versions, nil
 }
 

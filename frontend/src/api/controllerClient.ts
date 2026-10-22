@@ -68,14 +68,14 @@ function writeHistory(urls: string[]): void {
 }
 
 function migrateLegacySessionUrl(): string[] {
-  let legacy = ''
+  let legacy: string
   try {
     legacy = sessionStorage.getItem(LEGACY_SESSION_KEY)?.trim() ?? ''
   } catch {
     return []
   }
   if (!legacy) return []
-  let canonical = legacy
+  let canonical: string
   try {
     canonical = normalizeControllerBaseUrl(legacy)
   } catch {

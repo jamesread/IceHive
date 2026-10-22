@@ -14,13 +14,17 @@ import (
 
 var unsafePathSegment = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
 
+func reservedEntityDirName(dir string) bool {
+	return dir == "." || dir == ".." || strings.Contains(dir, string(os.PathSeparator))
+}
+
 // entityDirName returns the per-entity-type directory name (PascalCase entity_type from the bus).
 func entityDirName(entityType string) (string, error) {
 	dir := strings.TrimSpace(entityType)
 	if dir == "" {
 		return "", fmt.Errorf("empty entity_type")
 	}
-	if strings.Contains(dir, string(os.PathSeparator)) || dir == "." || dir == ".." {
+	if reservedEntityDirName(dir) {
 		return "", fmt.Errorf("invalid entity_type %q", entityType)
 	}
 	return dir, nil

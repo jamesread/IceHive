@@ -20,12 +20,7 @@ func SetPersisterLastSuccess(persister, entityType string, t time.Time) {
 	persisterLastSuccess.WithLabelValues(persister, entityType).Set(float64(t.Unix()))
 }
 
-// ClassifyPersistError maps a persist error message to a coarse error class for metrics.
-func ClassifyPersistError(err error) string {
-	if err == nil {
-		return "none"
-	}
-	msg := strings.ToLower(err.Error())
+func classifyPersistErrorMsg(msg string) string {
 	switch {
 	case strings.Contains(msg, "decode entity json"), strings.Contains(msg, "unsupported entity envelope"):
 		return "decode"
@@ -36,4 +31,12 @@ func ClassifyPersistError(err error) string {
 	default:
 		return "other"
 	}
+}
+
+// ClassifyPersistError maps a persist error message to a coarse error class for metrics.
+func ClassifyPersistError(err error) string {
+	if err == nil {
+		return "none"
+	}
+	return classifyPersistErrorMsg(strings.ToLower(err.Error()))
 }

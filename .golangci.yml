@@ -19,20 +19,20 @@ linters:
     - govet
     - ineffassign
     - misspell
-#    - modernize
+    - modernize
     - nilerr
     - noctx
 #    - promlinter
     - staticcheck
-#    - testifylint
+    - testifylint
     - thelper
     - unconvert
-#    - unparam
+    - unparam
     - unused
     - usestdlibvars
   settings:
     gocyclo:
-      min-complexity: 5
+      min-complexity: 4
     gosec:
       # Full gosec rule set (G101–G6xx), including Slowloris checks G112/G114.
       enable-all-rules: true

@@ -105,25 +105,34 @@ func packageBelongsToRepo(pkg ghRepoPackage, repoFullName string) bool {
 	return strings.EqualFold(strings.TrimSpace(pkg.Repository.FullName), repoFullName)
 }
 
+func namespacePackagesPath(ownerLogin, ownerType string) string {
+	ownerLogin = strings.TrimSpace(ownerLogin)
+	if strings.EqualFold(strings.TrimSpace(ownerType), "Organization") {
+		return fmt.Sprintf("orgs/%s/packages", ownerLogin)
+	}
+	return fmt.Sprintf("users/%s/packages", ownerLogin)
+}
+
+func appendURLQuery(path string, opts any) (string, error) {
+	v, err := query.Values(opts)
+	if err != nil {
+		return "", err
+	}
+	if enc := v.Encode(); enc != "" {
+		return path + "?" + enc, nil
+	}
+	return path, nil
+}
+
 func listNamespacePackages(
 	ctx context.Context,
 	gh *github.Client,
 	ownerLogin, ownerType string,
 	opts *listNamespacePackagesOpts,
 ) ([]ghRepoPackage, *github.Response, error) {
-	ownerLogin = strings.TrimSpace(ownerLogin)
-	var u string
-	if strings.EqualFold(strings.TrimSpace(ownerType), "Organization") {
-		u = fmt.Sprintf("orgs/%s/packages", ownerLogin)
-	} else {
-		u = fmt.Sprintf("users/%s/packages", ownerLogin)
-	}
-	v, err := query.Values(opts)
+	u, err := appendURLQuery(namespacePackagesPath(ownerLogin, ownerType), opts)
 	if err != nil {
 		return nil, nil, err
-	}
-	if enc := v.Encode(); enc != "" {
-		u += "?" + enc
 	}
 	req, err := gh.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
@@ -167,6 +176,10 @@ func packageVersionsPath(ownerLogin, ownerType, packageType, packageName string)
 	return fmt.Sprintf("users/%s/packages/%s/%s/versions", ownerLogin, packageType, nameSeg)
 }
 
+func preferPackageVersion(name string, candidateAt, updatedAt time.Time) bool {
+	return name == "" || candidateAt.After(updatedAt)
+}
+
 func latestPackageVersion(versions []ghPackageVersion) (name string, updatedAt time.Time) {
 	for _, ver := range versions {
 		verName := strings.TrimSpace(ver.Name)
@@ -174,7 +187,7 @@ func latestPackageVersion(versions []ghPackageVersion) (name string, updatedAt t
 			continue
 		}
 		candidateAt := versionTimestamp(ver)
-		if name == "" || candidateAt.After(updatedAt) {
+		if preferPackageVersion(name, candidateAt, updatedAt) {
 			name = verName
 			updatedAt = candidateAt
 		}
@@ -182,14 +195,19 @@ func latestPackageVersion(versions []ghPackageVersion) (name string, updatedAt t
 	return name, updatedAt
 }
 
+func nonZeroUTC(t *time.Time) (time.Time, bool) {
+	if t == nil || t.IsZero() {
+		return time.Time{}, false
+	}
+	return t.UTC(), true
+}
+
 func versionTimestamp(v ghPackageVersion) time.Time {
-	if v.UpdatedAt != nil && !v.UpdatedAt.IsZero() {
-		return v.UpdatedAt.UTC()
+	if at, ok := nonZeroUTC(v.UpdatedAt); ok {
+		return at
 	}
-	if v.CreatedAt != nil && !v.CreatedAt.IsZero() {
-		return v.CreatedAt.UTC()
-	}
-	return time.Time{}
+	at, _ := nonZeroUTC(v.CreatedAt)
+	return at
 }
 
 // firstNonEmpty returns the first value that is not blank after trimming.
@@ -224,30 +242,49 @@ func hasNextPage(resp *github.Response) bool {
 	return resp != nil && resp.NextPage != 0
 }
 
+func listNamespacePackagesPage(
+	ctx context.Context,
+	gh *github.Client,
+	ownerLogin, ownerType, pkgType, sourceID string,
+	page int,
+) (pkgs []ghRepoPackage, more bool, err error) {
+	opts := &listNamespacePackagesOpts{PackageType: pkgType, Page: page, PerPage: 100}
+	var resp *github.Response
+	err = observeFetchCtx(ctx, sourceID, "packages.list_namespace", func(c context.Context) error {
+		var innerErr error
+		pkgs, resp, innerErr = listNamespacePackages(c, gh, ownerLogin, ownerType, opts)
+		return innerErr
+	})
+	if packagesUnavailable(err) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	return pkgs, hasNextPage(resp), nil
+}
+
 // loadNamespacePackagesOfType pages through one package_type until there are no more pages or limit is reached.
 func loadNamespacePackagesOfType(ctx context.Context, gh *github.Client, ownerLogin, ownerType, pkgType, sourceID string, limit int) ([]ghRepoPackage, error) {
 	var out []ghRepoPackage
 	for page := 1; len(out) < limit; page++ {
-		opts := &listNamespacePackagesOpts{PackageType: pkgType, Page: page, PerPage: 100}
-		var pkgs []ghRepoPackage
-		var resp *github.Response
-		err := observeFetchCtx(ctx, sourceID, "packages.list_namespace", func(c context.Context) error {
-			var innerErr error
-			pkgs, resp, innerErr = listNamespacePackages(c, gh, ownerLogin, ownerType, opts)
-			return innerErr
-		})
-		if packagesUnavailable(err) {
-			return out, nil
-		}
+		pkgs, more, err := listNamespacePackagesPage(ctx, gh, ownerLogin, ownerType, pkgType, sourceID, page)
 		if err != nil {
 			return nil, err
 		}
 		out = append(out, pkgs...)
-		if !hasNextPage(resp) {
+		if !more {
 			break
 		}
 	}
 	return out, nil
+}
+
+func capPackages(all []ghRepoPackage) []ghRepoPackage {
+	if len(all) > maxPackagesFetch {
+		return all[:maxPackagesFetch]
+	}
+	return all
 }
 
 // loadNamespacePackages lists packages for a user/org namespace (all supported package_type values).
@@ -263,10 +300,18 @@ func loadNamespacePackages(ctx context.Context, gh *github.Client, ownerLogin, o
 		}
 		all = append(all, pkgs...)
 	}
-	if len(all) > maxPackagesFetch {
-		all = all[:maxPackagesFetch]
+	return capPackages(all), nil
+}
+
+func namespaceIdentity(repo *github.Repository) (login, ownerType, errMsg string) {
+	if repo == nil {
+		return "", "", "nil repository"
 	}
-	return all, nil
+	login = repoOwnerLogin(repo)
+	if login == "" {
+		return "", "", "repository has no owner login"
+	}
+	return login, repoOwnerType(repo), ""
 }
 
 func namespacePackagesFromCache(
@@ -276,14 +321,10 @@ func namespacePackagesFromCache(
 	cache map[string]namespacePackagesEntry,
 	sourceID string,
 ) namespacePackagesEntry {
-	if repo == nil {
-		return namespacePackagesEntry{Err: "nil repository"}
+	ownerLogin, ownerType, errMsg := namespaceIdentity(repo)
+	if errMsg != "" {
+		return namespacePackagesEntry{Err: errMsg}
 	}
-	ownerLogin := repoOwnerLogin(repo)
-	if ownerLogin == "" {
-		return namespacePackagesEntry{Err: "repository has no owner login"}
-	}
-	ownerType := repoOwnerType(repo)
 	key := namespaceCacheKey(ownerLogin, ownerType)
 	if ent, ok := cache[key]; ok {
 		return ent
@@ -373,6 +414,10 @@ func packagesForEntity(list []repoPackageSummary, fetchCapped bool) (out []repoP
 
 // newestPackageSummary picks the versioned package with the newest VersionUpdatedAt;
 // packages without a parseable timestamp only win when no other package has one.
+func newerSummary(found bool, at, bestAt time.Time) bool {
+	return !found || at.After(bestAt)
+}
+
 func newestPackageSummary(list []repoPackageSummary) (repoPackageSummary, bool) {
 	var best repoPackageSummary
 	var bestAt time.Time
@@ -382,7 +427,7 @@ func newestPackageSummary(list []repoPackageSummary) (repoPackageSummary, bool) 
 			continue
 		}
 		at, _ := time.Parse(time.RFC3339, p.VersionUpdatedAt)
-		if !found || at.After(bestAt) {
+		if newerSummary(found, at, bestAt) {
 			best, bestAt, found = p, at, true
 		}
 	}

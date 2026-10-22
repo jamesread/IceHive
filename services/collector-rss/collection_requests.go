@@ -15,6 +15,24 @@ const collectionRequestQueueLogical = "collector-rss-collection-requests"
 
 var collectionRequestJSON = protojson.UnmarshalOptions{DiscardUnknown: true}
 
+func handleRSSCollectionRequest(hctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, body []byte, fetchTimeout time.Duration, userAgent string, itemsMax int) error {
+	msg := &icehivev1.CollectionRequest{}
+	if err := collectionRequestJSON.Unmarshal(body, msg); err != nil {
+		log.WithError(err).Warn("dropping malformed collection request JSON")
+		return nil
+	}
+	src := msg.GetSource()
+	if src == nil || src.GetCollectorType() != collectorRssType {
+		return nil
+	}
+	log.WithFields(logrus.Fields{
+		"source_id":   src.GetId(),
+		"source_spec": src.GetSourceSpec(),
+	}).Info("rss: collection request received; starting run")
+	runOneRssSource(hctx, log, amqpClient, controllerBaseURL, src, time.Now().UTC(), fetchTimeout, userAgent, itemsMax)
+	return nil
+}
+
 func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string, fetchTimeout time.Duration, userAgent string, itemsMax int) error {
 	rk := amqpctl.CollectorCollectionRequestRoutingKey(collectorRssType)
 	q := amqpctl.QueueName(collectionRequestQueueLogical)
@@ -22,24 +40,7 @@ func consumeCollectionRequests(ctx context.Context, log *logrus.Logger, amqpClie
 		return err
 	}
 	return amqpClient.ConsumeJSON(ctx, q, rk, func(hctx context.Context, body []byte) error {
-		msg := &icehivev1.CollectionRequest{}
-		if err := collectionRequestJSON.Unmarshal(body, msg); err != nil {
-			log.WithError(err).Warn("dropping malformed collection request JSON")
-			return nil
-		}
-		src := msg.GetSource()
-		if src == nil {
-			return nil
-		}
-		if src.GetCollectorType() != collectorRssType {
-			return nil
-		}
-		log.WithFields(logrus.Fields{
-			"source_id":   src.GetId(),
-			"source_spec": src.GetSourceSpec(),
-		}).Info("rss: collection request received; starting run")
-		runOneRssSource(hctx, log, amqpClient, controllerBaseURL, src, time.Now().UTC(), fetchTimeout, userAgent, itemsMax)
-		return nil
+		return handleRSSCollectionRequest(hctx, log, amqpClient, controllerBaseURL, body, fetchTimeout, userAgent, itemsMax)
 	})
 }
 

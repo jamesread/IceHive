@@ -60,6 +60,21 @@ func gitHubRepoRecollectSpec(repo *github.Repository) *string {
 	return &s
 }
 
+func dependabotAlertNumberID(repoNodeID string, a *github.DependabotAlert) string {
+	if n := a.GetNumber(); n != 0 {
+		return norm.NFC.String(fmt.Sprintf("%s:dependabot:%d", repoNodeID, n))
+	}
+	return ""
+}
+
+func dependabotURLID(repoNodeID, htmlURL string) string {
+	if htmlURL == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(repoNodeID + ":" + htmlURL))
+	return norm.NFC.String(fmt.Sprintf("%s:dependabot:url:%x", repoNodeID, sum[:12]))
+}
+
 // dependabotIssueSourceUniqueID returns a stable id for this alert within GitHub.
 // GitHub does not expose a Dependabot node_id on the REST alert; we use repo node id + alert number,
 // or a digest of the alert HTML URL when number is missing.
@@ -68,15 +83,10 @@ func dependabotIssueSourceUniqueID(repoNodeID string, a *github.DependabotAlert)
 	if repoNodeID == "" || a == nil {
 		return ""
 	}
-	if n := a.GetNumber(); n != 0 {
-		return norm.NFC.String(fmt.Sprintf("%s:dependabot:%d", repoNodeID, n))
+	if id := dependabotAlertNumberID(repoNodeID, a); id != "" {
+		return id
 	}
-	u := norm.NFC.String(strings.TrimSpace(a.GetHTMLURL()))
-	if u == "" {
-		return ""
-	}
-	sum := sha256.Sum256([]byte(repoNodeID + ":" + u))
-	return norm.NFC.String(fmt.Sprintf("%s:dependabot:url:%x", repoNodeID, sum[:12]))
+	return dependabotURLID(repoNodeID, norm.NFC.String(strings.TrimSpace(a.GetHTMLURL())))
 }
 
 // githubIssueSourceUniqueID returns a stable id for this issue within GitHub.
@@ -257,11 +267,7 @@ func buildGitRepoEntity(repo *github.Repository, dep *dependabotSnapshot, pr *pu
 	}
 }
 
-// repoTagsJSON returns a JSON array string of GitHub repository topics (UI "tags").
-func repoTagsJSON(topics []string) string {
-	if len(topics) == 0 {
-		return "[]"
-	}
+func normalizedTopics(topics []string) []string {
 	out := make([]string, 0, len(topics))
 	for _, t := range topics {
 		t = norm.NFC.String(strings.TrimSpace(t))
@@ -269,6 +275,12 @@ func repoTagsJSON(topics []string) string {
 			out = append(out, t)
 		}
 	}
+	return out
+}
+
+// repoTagsJSON returns a JSON array string of GitHub repository topics (UI "tags").
+func repoTagsJSON(topics []string) string {
+	out := normalizedTopics(topics)
 	if len(out) == 0 {
 		return "[]"
 	}

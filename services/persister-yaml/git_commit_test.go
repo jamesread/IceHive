@@ -129,11 +129,16 @@ func TestSyncGitYAMLCommitsUntrackedOnStartup(t *testing.T) {
 	if res.committedFiles != 1 {
 		t.Fatalf("committed %d files, want 1", res.committedFiles)
 	}
+	requireGitLogContains(t, dir, "startup snapshot")
+}
+
+func requireGitLogContains(t *testing.T, dir, want string) {
+	t.Helper()
 	out, err := exec.CommandContext(t.Context(), "git", "-C", dir, "log", "-1", "--oneline").CombinedOutput()
 	if err != nil {
 		t.Fatalf("git log: %v (%s)", err, out)
 	}
-	if !strings.Contains(string(out), "startup snapshot") {
+	if !strings.Contains(string(out), want) {
 		t.Fatalf("unexpected log: %s", out)
 	}
 }

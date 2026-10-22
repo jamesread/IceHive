@@ -13,9 +13,9 @@ func TestBuildGitRepoEntityDescriptionAndTags(t *testing.T) {
 	desc := "A test repository"
 	topics := []string{"go", "icehive"}
 	repo := &github.Repository{
-		NodeID:      github.Ptr("R_kg"),
-		Name:        github.Ptr("icehive"),
-		FullName:    github.Ptr("org/icehive"),
+		NodeID:      new("R_kg"),
+		Name:        new("icehive"),
+		FullName:    new("org/icehive"),
 		Description: &desc,
 		Topics:      topics,
 	}

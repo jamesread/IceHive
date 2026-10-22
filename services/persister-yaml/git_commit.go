@@ -75,26 +75,37 @@ func (s *yamlStore) runPeriodicGitCommit(ctx context.Context, log *logrus.Logger
 	}
 }
 
+func (s *yamlStore) commitIfEnabled(ctx context.Context, message string) (int, error) {
+	if !gitCommitEnabled() {
+		return 0, nil
+	}
+	return commitUntrackedYAMLLocked(ctx, s.root, message)
+}
+
+func (s *yamlStore) pushIfEnabled(ctx context.Context) (bool, error) {
+	if !gitPushEnabled() {
+		return false, nil
+	}
+	if err := gitPushLocked(ctx, s.root); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // syncGitYAML pauses entity writes, optionally commits untracked YAML, then optionally pushes.
 func (s *yamlStore) syncGitYAML(ctx context.Context, log *logrus.Logger, message string) (gitSyncResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	log.Debug("pausing entity writes for git sync")
-	var res gitSyncResult
-	if gitCommitEnabled() {
-		n, err := commitUntrackedYAMLLocked(ctx, s.root, message)
-		if err != nil {
-			return res, err
-		}
-		res.committedFiles = n
+	n, err := s.commitIfEnabled(ctx, message)
+	if err != nil {
+		return gitSyncResult{}, err
 	}
-	if gitPushEnabled() {
-		if err := gitPushLocked(ctx, s.root); err != nil {
-			return res, err
-		}
-		res.pushed = true
+	pushed, err := s.pushIfEnabled(ctx)
+	if err != nil {
+		return gitSyncResult{committedFiles: n}, err
 	}
-	return res, nil
+	return gitSyncResult{committedFiles: n, pushed: pushed}, nil
 }
 
 func gitPushArgs() []string {

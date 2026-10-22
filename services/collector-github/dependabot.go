@@ -31,7 +31,7 @@ func fetchDependabotAlertsForRepo(ctx context.Context, gh *github.Client, owner,
 	// Dependabot alerts use cursor pagination (Link rel="next" with ?cursor=...), not ?page=.
 	// state=open: server-side filter so dismissed/fixed alerts are not fetched or emitted.
 	opts := &github.ListAlertsOptions{
-		State:             github.Ptr("open"),
+		State:             new("open"),
 		ListCursorOptions: github.ListCursorOptions{PerPage: 100},
 	}
 	var all []*github.DependabotAlert

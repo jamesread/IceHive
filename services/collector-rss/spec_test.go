@@ -5,6 +5,13 @@ import (
 	"testing"
 )
 
+func requireFeedRecollectSpec(t *testing.T, got *string, want string) {
+	t.Helper()
+	if got == nil || *got != want {
+		t.Fatalf("got %v", got)
+	}
+}
+
 func TestFeedRecollectSpec(t *testing.T) {
 	t.Parallel()
 	if feedRecollectSpec("") != nil {
@@ -13,10 +20,7 @@ func TestFeedRecollectSpec(t *testing.T) {
 	if feedRecollectSpec("   ") != nil {
 		t.Fatal("blank url")
 	}
-	p := feedRecollectSpec("https://example.com/news.atom")
-	if p == nil || *p != "feed:https://example.com/news.atom" {
-		t.Fatalf("got %v", p)
-	}
+	requireFeedRecollectSpec(t, feedRecollectSpec("https://example.com/news.atom"), "feed:https://example.com/news.atom")
 }
 
 //gocyclo:ignore

@@ -24,14 +24,21 @@ func WithAPIPrefix(base string) string {
 	return b + APIPrefix
 }
 
+func isConnectUnknown405(err error) bool {
+	var ce *connect.Error
+	if !errors.As(err, &ce) {
+		return false
+	}
+	return ce.Code() == connect.CodeUnknown && strings.Contains(strings.ToLower(ce.Message()), "405")
+}
+
 // IsMethodNotAllowed reports whether err is an HTTP 405 from the controller Connect client.
 func IsMethodNotAllowed(err error) bool {
 	if err == nil {
 		return false
 	}
-	var ce *connect.Error
-	if errors.As(err, &ce) {
-		return ce.Code() == connect.CodeUnknown && strings.Contains(strings.ToLower(ce.Message()), "405")
+	if isConnectUnknown405(err) {
+		return true
 	}
 	msg := strings.ToLower(err.Error())
 	return strings.Contains(msg, "405") && strings.Contains(msg, "method not allowed")

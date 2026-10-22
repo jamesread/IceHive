@@ -56,6 +56,14 @@ func NewRing(capacity int) *Ring {
 	}
 }
 
+func (r *Ring) appendLocked(e Event) {
+	r.buf[r.next] = e
+	r.next = (r.next + 1) % r.cap
+	if r.next == 0 {
+		r.full = true
+	}
+}
+
 // Record appends an event (fills id and unix_ms when unset).
 func (r *Ring) Record(e Event) {
 	if r == nil {
@@ -69,11 +77,7 @@ func (r *Ring) Record(e Event) {
 	if e.ID == "" {
 		e.ID = fmt.Sprintf("%d", r.seq.Add(1))
 	}
-	r.buf[r.next] = e
-	r.next = (r.next + 1) % r.cap
-	if r.next == 0 {
-		r.full = true
-	}
+	r.appendLocked(e)
 }
 
 func (r *Ring) acceptHeartbeat(serviceName string, unixMs int64) bool {
@@ -94,6 +98,13 @@ func heartbeatSummary(serviceName, version string) string {
 	return fmt.Sprintf("Heartbeat from %s", serviceName)
 }
 
+func unixMsOrNow(unixMs int64) int64 {
+	if unixMs <= 0 {
+		return time.Now().UnixMilli()
+	}
+	return unixMs
+}
+
 // RecordHeartbeat records a heartbeat_received event, throttled per service.
 func (r *Ring) RecordHeartbeat(serviceName, version string, unixMs int64) {
 	if r == nil {
@@ -103,9 +114,7 @@ func (r *Ring) RecordHeartbeat(serviceName, version string, unixMs int64) {
 	if serviceName == "" {
 		return
 	}
-	if unixMs <= 0 {
-		unixMs = time.Now().UnixMilli()
-	}
+	unixMs = unixMsOrNow(unixMs)
 	if !r.acceptHeartbeat(serviceName, unixMs) {
 		return
 	}

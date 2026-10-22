@@ -18,20 +18,20 @@ func TestRepoToScalarValuesExtended(t *testing.T) {
 	created := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
 	adv := "enabled"
 	repo := &github.Repository{
-		NodeID:     github.Ptr("R_kg"),
-		Name:       github.Ptr("forked"),
-		FullName:   github.Ptr("org/forked"),
-		Fork:       github.Ptr(true),
+		NodeID:     new("R_kg"),
+		Name:       new("forked"),
+		FullName:   new("org/forked"),
+		Fork:       new(true),
 		Visibility: &vis,
 		Homepage:   &homepage,
-		Size:       github.Ptr(42),
+		Size:       new(42),
 		CreatedAt:  &github.Timestamp{Time: created},
 		Parent:     &github.Repository{FullName: &parentFN},
 		Source:     &github.Repository{FullName: &sourceFN},
 		SecurityAndAnalysis: &github.SecurityAndAnalysis{
 			AdvancedSecurity: &github.AdvancedSecurity{Status: &adv},
 		},
-		CustomProperties: map[string]interface{}{"tier": "prod"},
+		CustomProperties: map[string]any{"tier": "prod"},
 	}
 	owner := "org"
 	repo.Owner = &github.User{Login: &owner}
@@ -62,7 +62,7 @@ func TestRepoToScalarValuesExtended(t *testing.T) {
 	if sec["advanced_security"] != "enabled" {
 		t.Fatalf("security: %v", sec)
 	}
-	var props map[string]interface{}
+	var props map[string]any
 	if err := json.Unmarshal([]byte(vals["custom_properties"].(string)), &props); err != nil {
 		t.Fatal(err)
 	}
@@ -75,9 +75,9 @@ func TestGitRepoScalarStructureCoversValues(t *testing.T) {
 	t.Parallel()
 	structure := gitRepoScalarStructure()
 	repo := &github.Repository{
-		NodeID:   github.Ptr("R"),
-		Name:     github.Ptr("n"),
-		FullName: github.Ptr("o/n"),
+		NodeID:   new("R"),
+		Name:     new("n"),
+		FullName: new("o/n"),
 	}
 	for key := range repoToScalarValues(repo) {
 		if _, ok := structure[key]; !ok {

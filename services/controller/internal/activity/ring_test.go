@@ -5,19 +5,24 @@ import (
 	"time"
 )
 
+func requireEventSummaries(t *testing.T, got []Event, want ...string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("len=%d want %d", len(got), len(want))
+	}
+	for i, s := range want {
+		if got[i].Summary != s {
+			t.Fatalf("got[%d]=%q want %q", i, got[i].Summary, s)
+		}
+	}
+}
+
 func TestRingListNewestFirst(t *testing.T) {
 	r := NewRing(5)
 	r.Record(Event{Kind: KindHeartbeatReceived, Summary: "a", UnixMs: 1})
 	r.Record(Event{Kind: KindHeartbeatReceived, Summary: "b", UnixMs: 2})
 	r.Record(Event{Kind: KindHeartbeatReceived, Summary: "c", UnixMs: 3})
-
-	got := r.List(10)
-	if len(got) != 3 {
-		t.Fatalf("len=%d want 3", len(got))
-	}
-	if got[0].Summary != "c" || got[1].Summary != "b" || got[2].Summary != "a" {
-		t.Fatalf("order=%v", []string{got[0].Summary, got[1].Summary, got[2].Summary})
-	}
+	requireEventSummaries(t, r.List(10), "c", "b", "a")
 }
 
 func TestRingWrapsAndCapsList(t *testing.T) {
@@ -25,13 +30,7 @@ func TestRingWrapsAndCapsList(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		r.Record(Event{Kind: KindCollectionRun, Summary: string(rune('a' + i - 1)), UnixMs: int64(i)})
 	}
-	got := r.List(2)
-	if len(got) != 2 {
-		t.Fatalf("len=%d want 2", len(got))
-	}
-	if got[0].Summary != "e" || got[1].Summary != "d" {
-		t.Fatalf("got %q %q", got[0].Summary, got[1].Summary)
-	}
+	requireEventSummaries(t, r.List(2), "e", "d")
 }
 
 func TestRecordHeartbeatThrottled(t *testing.T) {

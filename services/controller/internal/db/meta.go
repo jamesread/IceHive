@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -188,18 +189,26 @@ func ListMeta(ctx context.Context, db *sql.DB) ([][2]string, error) {
 	return out, nil
 }
 
-// GetMeta returns a single key from icehive_meta.
-func GetMeta(ctx context.Context, db *sql.DB, key string) (string, bool, error) {
+func requireMetaKey(db *sql.DB, key string) (string, error) {
 	if db == nil {
-		return "", false, fmt.Errorf("nil DB")
+		return "", fmt.Errorf("nil DB")
 	}
 	key = strings.TrimSpace(key)
 	if key == "" {
-		return "", false, fmt.Errorf("empty meta key")
+		return "", fmt.Errorf("empty meta key")
+	}
+	return key, nil
+}
+
+// GetMeta returns a single key from icehive_meta.
+func GetMeta(ctx context.Context, db *sql.DB, key string) (string, bool, error) {
+	key, err := requireMetaKey(db, key)
+	if err != nil {
+		return "", false, err
 	}
 	var value string
-	err := db.QueryRowContext(ctx, `SELECT v FROM icehive_meta WHERE k = ?`, key).Scan(&value)
-	if err == sql.ErrNoRows {
+	err = db.QueryRowContext(ctx, `SELECT v FROM icehive_meta WHERE k = ?`, key).Scan(&value)
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", false, nil
 	}
 	if err != nil {
@@ -208,18 +217,26 @@ func GetMeta(ctx context.Context, db *sql.DB, key string) (string, bool, error) 
 	return value, true, nil
 }
 
+func heartbeatArgs(serviceName string, latestUnixMs int64) (string, error) {
+	serviceName = strings.TrimSpace(serviceName)
+	if serviceName == "" {
+		return "", fmt.Errorf("empty service name")
+	}
+	if latestUnixMs <= 0 {
+		return "", fmt.Errorf("invalid heartbeat timestamp")
+	}
+	return serviceName, nil
+}
+
 func UpsertHeartbeat(ctx context.Context, db *sql.DB, serviceName string, latestUnixMs int64, version string) error {
 	if db == nil {
 		return fmt.Errorf("nil DB")
 	}
-	serviceName = strings.TrimSpace(serviceName)
-	if serviceName == "" {
-		return fmt.Errorf("empty service name")
+	serviceName, err := heartbeatArgs(serviceName, latestUnixMs)
+	if err != nil {
+		return err
 	}
-	if latestUnixMs <= 0 {
-		return fmt.Errorf("invalid heartbeat timestamp")
-	}
-	_, err := db.ExecContext(
+	_, err = db.ExecContext(
 		ctx,
 		`INSERT INTO icehive_heartbeats (service_name, latest_heartbeat_unix_ms, version)
 		 VALUES (?, ?, ?)

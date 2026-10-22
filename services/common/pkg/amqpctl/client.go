@@ -42,13 +42,17 @@ func Connect(_ context.Context, cfg Config) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) connectLocked() error {
-	connName := strings.TrimSpace(c.cfg.ConnectionName)
-	if connName == "" {
-		connName = "ih_icehive"
+func clientConnectionName(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "ih_icehive"
 	}
+	return name
+}
+
+func (c *Client) connectLocked() error {
 	props := amqp091.NewConnectionProperties()
-	props.SetClientConnectionName(connName)
+	props.SetClientConnectionName(clientConnectionName(c.cfg.ConnectionName))
 	conn, err := amqp091.DialConfig(c.cfg.URL, amqp091.Config{Properties: props})
 	if err != nil {
 		return fmt.Errorf("amqp dial: %w", err)

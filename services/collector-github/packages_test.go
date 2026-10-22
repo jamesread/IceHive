@@ -99,14 +99,17 @@ func TestNewestPackageSummaryFallbacks(t *testing.T) {
 	}
 }
 
+func requirePackageOwner(t *testing.T, login, ownerType, wantLogin, wantType string) {
+	t.Helper()
+	if login != wantLogin || ownerType != wantType {
+		t.Fatalf("got %q %q, want %q %q", login, ownerType, wantLogin, wantType)
+	}
+}
+
 func TestPackageOwnerLoginAndType(t *testing.T) {
 	t.Parallel()
 	login, ownerType := packageOwnerLoginAndType(ghRepoPackage{Owner: &ghPackageOwner{Login: " acme ", Type: "Organization"}}, "ns", "User")
-	if login != "acme" || ownerType != "Organization" {
-		t.Fatalf("owner fields: got %q %q", login, ownerType)
-	}
+	requirePackageOwner(t, login, ownerType, "acme", "Organization")
 	login, ownerType = packageOwnerLoginAndType(ghRepoPackage{}, " ns ", "")
-	if login != "ns" || ownerType != "User" {
-		t.Fatalf("fallbacks: got %q %q", login, ownerType)
-	}
+	requirePackageOwner(t, login, ownerType, "ns", "User")
 }

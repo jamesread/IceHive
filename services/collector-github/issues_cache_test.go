@@ -19,13 +19,13 @@ func TestIssueListUnchanged(t *testing.T) {
 	}
 	ts, _ := time.Parse(time.RFC3339, updated)
 	probe := &github.Issue{
-		NodeID:    github.Ptr(issueID),
+		NodeID:    new(issueID),
 		UpdatedAt: &github.Timestamp{Time: ts},
 	}
 	if !issueListUnchanged(cache, probe) {
 		t.Fatal("expected unchanged")
 	}
-	probe.NodeID = github.Ptr("I_other")
+	probe.NodeID = new("I_other")
 	if issueListUnchanged(cache, probe) {
 		t.Fatal("expected changed when issue id differs")
 	}
@@ -37,8 +37,8 @@ func TestMergeIssueCachePublishesNewAndUpdated(t *testing.T) {
 	oldUpdated := "2026-06-01T10:00:00Z"
 	newUpdated := "2026-06-18T08:16:14Z"
 	oldIssue := &github.Issue{
-		NodeID:    github.Ptr("I_old"),
-		Number:    github.Ptr(1),
+		NodeID:    new("I_old"),
+		Number:    new(1),
 		UpdatedAt: mustGitHubTime(oldUpdated),
 	}
 	oldRaw, _ := json.Marshal(oldIssue)
@@ -48,13 +48,13 @@ func TestMergeIssueCachePublishesNewAndUpdated(t *testing.T) {
 		},
 	}
 	updatedIssue := &github.Issue{
-		NodeID:    github.Ptr("I_old"),
-		Number:    github.Ptr(1),
+		NodeID:    new("I_old"),
+		Number:    new(1),
 		UpdatedAt: mustGitHubTime(newUpdated),
 	}
 	newIssue := &github.Issue{
-		NodeID:    github.Ptr("I_new"),
-		Number:    github.Ptr(2),
+		NodeID:    new("I_new"),
+		Number:    new(2),
 		UpdatedAt: mustGitHubTime(newUpdated),
 	}
 	toPublish, merged, skipped := mergeIssueCache(cache, []*github.Issue{updatedIssue, newIssue}, repoUID)
@@ -64,8 +64,13 @@ func TestMergeIssueCachePublishesNewAndUpdated(t *testing.T) {
 	if len(toPublish) != 2 {
 		t.Fatalf("published: %d", len(toPublish))
 	}
-	if merged.LatestIssueID != "I_new" && merged.LatestIssueID != "I_old" {
-		t.Fatalf("latest issue id: %q", merged.LatestIssueID)
+	requireLatestIssueID(t, merged.LatestIssueID)
+}
+
+func requireLatestIssueID(t *testing.T, id string) {
+	t.Helper()
+	if id != "I_new" && id != "I_old" {
+		t.Fatalf("latest issue id: %q", id)
 	}
 }
 
@@ -74,8 +79,8 @@ func TestMergeIssueCacheSkipsUnchanged(t *testing.T) {
 	repoUID := "R_repo"
 	updated := "2026-06-18T08:16:14Z"
 	issue := &github.Issue{
-		NodeID:    github.Ptr("I_same"),
-		Number:    github.Ptr(3),
+		NodeID:    new("I_same"),
+		Number:    new(3),
 		UpdatedAt: mustGitHubTime(updated),
 	}
 	raw, _ := json.Marshal(issue)
@@ -110,7 +115,15 @@ func TestIssueCollectorSaveLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loaded.LatestIssueID != "I_x" || len(loaded.Issues) != 1 {
+	requireLoadedIssueCache(t, loaded)
+}
+
+func requireLoadedIssueCache(t *testing.T, loaded *repoIssueCacheFile) {
+	t.Helper()
+	if loaded.LatestIssueID != "I_x" {
+		t.Fatalf("loaded: %+v", loaded)
+	}
+	if len(loaded.Issues) != 1 {
 		t.Fatalf("loaded: %+v", loaded)
 	}
 }

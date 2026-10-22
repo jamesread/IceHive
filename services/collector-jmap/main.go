@@ -57,7 +57,7 @@ func jmapWork(
 	defer ticker.Stop()
 
 	for {
-		if err := runJmapPoll(ctx, log, k, amqpClient, controllerBaseURL); err != nil && !errors.Is(err, context.Canceled) {
+		if err := runJmapPoll(ctx, log, amqpClient, controllerBaseURL); err != nil && !errors.Is(err, context.Canceled) {
 			log.WithError(err).Warn("jmap collector poll tick failed")
 		}
 		select {
@@ -85,7 +85,7 @@ func logJmapConnectionOK(log *logrus.Logger, rt *jmapRuntime) {
 }
 
 //gocyclo:ignore
-func runJmapPoll(ctx context.Context, log *logrus.Logger, k *koanf.Koanf, amqpClient *amqpctl.Client, controllerBaseURL string) error {
+func runJmapPoll(ctx context.Context, log *logrus.Logger, amqpClient *amqpctl.Client, controllerBaseURL string) error {
 	rt, err := jmapRuntimeFromEnv(ctx)
 	if err != nil {
 		return err

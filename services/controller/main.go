@@ -66,7 +66,7 @@ func (s *controllerSrv) setDB(db *sql.DB) {
 	s.db = db
 }
 
-func (s *controllerSrv) metaDB(ctx context.Context) (*sql.DB, error) {
+func (s *controllerSrv) metaDB() (*sql.DB, error) {
 	s.dbMu.RLock()
 	db := s.db
 	s.dbMu.RUnlock()
@@ -142,7 +142,7 @@ func (s *controllerSrv) Health(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.HealthRequest],
 ) (*connect.Response[icehivev1.HealthResponse], error) {
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (s *controllerSrv) WorkerBootstrap(
 ) (*connect.Response[icehivev1.WorkerBootstrapResponse], error) {
 	_ = req.Msg
 
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func (s *controllerSrv) ListConfig(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.ListConfigRequest],
 ) (*connect.Response[icehivev1.ListConfigResponse], error) {
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -233,17 +233,7 @@ func (s *controllerSrv) ListConfig(
 	}
 	vars := make([]*icehivev1.ConfigVar, 0, len(rows))
 	for _, kv := range rows {
-		key := kv[0]
-		raw := formatConfigValue(kv[1])
-		redacted := configKeyRedacted(key)
-		if redacted {
-			raw = ""
-		}
-		vars = append(vars, &icehivev1.ConfigVar{
-			Key:      key,
-			Value:    raw,
-			Redacted: redacted,
-		})
+		vars = append(vars, configVarFromMeta(kv[0], formatConfigValue(kv[1])))
 	}
 	return connect.NewResponse(&icehivev1.ListConfigResponse{Vars: vars}), nil
 }
@@ -258,7 +248,7 @@ func (s *controllerSrv) GetConfig(
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty config key"))
 	}
 	created := false
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +287,7 @@ func (s *controllerSrv) SetConfig(
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty config key"))
 	}
 
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +301,7 @@ func (s *controllerSrv) ListServices(
 	ctx context.Context,
 	_ *connect.Request[icehivev1.ListServicesRequest],
 ) (*connect.Response[icehivev1.ListServicesResponse], error) {
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -355,8 +345,30 @@ func (s *controllerSrv) ListActivity(
 	return connect.NewResponse(&icehivev1.ListActivityResponse{Events: out}), nil
 }
 
+func configVarFromMeta(key, raw string) *icehivev1.ConfigVar {
+	redacted := configKeyRedacted(key)
+	if redacted {
+		raw = ""
+	}
+	return &icehivev1.ConfigVar{Key: key, Value: raw, Redacted: redacted}
+}
+
+func nullInt64OrZero(n sql.NullInt64) int64 {
+	if n.Valid {
+		return n.Int64
+	}
+	return 0
+}
+
+func nullStringOrEmpty(n sql.NullString) string {
+	if n.Valid {
+		return n.String
+	}
+	return ""
+}
+
 func collectionSourceToProto(r db.CollectionSourceRow, health healthmetrics.PipelineHealth) *icehivev1.CollectionSource {
-	p := &icehivev1.CollectionSource{
+	return &icehivev1.CollectionSource{
 		Id:                        r.ID,
 		CollectorType:             r.CollectorType,
 		SourceSpec:                r.SourceSpec,
@@ -364,30 +376,35 @@ func collectionSourceToProto(r db.CollectionSourceRow, health healthmetrics.Pipe
 		Enabled:                   r.Enabled,
 		CreatedUnixMs:             r.CreatedAt.UnixMilli(),
 		UpdatedUnixMs:             r.UpdatedAt.UnixMilli(),
+		LastRunUnixMs:             nullInt64OrZero(r.LastRunUnixMs),
+		LastSuccessUnixMs:         nullInt64OrZero(r.LastSuccessUnixMs),
+		LastError:                 nullStringOrEmpty(r.LastError),
+		NextDueUnixMs:             nullInt64OrZero(r.NextDueUnixMs),
 		SecondsSinceLastSuccess:   health.SecondsSinceLastSuccess,
 		IsStale:                   health.IsStale,
 		EntityFreshnessAgeSeconds: health.EntityFreshnessAgeSeconds,
 	}
-	if r.LastRunUnixMs.Valid {
-		p.LastRunUnixMs = r.LastRunUnixMs.Int64
+}
+
+func (s *controllerSrv) collectorFreshness(ctx context.Context) map[string]int64 {
+	if s.health == nil {
+		return nil
 	}
-	if r.LastSuccessUnixMs.Valid {
-		p.LastSuccessUnixMs = r.LastSuccessUnixMs.Int64
+	return s.health.EntityFreshnessByCollector(ctx)
+}
+
+func mapCollectionSourceErr(err error) error {
+	if strings.Contains(err.Error(), "not found") {
+		return connect.NewError(connect.CodeNotFound, err)
 	}
-	if r.LastError.Valid {
-		p.LastError = r.LastError.String
-	}
-	if r.NextDueUnixMs.Valid {
-		p.NextDueUnixMs = r.NextDueUnixMs.Int64
-	}
-	return p
+	return connect.NewError(connect.CodeInternal, err)
 }
 
 func (s *controllerSrv) ListCollectionSources(
 	ctx context.Context,
 	req *connect.Request[icehivev1.ListCollectionSourcesRequest],
 ) (*connect.Response[icehivev1.ListCollectionSourcesResponse], error) {
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -397,10 +414,7 @@ func (s *controllerSrv) ListCollectionSources(
 	}
 	out := make([]*icehivev1.CollectionSource, 0, len(rows))
 	now := time.Now()
-	var freshness map[string]int64
-	if s.health != nil {
-		freshness = s.health.EntityFreshnessByCollector(ctx)
-	}
+	freshness := s.collectorFreshness(ctx)
 	for _, r := range rows {
 		health := healthmetrics.ComputePipelineHealth(r, freshness, now)
 		out = append(out, collectionSourceToProto(r, health))
@@ -412,7 +426,7 @@ func (s *controllerSrv) ListCollectorSourceSchemas(
 	ctx context.Context,
 	req *connect.Request[icehivev1.ListCollectorSourceSchemasRequest],
 ) (*connect.Response[icehivev1.ListCollectorSourceSchemasResponse], error) {
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +461,7 @@ func (s *controllerSrv) UpsertCollectionSource(
 		CronLine:      src.GetCronLine(),
 		Enabled:       src.GetEnabled(),
 	}
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
@@ -455,11 +469,7 @@ func (s *controllerSrv) UpsertCollectionSource(
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	var freshness map[string]int64
-	if s.health != nil {
-		freshness = s.health.EntityFreshnessByCollector(ctx)
-	}
-	health := healthmetrics.ComputePipelineHealth(saved, freshness, time.Now())
+	health := healthmetrics.ComputePipelineHealth(saved, s.collectorFreshness(ctx), time.Now())
 	return connect.NewResponse(&icehivev1.UpsertCollectionSourceResponse{
 		Source: collectionSourceToProto(saved, health),
 	}), nil
@@ -473,15 +483,12 @@ func (s *controllerSrv) DeleteCollectionSource(
 	if id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty id"))
 	}
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}
 	if err := db.DeleteCollectionSource(ctx, sqlDB, id); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, connect.NewError(connect.CodeNotFound, err)
-		}
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, mapCollectionSourceErr(err)
 	}
 	return connect.NewResponse(&icehivev1.DeleteCollectionSourceResponse{}), nil
 }
@@ -513,7 +520,7 @@ func (s *controllerSrv) EnqueueCollectionRequest(
 		if id == "" {
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty collection_source_id"))
 		}
-		sqlDB, err := s.metaDB(ctx)
+		sqlDB, err := s.metaDB()
 		if err != nil {
 			return nil, err
 		}
@@ -578,7 +585,7 @@ func (s *controllerSrv) ReportCollectionSourceRun(
 	if id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty id"))
 	}
-	sqlDB, err := s.metaDB(ctx)
+	sqlDB, err := s.metaDB()
 	if err != nil {
 		return nil, err
 	}

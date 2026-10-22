@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type memoryStore struct {
@@ -26,7 +27,7 @@ func TestMemoryStoreSave(t *testing.T) {
 		Kind:    "commit",
 		Payload: []byte(`{"sha":"abc"}`),
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, s.(*memoryStore).records, 1)
 	assert.Equal(t, "github", s.(*memoryStore).records[0].Source)
 }

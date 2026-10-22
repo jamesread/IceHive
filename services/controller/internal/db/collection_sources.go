@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -152,18 +153,26 @@ func UpsertCollectionSource(ctx context.Context, db *sql.DB, r CollectionSourceR
 	return GetCollectionSourceByID(ctx, db, id)
 }
 
-// GetCollectionSourceByID loads one row by id.
-func GetCollectionSourceByID(ctx context.Context, db *sql.DB, id string) (CollectionSourceRow, error) {
+func requireCollectionSourceID(db *sql.DB, id string) (string, error) {
 	if db == nil {
-		return CollectionSourceRow{}, fmt.Errorf("nil DB")
+		return "", fmt.Errorf("nil DB")
 	}
 	id = strings.TrimSpace(id)
 	if id == "" {
-		return CollectionSourceRow{}, fmt.Errorf("empty id")
+		return "", fmt.Errorf("empty id")
+	}
+	return id, nil
+}
+
+// GetCollectionSourceByID loads one row by id.
+func GetCollectionSourceByID(ctx context.Context, db *sql.DB, id string) (CollectionSourceRow, error) {
+	id, err := requireCollectionSourceID(db, id)
+	if err != nil {
+		return CollectionSourceRow{}, err
 	}
 	var r CollectionSourceRow
 	var enabled int
-	err := db.QueryRowContext(ctx, `
+	err = db.QueryRowContext(ctx, `
 		SELECT id, collector_type, source_spec, cron_line, enabled,
 		       last_run_unix_ms, last_success_unix_ms, last_error, next_due_unix_ms,
 		       created_at, updated_at
@@ -173,7 +182,7 @@ func GetCollectionSourceByID(ctx context.Context, db *sql.DB, id string) (Collec
 		&r.LastRunUnixMs, &r.LastSuccessUnixMs, &r.LastError, &r.NextDueUnixMs,
 		&r.CreatedAt, &r.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return CollectionSourceRow{}, fmt.Errorf("collection source not found: %s", id)
 	}
 	if err != nil {
@@ -185,12 +194,9 @@ func GetCollectionSourceByID(ctx context.Context, db *sql.DB, id string) (Collec
 
 // DeleteCollectionSource removes a source by id.
 func DeleteCollectionSource(ctx context.Context, db *sql.DB, id string) error {
-	if db == nil {
-		return fmt.Errorf("nil DB")
-	}
-	id = strings.TrimSpace(id)
-	if id == "" {
-		return fmt.Errorf("empty id")
+	id, err := requireCollectionSourceID(db, id)
+	if err != nil {
+		return err
 	}
 	res, err := db.ExecContext(ctx, `DELETE FROM icehive_collection_sources WHERE id = ?`, id)
 	if err != nil {
@@ -217,13 +223,13 @@ func ReportCollectionSourceRun(ctx context.Context, db *sql.DB, id string, runUn
 	if runUnixMs <= 0 {
 		return fmt.Errorf("invalid run_unix_ms")
 	}
-	var lastErr interface{}
+	var lastErr any
 	if success {
 		lastErr = nil
 	} else {
 		lastErr = errMsg
 	}
-	var nextDue interface{}
+	var nextDue any
 	if nextDueUnixMs > 0 {
 		nextDue = nextDueUnixMs
 	} else {

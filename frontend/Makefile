@@ -11,6 +11,7 @@ test:
 
 lint:
 	npx vue-tsc --noEmit
+	npm run lint
 
 dev:
 	npm run dev

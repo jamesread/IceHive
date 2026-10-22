@@ -287,15 +287,7 @@ func (p *mysqlPersister) createTable(ctx context.Context, tableName string, stru
 	return nil
 }
 
-func (p *mysqlPersister) tableColumns(ctx context.Context, tableName string) (map[string]bool, error) {
-	rows, err := p.db.QueryContext(ctx, `
-		SELECT column_name
-		FROM information_schema.columns
-		WHERE table_schema = DATABASE() AND table_name = ?`, tableName)
-	if err != nil {
-		return nil, fmt.Errorf("query columns for %s: %w", tableName, err)
-	}
-	defer func() { _ = rows.Close() }()
+func scanColumnNames(rows *sql.Rows) (map[string]bool, error) {
 	out := map[string]bool{}
 	for rows.Next() {
 		var c string
@@ -308,6 +300,18 @@ func (p *mysqlPersister) tableColumns(ctx context.Context, tableName string) (ma
 		return nil, fmt.Errorf("iterate columns: %w", err)
 	}
 	return out, nil
+}
+
+func (p *mysqlPersister) tableColumns(ctx context.Context, tableName string) (map[string]bool, error) {
+	rows, err := p.db.QueryContext(ctx, `
+		SELECT column_name
+		FROM information_schema.columns
+		WHERE table_schema = DATABASE() AND table_name = ?`, tableName)
+	if err != nil {
+		return nil, fmt.Errorf("query columns for %s: %w", tableName, err)
+	}
+	defer func() { _ = rows.Close() }()
+	return scanColumnNames(rows)
 }
 
 //gocyclo:ignore

@@ -50,16 +50,27 @@ func NewRefresher(log *logrus.Logger, metaDB *sql.DB, k *koanf.Koanf, entitiesDB
 	}
 }
 
+func mysqlTCPPort(port int) int {
+	if port <= 0 {
+		return 3306
+	}
+	return port
+}
+
+func tickerInterval(interval, fallback time.Duration) time.Duration {
+	if interval <= 0 {
+		return fallback
+	}
+	return interval
+}
+
 // OpenEntitiesDB opens a read-only connection to the persister sink database when settings are available.
 func OpenEntitiesDB(ctx context.Context, k *koanf.Koanf, metaDB *sql.DB) (*sql.DB, error) {
 	settings, err := loadPersisterSettings(ctx, k, metaDB)
 	if err != nil {
 		return nil, err
 	}
-	port := settings.Port
-	if port <= 0 {
-		port = 3306
-	}
+	port := mysqlTCPPort(settings.Port)
 	cfg := mysql.NewConfig()
 	cfg.User = settings.User
 	cfg.Passwd = settings.Password
@@ -86,10 +97,7 @@ func loadPersisterSettings(ctx context.Context, k *koanf.Koanf, metaDB *sql.DB) 
 		}
 	}
 	if k != nil && k.Exists("persister_mysql.host") {
-		port := k.Int("persister_mysql.port")
-		if port <= 0 {
-			port = 3306
-		}
+		port := mysqlTCPPort(k.Int("persister_mysql.port"))
 		return db.PersisterMySQLSettings{
 			Host:     strings.TrimSpace(k.String("persister_mysql.host")),
 			Port:     port,
@@ -103,10 +111,7 @@ func loadPersisterSettings(ctx context.Context, k *koanf.Koanf, metaDB *sql.DB) 
 
 // Start runs refresh ticks until ctx is cancelled.
 func (r *Refresher) Start(ctx context.Context, interval time.Duration) {
-	if interval <= 0 {
-		interval = 60 * time.Second
-	}
-	t := time.NewTicker(interval)
+	t := time.NewTicker(tickerInterval(interval, 60*time.Second))
 	defer t.Stop()
 	r.refresh(ctx)
 	for {
@@ -125,6 +130,17 @@ func (r *Refresher) refresh(ctx context.Context) {
 	r.refreshEntityFreshness(ctx)
 }
 
+func heartbeatAgeSeconds(latestUnixMs int64, now time.Time) float64 {
+	if latestUnixMs <= 0 {
+		return 0
+	}
+	age := now.Sub(time.UnixMilli(latestUnixMs)).Seconds()
+	if age < 0 {
+		return 0
+	}
+	return age
+}
+
 func (r *Refresher) refreshHeartbeats(ctx context.Context) {
 	rows, err := db.ListHeartbeats(ctx, r.metaDB)
 	if err != nil {
@@ -133,14 +149,7 @@ func (r *Refresher) refreshHeartbeats(ctx context.Context) {
 	}
 	now := time.Now()
 	for _, row := range rows {
-		age := now.Sub(time.UnixMilli(row.LatestHeartbeatUnixMs)).Seconds()
-		if row.LatestHeartbeatUnixMs <= 0 {
-			age = -1
-		}
-		if age < 0 {
-			age = 0
-		}
-		obsmetrics.SetControllerServiceHeartbeatAge(row.ServiceName, age)
+		obsmetrics.SetControllerServiceHeartbeatAge(row.ServiceName, heartbeatAgeSeconds(row.LatestHeartbeatUnixMs, now))
 	}
 }
 
@@ -217,22 +226,24 @@ func sourceIsStale(src db.CollectionSourceRow, now time.Time, successAge float64
 	return false
 }
 
+func (r *Refresher) recordEntityFreshness(ctx context.Context, probe entityFreshnessProbe) {
+	age, err := queryEntityFreshnessAge(ctx, r.entitiesDB, probe.Table, probe.WhereClause)
+	if err != nil {
+		r.log.WithError(err).WithField("table", probe.Table).Debug("health metrics: entity freshness query failed")
+		return
+	}
+	if age < 0 {
+		return
+	}
+	obsmetrics.SetControllerEntityFreshnessAge(probe.EntityType, probe.SourceSystem, age)
+}
+
 func (r *Refresher) refreshEntityFreshness(ctx context.Context) {
 	if r.entitiesDB == nil {
 		return
 	}
-	now := time.Now()
 	for _, probe := range r.entityProbes {
-		age, err := queryEntityFreshnessAge(ctx, r.entitiesDB, probe.Table, probe.WhereClause)
-		if err != nil {
-			r.log.WithError(err).WithField("table", probe.Table).Debug("health metrics: entity freshness query failed")
-			continue
-		}
-		if age < 0 {
-			continue
-		}
-		obsmetrics.SetControllerEntityFreshnessAge(probe.EntityType, probe.SourceSystem, age)
-		_ = now
+		r.recordEntityFreshness(ctx, probe)
 	}
 }
 
@@ -264,10 +275,7 @@ type PipelineHealth struct {
 func ComputePipelineHealth(src db.CollectionSourceRow, entityFreshnessByCollector map[string]int64, now time.Time) PipelineHealth {
 	out := PipelineHealth{}
 	if src.LastSuccessUnixMs.Valid && src.LastSuccessUnixMs.Int64 > 0 {
-		out.SecondsSinceLastSuccess = int64(now.Sub(time.UnixMilli(src.LastSuccessUnixMs.Int64)).Seconds())
-		if out.SecondsSinceLastSuccess < 0 {
-			out.SecondsSinceLastSuccess = 0
-		}
+		out.SecondsSinceLastSuccess = max(int64(now.Sub(time.UnixMilli(src.LastSuccessUnixMs.Int64)).Seconds()), 0)
 	}
 	cronLine := strings.TrimSpace(src.CronLine)
 	if !src.Enabled {
@@ -286,6 +294,14 @@ func ComputePipelineHealth(src db.CollectionSourceRow, entityFreshnessByCollecto
 	return out
 }
 
+func (r *Refresher) probeFreshnessAge(ctx context.Context, probe entityFreshnessProbe) (int64, bool) {
+	age, err := queryEntityFreshnessAge(ctx, r.entitiesDB, probe.Table, probe.WhereClause)
+	if err != nil || age < 0 {
+		return 0, false
+	}
+	return int64(age), true
+}
+
 // EntityFreshnessByCollector returns the max entity row age in seconds per collector_type.
 func (r *Refresher) EntityFreshnessByCollector(ctx context.Context) map[string]int64 {
 	out := map[string]int64{}
@@ -300,11 +316,9 @@ func (r *Refresher) EntityFreshnessByCollector(ctx context.Context) map[string]i
 		{"collector-github", defaultEntityProbes[0]},
 	}
 	for _, m := range mappings {
-		age, err := queryEntityFreshnessAge(ctx, r.entitiesDB, m.probe.Table, m.probe.WhereClause)
-		if err != nil || age < 0 {
-			continue
+		if age, ok := r.probeFreshnessAge(ctx, m.probe); ok {
+			out[m.collectorType] = age
 		}
-		out[m.collectorType] = int64(age)
 	}
 	return out
 }

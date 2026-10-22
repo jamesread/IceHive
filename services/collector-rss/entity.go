@@ -63,12 +63,7 @@ func entryLink(item *gofeed.Item) string {
 	if u := strings.TrimSpace(item.Link); u != "" {
 		return norm.NFC.String(u)
 	}
-	for _, u := range item.Links {
-		if t := strings.TrimSpace(u); t != "" {
-			return norm.NFC.String(t)
-		}
-	}
-	return ""
+	return firstNonEmptyNormalizedLink(item.Links)
 }
 
 func entryAuthors(item *gofeed.Item) string {

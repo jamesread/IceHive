@@ -18,9 +18,15 @@ import {
   type CollectionSource,
 } from '../gen/icehive/v1/controller_pb'
 
+interface NavigationApi {
+  clearNavigationLinks(): void
+  addRouterLink(name: string, title: string, options?: Record<string, unknown>): void
+  addCallback(title: string, callback: () => void, options?: Record<string, unknown>): void
+}
+
 /** Landing view — links to Controller-backed tools. */
 const router = useRouter()
-const navigation = ref<any>(null)
+const navigation = ref<NavigationApi | null>(null)
 const activityEvents = ref<ActivityEvent[]>([])
 const activityErr = ref<string | null>(null)
 const activityLive = ref(false)

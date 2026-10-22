@@ -6,6 +6,16 @@ import (
 	"github.com/google/go-github/v71/github"
 )
 
+func requireGitHubRepoRecollectSpec(t *testing.T, p *string, want string) {
+	t.Helper()
+	if p == nil {
+		t.Fatal("expected non-nil spec")
+	}
+	if *p != want {
+		t.Fatalf("got %q", *p)
+	}
+}
+
 func TestGitHubRepoRecollectSpec(t *testing.T) {
 	t.Parallel()
 	if gitHubRepoRecollectSpec(nil) != nil {
@@ -15,11 +25,5 @@ func TestGitHubRepoRecollectSpec(t *testing.T) {
 		t.Fatal("expected nil when full_name empty")
 	}
 	fn := "jamesread/faridoon"
-	p := gitHubRepoRecollectSpec(&github.Repository{FullName: &fn})
-	if p == nil {
-		t.Fatal("expected non-nil spec")
-	}
-	if *p != "repo:jamesread/faridoon" {
-		t.Fatalf("got %q", *p)
-	}
+	requireGitHubRepoRecollectSpec(t, gitHubRepoRecollectSpec(&github.Repository{FullName: &fn}), "repo:jamesread/faridoon")
 }

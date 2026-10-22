@@ -12,17 +12,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func absOrSelf(path string) string {
+	if p, err := filepath.Abs(path); err == nil {
+		return p
+	}
+	return path
+}
+
 // LoadOptionalYAML loads fileName from cfgDir when present; otherwise returns an empty Koanf.
 func LoadOptionalYAML(log *logrus.Logger, cfgDir, searchLabel, fileName string) (*koanf.Koanf, error) {
 	k := koanf.New(".")
-	absCfgDir := cfgDir
-	if p, err := filepath.Abs(cfgDir); err == nil {
-		absCfgDir = p
-	}
 	path, err := dirs.GetFirstExistingFileFromDirs(searchLabel, []string{cfgDir}, fileName)
 	if err != nil {
 		log.WithFields(logrus.Fields{
-			"config_dir": absCfgDir,
+			"config_dir": absOrSelf(cfgDir),
 			"yaml_file":  fileName,
 		}).Info("optional YAML not found; using defaults")
 		return k, nil //nolint:nilerr // missing optional configuration uses defaults.
@@ -30,10 +33,6 @@ func LoadOptionalYAML(log *logrus.Logger, cfgDir, searchLabel, fileName string) 
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("load %s: %w", fileName, err)
 	}
-	absYAML := path
-	if p, err := filepath.Abs(path); err == nil {
-		absYAML = p
-	}
-	log.WithField("yaml_config_path", absYAML).Info("YAML configuration loaded")
+	log.WithField("yaml_config_path", absOrSelf(path)).Info("YAML configuration loaded")
 	return k, nil
 }

@@ -76,7 +76,7 @@ func paginateUserRepos(ctx context.Context, gh *github.Client, owner, sourceID s
 			return nil, err
 		}
 		out = append(out, repos...)
-		if resp == nil || resp.NextPage == 0 {
+		if !hasNextPage(resp) {
 			break
 		}
 		opts.Page = resp.NextPage

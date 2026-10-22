@@ -74,6 +74,15 @@ func fetchBootstrapWithRetry(
 	}
 }
 
+func retryWait(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(10 * time.Second):
+		return nil
+	}
+}
+
 func waitForAMQPConnect(ctx context.Context, log *logrus.Logger, boot *bootstrap.WorkerRuntime, connectionName string) (*amqpctl.Client, error) {
 	for {
 		c, err := amqpctl.Connect(ctx, amqpctl.Config{
@@ -89,10 +98,8 @@ func waitForAMQPConnect(ctx context.Context, log *logrus.Logger, boot *bootstrap
 			return c, nil
 		}
 		log.WithError(err).Warn("AMQP status=disconnected; connect failed; retrying in 10s")
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(10 * time.Second):
+		if err := retryWait(ctx); err != nil {
+			return nil, err
 		}
 	}
 }

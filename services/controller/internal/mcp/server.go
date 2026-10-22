@@ -223,20 +223,24 @@ func handleListCollectorSourceSchemas(ctx context.Context, api ControllerAPI, re
 	return jsonResult(map[string]any{"schemas": res.Msg.GetSchemas()})
 }
 
+func parseCollectionSourceJSON(raw string) (*icehivev1.CollectionSource, string) {
+	var source icehivev1.CollectionSource
+	if parseErr := json.Unmarshal([]byte(raw), &source); parseErr != nil {
+		return nil, parseErr.Error()
+	}
+	return &source, ""
+}
+
 func handleUpsertCollectionSource(ctx context.Context, api ControllerAPI, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	raw, err := req.RequireString("source")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	var source icehivev1.CollectionSource
-	parseMsg := ""
-	if parseErr := json.Unmarshal([]byte(raw), &source); parseErr != nil {
-		parseMsg = parseErr.Error()
-	}
+	source, parseMsg := parseCollectionSourceJSON(raw)
 	if parseMsg != "" {
 		return mcp.NewToolResultError("invalid source JSON: " + parseMsg), nil
 	}
-	res, err := api.UpsertCollectionSource(ctx, connect.NewRequest(&icehivev1.UpsertCollectionSourceRequest{Source: &source}))
+	res, err := api.UpsertCollectionSource(ctx, connect.NewRequest(&icehivev1.UpsertCollectionSourceRequest{Source: source}))
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

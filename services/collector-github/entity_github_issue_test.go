@@ -34,14 +34,14 @@ func TestBuildGitHubIssueEntity(t *testing.T) {
 		Title:  &title,
 		Body:   &body,
 		State:  &state,
-		User:   &github.User{Login: github.Ptr(login)},
-		Labels: []*github.Label{{Name: github.Ptr(labelName)}},
+		User:   &github.User{Login: new(login)},
+		Labels: []*github.Label{{Name: new(labelName)}},
 		Assignees: []*github.User{
-			{Login: github.Ptr("bob")},
+			{Login: new("bob")},
 		},
 		Milestone: &github.Milestone{
-			Title:  github.Ptr(milestoneTitle),
-			Number: github.Ptr(milestoneNum),
+			Title:  new(milestoneTitle),
+			Number: new(milestoneNum),
 		},
 	}
 
@@ -79,11 +79,11 @@ func TestBuildGitHubIssueEntity(t *testing.T) {
 
 func TestBuildGitHubIssueEntitySkipsPullRequest(t *testing.T) {
 	t.Parallel()
-	repo := &github.Repository{NodeID: github.Ptr("R_x"), FullName: github.Ptr("o/r")}
+	repo := &github.Repository{NodeID: new("R_x"), FullName: new("o/r")}
 	prURL := "https://github.com/o/r/pull/1"
 	issue := &github.Issue{
-		NodeID: github.Ptr("I_x"),
-		Number: github.Ptr(1),
+		NodeID: new("I_x"),
+		Number: new(1),
 		PullRequestLinks: &github.PullRequestLinks{
 			HTMLURL: &prURL,
 		},
