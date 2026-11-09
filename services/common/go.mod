@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	connectrpc.com/connect v1.21.1
-	github.com/jamesread/golure v0.0.0-20260927082702-900b761e432f
+	github.com/jamesread/golure v0.0.0-20261109144715-86ce70a3f84b
 	github.com/jamesread/httpauthshim v0.2.0
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/file v1.2.1

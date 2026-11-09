@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/icehive/icehive/services/common/pkg/common"
+	"github.com/jamesread/golure/pkg/logsetup"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,27 +19,8 @@ const EnvLogLevel = "LOG_LEVEL"
 // (for code that logs with the package-level logrus API). Empty EnvLogLevel defaults to info.
 // Invalid values default to info and a single warning line is written to stderr.
 func ApplyEnvLogLevel(log *logrus.Logger) {
-	level, warn := resolveLevelFromEnv()
-	if warn != "" {
-		fmt.Fprintln(os.Stderr, warn)
+	if err := logsetup.ApplyEnvLevel(log, EnvLogLevel, logrus.InfoLevel); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: invalid %s=%q (%v); using info\n",
+			common.ProjectName, EnvLogLevel, strings.TrimSpace(os.Getenv(EnvLogLevel)), err)
 	}
-	if log != nil {
-		log.SetLevel(level)
-	}
-	logrus.SetLevel(level)
-}
-
-func resolveLevelFromEnv() (logrus.Level, string) {
-	raw := strings.TrimSpace(os.Getenv(EnvLogLevel))
-	if raw == "" {
-		return logrus.InfoLevel, ""
-	}
-	level, err := logrus.ParseLevel(strings.ToLower(raw))
-	if err != nil {
-		return logrus.InfoLevel, fmt.Sprintf(
-			"%s: invalid %s=%q (%v); using info",
-			common.ProjectName, EnvLogLevel, raw, err,
-		)
-	}
-	return level, ""
 }

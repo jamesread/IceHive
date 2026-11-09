@@ -52,8 +52,8 @@ github.com/google/jsonschema-go v0.4.3 h1:/DBOLZTfDow7pe2GmaJNhltueGTtDKICi8V8p+
 github.com/google/jsonschema-go v0.4.3/go.mod h1:r5quNTdLOYEz95Ru18zA0ydNbBuYoo9tgaYcxEYhJVE=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/jamesread/golure v0.0.0-20260927082702-900b761e432f h1:9eoL7vPEKO2JXRJjfLCmONS5jGpMXMsQzHwjTIOpN98=
-github.com/jamesread/golure v0.0.0-20260927082702-900b761e432f/go.mod h1:BZ/CMtZJJ4LNEBDSjGfafTJMjlDPIA9FS16+reN9NUE=
+github.com/jamesread/golure v0.0.0-20261109144715-86ce70a3f84b h1:N3oywTsqSBvbeQBAi2rTuskPUBxjNgzRVORQDkL8JcU=
+github.com/jamesread/golure v0.0.0-20261109144715-86ce70a3f84b/go.mod h1:C5IAp6bbli1tZYibp+dQhGOmJWscUhiIp+QPEJCMIJ4=
 github.com/jamesread/httpauthshim v0.2.0 h1:0vWutwipdNBCROQyjhsONdlb6qxcbnyajNc4fl8r/Fc=
 github.com/jamesread/httpauthshim v0.2.0/go.mod h1:SvCzQpS3Llj+oykwcV3cnDEDdb/5ra7i/sh3faGFcKs=
 github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=

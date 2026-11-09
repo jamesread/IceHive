@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jamesread/golure/pkg/httpserve"
 	"github.com/knadh/koanf/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -183,18 +184,19 @@ func Main(cfg MainConfig) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-	srv := &http.Server{
+	mux.HandleFunc("/healthz", httpserve.OK("ok"))
+	serverCfg := httpserve.Config{
 		Addr:              listenAddr,
 		Handler:           httpshim.Wrap(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	serverCtx, stopServer := context.WithCancel(ctx)
+	defer stopServer()
+	serverDone := make(chan struct{})
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		defer close(serverDone)
+		if err := httpserve.Run(serverCtx, httpserve.New(serverCfg), serverCfg); err != nil {
 			log.WithError(err).Fatal("http server failed")
 		}
 	}()
@@ -203,11 +205,8 @@ func Main(cfg MainConfig) {
 	obsmetrics.Register()
 
 	workErr := cfg.Work(ctx, k, log, boot, amqpClient, ctrlBase)
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.WithError(err).Fatal("graceful shutdown")
-	}
+	stopServer()
+	<-serverDone
 	if workErr != nil && !errors.Is(workErr, context.Canceled) {
 		log.WithError(workErr).Fatal("collector work")
 	}

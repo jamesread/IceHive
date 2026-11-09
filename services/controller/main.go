@@ -19,6 +19,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jamesread/golure/pkg/dirs"
+	"github.com/jamesread/golure/pkg/httpserve"
 	"github.com/jamesread/golure/pkg/listenaddr"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -839,10 +840,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", serveControllerWelcome)
 	mux.HandleFunc("HEAD /{$}", serveControllerWelcome)
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
+	mux.HandleFunc("/healthz", httpserve.OK("ok"))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.HandleFunc("GET /llms.txt", func(w http.ResponseWriter, _ *http.Request) {
@@ -869,14 +867,16 @@ func main() {
 	apiInner.Handle(path, h)
 	mux.Handle("/api/", http.StripPrefix("/api", apiInner))
 
-	httpSrv := &http.Server{
+	serverCfg := httpserve.Config{
 		Addr:              listenAddr,
 		Handler:           withCORS(httpshim.Wrap(mux)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	serverDone := make(chan struct{})
 
 	go func() {
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		defer close(serverDone)
+		if err := httpserve.Run(ctx, httpserve.New(serverCfg), serverCfg); err != nil {
 			log.WithError(err).Fatal("http server failed")
 		}
 	}()
@@ -895,11 +895,7 @@ func main() {
 	<-ctx.Done()
 	log.Infof("shutdown signal (%v)", ctx.Err())
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
-		log.WithError(err).Fatal("graceful shutdown")
-	}
+	<-serverDone
 	<-backendDone
 }
 
